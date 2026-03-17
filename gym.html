@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Weekly Workout Plan</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Hide scrollbar for the days navigation but keep functionality */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased selection:bg-indigo-500 selection:text-white">
+
+    <main class="max-w-2xl mx-auto bg-white min-h-screen shadow-xl sm:border-x sm:border-slate-200 flex flex-col relative">
+        
+        <!-- Header -->
+        <header class="bg-indigo-600 text-white p-6 rounded-b-3xl shadow-md z-10 sticky top-0">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight">My Workout Plan</h1>
+                    <p class="text-indigo-200 text-sm mt-1">Crush your weekly goals 💪</p>
+                </div>
+                <div class="bg-indigo-500 p-3 rounded-full">
+                    <i class="ph ph-barbell text-2xl"></i>
+                </div>
+            </div>
+
+            <!-- Days Navigation -->
+            <nav id="days-nav" class="flex overflow-x-auto no-scrollbar gap-2 pb-2 -mx-2 px-2"></nav>
+        </header>
+
+        <!-- Content Area -->
+        <div class="p-6 flex-grow">
+            <!-- Day Title & Focus -->
+            <div class="mb-6 flex justify-between items-end border-b border-slate-100 pb-4">
+                <div>
+                    <h2 id="day-title" class="text-xl font-bold text-slate-800">Monday</h2>
+                    <p id="day-focus" class="text-indigo-600 font-semibold text-sm mt-1 uppercase tracking-wider">Chest & Triceps</p>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs text-slate-500 block mb-1">Total Exercises</span>
+                    <span id="exercise-count" class="bg-slate-100 text-slate-700 py-1 px-3 rounded-full text-sm font-bold">0</span>
+                </div>
+            </div>
+
+            <!-- Exercises List -->
+            <div id="exercises-container" class="space-y-8 pb-10">
+                <!-- Exercises injected here via JS -->
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- Workout Plan Data ---
+        const workoutData = {
+            Monday: {
+                focus: "Chest & Triceps",
+                exercises: [
+                    {
+                        name: "Barbell Bench Press",
+                        sets: 4, reps: "8-10",
+                        image: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&q=80&w=800",
+                        steps: [
+                            "Lie flat on the bench with your eyes under the bar.",
+                            "Grip the bar slightly wider than shoulder-width.",
+                            "Unrack the bar and lower it slowly to your mid-chest.",
+                            "Press the bar back up to the starting position powerfully."
+                        ]
+                    },
+                    {
+                        name: "Incline Dumbbell Press",
+                        sets: 3, reps: "10-12",
+                        image: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&q=80&w=800",
+                        steps: [
+                            "Set an adjustable bench to a 30-45 degree angle.",
+                            "Sit back with a dumbbell in each hand resting on your thighs.",
+                            "Kick the weights up to your shoulders and press them overhead.",
+                            "Lower them slowly until you feel a stretch in your chest, then press up."
+                        ]
+                    },
+                    {
+                        name: "Tricep Pushdowns",
+                        sets: 3, reps: "12-15",
+                        image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=800",
+                        steps: [
+                            "Attach a rope or straight bar to a high pulley.",
+                            "Grip the attachment and tuck your elbows into your sides.",
+                            "Push the attachment down until your arms are fully extended.",
+                            "Slowly return to the starting position without moving your elbows."
+                        ]
+                    }
+                ]
+            },
+            Tuesday: {
+                focus: "Back & Biceps",
+                exercises: [
+                    {
+                        name: "Pull-Ups",
+                        sets: 4, reps: "Until Failure",
+                        image: "https://images.unsplash.com/photo-1598971639058-fab354c6812c?auto=format&fit=crop&q=80&w=800",
+                        steps: [
+                            "Grab the pull-up bar with a grip slightly wider than shoulder-width.",
+                            "Hang freely with your arms fully extended.",
+                            "Pull yourself up by driving your elbows down towards the floor.",
+                            "Lower yourself back down with control."
+                        ]
+                    },
+                    {
+                        name: "Barbell Rows",
+                        sets: 4, reps: "8-10",
+                        image: "https://images.unsplash.com/photo-1534438097544-e13769c011e4?auto=format&fit=crop&q=80&w=800",
+                        steps: [
+                            "Stand with feet shoulder-width apart, holding a barbell with an overhand grip.",
+                            "Hinge at the hips, keeping your back straight and nearly parallel to the floor.",
+                            "Pull the barbell towards your lower ribcage, squeezing your shoulder blades.",
+                            "Lower the weight slowly."
+                        ]
+                    },
+                    {
+                        name: "Dumbbell Bicep Curls",
+                        sets: 3, reps: "10-12",
+                        image: "https://images.unsplash.com/photo-1581009137042-c552e485697a?auto=format&fit=crop&q=80&w=800",
+                        steps: [
+                            "Stand holding a dumbbell in each hand with palms facing forward.",
+                            "Keep your elbows tucked close to your torso.",
+                            "Curl the weights up towards your shoulders, contracting your biceps.",
+                            "Lower the weights back down slowly."
+                        ]
+                    }
+                ]
+            },
+            Wednesday: {
+                focus: "Legs & Core",
+                exercises: [
+                    {
+                        name: "Barbell Squats",
+                        sets: 4, reps: "8-10",
+                        image: "https://images.unsplash.com/photo-1566241440091-ec10de8db2e1?auto=format&fit=crop&q=80&w=800",
+                        steps: [
+                            "Rest the barbell on your upper back/shoulders.",
+                            "Stand with feet slightly wider than shoulder-width.",
+                            "Push your hips back and bend your knees as if sitting in a chair.",
+                            "Lower until your thighs are at least parallel to the floor, then drive up."
+                        ]
+                    },
+                    {
+                        name: "Leg Press",
+                        sets: 3, reps: "10-12",
+                        image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=800",
+                        steps: [
+                            "Sit on the leg press machine and place your feet shoulder-width apart on the sled.",
+                            "Release the safety handles and lower the sled towards your chest.",
+                            "Press the sled back up by driving through your heels.",
+                            "Do not lock your knees fully at the top."
+                        ]
+                    },
+                    {
+                        name: "Plank",
+                        sets: 3, reps: "60 seconds",
+                        image: "https://images.unsplash.com/photo-1566241477600-ac0244c70133?auto=format&fit=crop&q=80&w=800",
+                        steps: [
+                            "Get into a push-up position but rest on your forearms instead of hands.",
+                            "Keep your body in a straight line from head to heels.",
+                            "Brace your core tightly and squeeze your glutes.",
+                            "Hold the position without letting your hips sag."
+                        ]
+                    }
+                ]
+            },
+            Thursday: {
+                focus: "Shoulders & Abs",
+                exercises: [
+                    {
+                        name: "Overhead Dumbbell Press",
+                        sets: 4, reps: "8-10",
+                        image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=800",
+                        steps: [
+                            "Sit on a bench with back support, holding a dumbbell in each hand at shoulder height.",
+                            "Press the dumbbells straight up overhead until your arms are fully extended.",
+                            "Slowly lower the weights back to shoulder height."
+                        ]
+                    },
+                    {
+                        name: "Lateral Raises",
+                        sets: 4, reps: "12-15",
+                        image: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&q=80&w=800",
+                        steps: [
+                            "Stand with a light dumbbell in each hand by your sides.",
+                            "Keeping a slight bend in your elbows, raise your arms out to the sides until they are parallel with the floor.",
+                            "Lower the dumbbells back to the starting position under control."
+                        ]
+                    },
+                    {
+                        name: "Hanging Leg Raises",
+                        sets: 3, reps: "10-15",
+                        image: "https://images.unsplash.com/photo-1598971639058-fab354c6812c?auto=format&fit=crop&q=80&w=800",
+                        steps: [
+                            "Hang from a pull-up bar with an overhand grip.",
+                            "Keeping your legs as straight as possible, raise them until they are parallel to the floor.",
+                            "Lower them slowly back to the starting position.",
+                            "Avoid swinging your body to generate momentum."
+                        ]
+                    }
+                ]
+            },
+            Friday: {
+                focus: "Full Body Functional",
+                exercises: [
+                    {
+                        name: "Deadlifts",
+                        sets: 4, reps: "5-8",
+                        image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=800",
+                        steps: [
+                            "Stand with feet hip-width apart, barbell over your mid-foot.",
+                            "Hinge at the hips and bend your knees to grip the bar.",
+                            "Keep your back straight, chest up, and brace your core.",
+                            "Drive through your heels to stand up, pulling the bar up along your legs."
+                        ]
+                    },
+                    {
+                        name: "Kettlebell Swings",
+                        sets: 3, reps: "15-20",
+                        image: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&q=80&w=800",
+                        steps: [
+                            "Stand with feet wider than shoulder-width, holding a kettlebell with both hands.",
+                            "Hinge at the hips and let the kettlebell swing back between your legs.",
+                            "Thrust your hips forward explosively to swing the kettlebell up to chest height.",
+                            "Let it swing back down naturally and repeat."
+                        ]
+                    }
+                ]
+            },
+            Saturday: {
+                focus: "Active Recovery",
+                exercises: [
+                    {
+                        name: "Light Jogging / Treadmill",
+                        sets: 1, reps: "30 Mins",
+                        image: "https://images.unsplash.com/photo-1538805060514-97d9cc17730c?auto=format&fit=crop&q=80&w=800",
+                        steps: [
+                            "Start with a 5-minute brisk walk to warm up.",
+                            "Increase pace to a light, conversational jog.",
+                            "Maintain a steady pace for 20 minutes.",
+                            "Cool down with a 5-minute walk."
+                        ]
+                    },
+                    {
+                        name: "Full Body Stretching",
+                        sets: 1, reps: "15 Mins",
+                        image: "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&q=80&w=800",
+                        steps: [
+                            "Perform dynamic stretches (arm circles, leg swings).",
+                            "Move into static stretches holding each for 30 seconds.",
+                            "Focus on hamstrings, quads, chest, and back.",
+                            "Breathe deeply to promote relaxation and recovery."
+                        ]
+                    }
+                ]
+            },
+            Sunday: {
+                focus: "Rest Day",
+                exercises: [
+                    {
+                        name: "Rest & Hydrate",
+                        sets: "-", reps: "-",
+                        image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=800",
+                        steps: [
+                            "Take the day completely off from strenuous lifting.",
+                            "Drink plenty of water throughout the day.",
+                            "Eat nutritious meals to help your muscles repair.",
+                            "Take a light walk if you want to stay slightly active."
+                        ]
+                    }
+                ]
+            }
+        };
+
+        const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+        let currentDay = "Monday";
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            // Try to set current day based on real day
+            const todayIndex = new Date().getDay(); // 0 is Sunday, 1 is Monday
+            if(todayIndex === 0) currentDay = "Sunday";
+            else currentDay = daysOfWeek[todayIndex - 1];
+
+            renderNavigation();
+            renderWorkout(currentDay);
+        });
+
+        function renderNavigation() {
+            const navContainer = document.getElementById('days-nav');
+            navContainer.innerHTML = '';
+
+            daysOfWeek.forEach(day => {
+                const isSelected = day === currentDay;
+                const btn = document.createElement('button');
+                
+                // Styling the pill buttons
+                btn.className = `whitespace-nowrap px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 
+                                 ${isSelected 
+                                    ? 'bg-white text-indigo-700 shadow-sm' 
+                                    : 'bg-indigo-700/50 text-indigo-100 hover:bg-indigo-700/80 hover:text-white'}`;
+                
+                // Shorten name for mobile, keep full for slightly larger screens
+                btn.innerHTML = `
+                    <span class="hidden sm:inline">${day}</span>
+                    <span class="sm:hidden">${day.substring(0,3)}</span>
+                `;
+                
+                btn.onclick = () => {
+                    if(currentDay !== day) {
+                        currentDay = day;
+                        renderNavigation(); // Re-render to update active states
+                        renderWorkout(currentDay); // Render the new day's content
+                        
+                        // Scroll button into view smoothly
+                        btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                    }
+                };
+                navContainer.appendChild(btn);
+            });
+        }
+
+        function renderWorkout(day) {
+            const data = workoutData[day];
+            
+            // Update Headers
+            document.getElementById('day-title').innerText = day;
+            document.getElementById('day-focus').innerText = data.focus;
+            document.getElementById('exercise-count').innerText = data.exercises.length;
+
+            const container = document.getElementById('exercises-container');
+            container.innerHTML = ''; // Clear previous
+
+            data.exercises.forEach((exercise, index) => {
+                // Create Steps HTML
+                const stepsHtml = exercise.steps.map((step, i) => `
+                    <li class="flex items-start mb-2">
+                        <span class="bg-indigo-100 text-indigo-700 font-bold text-xs rounded-full min-w-[20px] h-[20px] flex items-center justify-center mr-3 mt-0.5">${i + 1}</span>
+                        <span class="text-slate-600 leading-relaxed">${step}</span>
+                    </li>
+                `).join('');
+
+                const cardHtml = `
+                    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 animate-fade-in" style="animation-delay: ${index * 0.05}s;">
+                        
+                        <!-- Image Area -->
+                        <div class="relative h-56 bg-slate-200">
+                            <img src="${exercise.image}" alt="${exercise.name}" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&q=80&w=800'">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                            <h3 class="absolute bottom-4 left-5 text-2xl font-bold text-white tracking-wide">${exercise.name}</h3>
+                        </div>
+
+                        <!-- Content Area -->
+                        <div class="p-5">
+                            <!-- Target Badges -->
+                            <div class="flex flex-wrap gap-2 mb-5">
+                                <div class="bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                                    <i class="ph-fill ph-stack text-blue-500 text-lg"></i>
+                                    <span class="text-sm font-semibold text-blue-800">${exercise.sets} Sets</span>
+                                </div>
+                                <div class="bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                                    <i class="ph-fill ph-arrows-clockwise text-emerald-500 text-lg"></i>
+                                    <span class="text-sm font-semibold text-emerald-800">${exercise.reps} Reps</span>
+                                </div>
+                            </div>
+
+                            <!-- Steps -->
+                            <div>
+                                <h4 class="text-sm font-bold text-slate-800 mb-3 uppercase tracking-wider flex items-center gap-2">
+                                    <i class="ph-bold ph-list-numbers text-indigo-500"></i> How to perform
+                                </h4>
+                                <ul class="text-sm">
+                                    ${stepsHtml}
+                                </ul>
+                            </div>
+                        </div>
+                        
+                    </div>
+                `;
+                
+                // Add to DOM
+                container.insertAdjacentHTML('beforeend', cardHtml);
+            });
+        }
+    </script>
+</body>
+</html>
