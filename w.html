@@ -38,6 +38,21 @@
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#151e2e',
+                            900: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Phosphor Icons -->
@@ -78,15 +93,18 @@
     </style>
 </head>
 
-<body class="bg-slate-50 text-slate-800 font-sans h-screen flex flex-col overflow-hidden">
+<body
+    class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans h-screen flex flex-col overflow-hidden transition-colors duration-300">
 
     <!-- Header -->
-    <header class="bg-white px-6 py-4 shadow-sm z-10 flex justify-between items-center shrink-0">
-        <div class="flex items-center gap-2 text-emerald-600">
+    <header
+        class="bg-white dark:bg-slate-800 px-6 py-4 shadow-sm dark:shadow-none border-b border-transparent dark:border-slate-700 z-10 flex justify-between items-center shrink-0 transition-colors duration-300">
+        <div class="flex items-center gap-2 text-emerald-600 dark:text-emerald-500">
             <i class="ph-fill ph-activity text-2xl"></i>
-            <h1 class="text-xl font-bold tracking-tight">TrackFit</h1>
+            <h1 class="text-xl font-bold tracking-tight text-slate-800 dark:text-white">TrackFit</h1>
         </div>
-        <div class="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700 font-bold">
+        <div
+            class="w-8 h-8 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center text-emerald-700 dark:text-emerald-400 font-bold">
             <i class="ph ph-user"></i>
         </div>
     </header>
@@ -95,34 +113,41 @@
     <main class="flex-1 overflow-y-auto no-scrollbar pb-24 relative" id="main-content">
 
         <!-- Loading State -->
-        <div id="loading-view" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 z-50">
+        <div id="loading-view"
+            class="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 z-50 transition-colors duration-300">
             <i class="ph ph-spinner animate-spin text-4xl text-emerald-500 mb-4"></i>
-            <p class="text-slate-500 font-medium">Loading your data...</p>
+            <p class="text-slate-500 dark:text-slate-400 font-medium">Loading your data...</p>
         </div>
 
         <!-- Dashboard View -->
         <section id="dashboard-view" class="p-6 hidden fade-in">
 
             <div id="empty-state" class="hidden flex-col items-center justify-center py-12 text-center">
-                <div class="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
-                    <i class="ph ph-scales text-4xl text-emerald-600"></i>
+                <div
+                    class="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mb-4">
+                    <i class="ph ph-scales text-4xl text-emerald-600 dark:text-emerald-500"></i>
                 </div>
-                <h2 class="text-xl font-bold text-slate-800 mb-2">Welcome to TrackFit!</h2>
-                <p class="text-slate-500 mb-6">Start tracking your journey by adding your first weight entry today.</p>
+                <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-2">Welcome to TrackFit!</h2>
+                <p class="text-slate-500 dark:text-slate-400 mb-6">Start tracking your journey by adding your first
+                    weight entry today.</p>
                 <button onclick="openAddModal()"
-                    class="bg-emerald-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg shadow-emerald-200 active:scale-95 transition-transform">
+                    class="bg-emerald-600 dark:bg-emerald-500 text-white px-6 py-3 rounded-xl font-semibold shadow-lg shadow-emerald-200 dark:shadow-none active:scale-95 transition-transform">
                     Add First Entry
                 </button>
             </div>
 
             <div id="dashboard-content">
                 <!-- Main Stats Card -->
-                <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 mb-6 relative overflow-hidden">
-                    <div class="absolute -right-6 -top-6 w-32 h-32 bg-emerald-50 rounded-full opacity-50"></div>
-                    <p class="text-slate-500 font-medium text-sm mb-1 uppercase tracking-wider">Current Weight</p>
+                <div
+                    class="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 mb-6 relative overflow-hidden transition-colors duration-300">
+                    <div
+                        class="absolute -right-6 -top-6 w-32 h-32 bg-emerald-50 dark:bg-emerald-900/20 rounded-full opacity-50">
+                    </div>
+                    <p class="text-slate-500 dark:text-slate-400 font-medium text-sm mb-1 uppercase tracking-wider">
+                        Current Weight</p>
                     <div class="flex items-baseline gap-2 mb-2">
-                        <h2 class="text-5xl font-extrabold text-slate-800" id="current-weight">--</h2>
-                        <span class="text-slate-400 font-medium" id="current-unit">kg</span>
+                        <h2 class="text-5xl font-extrabold text-slate-800 dark:text-white" id="current-weight">--</h2>
+                        <span class="text-slate-400 dark:text-slate-500 font-medium" id="current-unit">kg</span>
                     </div>
                     <div class="flex items-center gap-2 text-sm font-medium" id="trend-indicator">
                         <!-- Trend injected here -->
@@ -132,31 +157,32 @@
                 <!-- Mini Stats Grid -->
                 <div class="grid grid-cols-2 gap-4 mb-6">
                     <div
-                        class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-col justify-between">
-                        <div class="flex items-center gap-2 text-slate-400 mb-2">
-                            <i class="ph-fill ph-target text-lg text-blue-500"></i>
+                        class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between transition-colors duration-300">
+                        <div class="flex items-center gap-2 text-slate-400 dark:text-slate-500 mb-2">
+                            <i class="ph-fill ph-target text-lg text-blue-500 dark:text-blue-400"></i>
                             <span class="text-xs font-semibold uppercase">Goal</span>
                         </div>
-                        <p class="text-xl font-bold text-slate-800" id="goal-weight-display">-- kg</p>
-                        <p class="text-xs text-slate-500 mt-1" id="goal-diff-display">-- to go</p>
+                        <p class="text-xl font-bold text-slate-800 dark:text-white" id="goal-weight-display">-- kg</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" id="goal-diff-display">-- to go</p>
                     </div>
                     <div
-                        class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-col justify-between">
-                        <div class="flex items-center gap-2 text-slate-400 mb-2">
-                            <i class="ph-fill ph-calculator text-lg text-purple-500"></i>
+                        class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between transition-colors duration-300">
+                        <div class="flex items-center gap-2 text-slate-400 dark:text-slate-500 mb-2">
+                            <i class="ph-fill ph-calculator text-lg text-purple-500 dark:text-purple-400"></i>
                             <span class="text-xs font-semibold uppercase">Current BMI</span>
                         </div>
-                        <p class="text-xl font-bold text-slate-800" id="bmi-display">--</p>
-                        <p class="text-xs text-slate-500 mt-1" id="bmi-category">--</p>
+                        <p class="text-xl font-bold text-slate-800 dark:text-white" id="bmi-display">--</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" id="bmi-category">--</p>
                     </div>
                 </div>
 
                 <!-- Chart Card -->
-                <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
+                <div
+                    class="bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 transition-colors duration-300">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-slate-800">Weight History</h3>
+                        <h3 class="font-bold text-slate-800 dark:text-white">Weight History</h3>
                         <select id="chart-range"
-                            class="text-sm bg-slate-50 border-none rounded-lg text-slate-600 focus:ring-0 cursor-pointer"
+                            class="text-sm bg-slate-50 dark:bg-slate-900 border-none rounded-lg text-slate-600 dark:text-slate-300 focus:ring-0 cursor-pointer"
                             onchange="updateChart()">
                             <option value="7">Last 7 Entries</option>
                             <option value="30">Last 30 Entries</option>
@@ -172,40 +198,45 @@
 
         <!-- History View -->
         <section id="history-view" class="p-6 hidden fade-in">
-            <h2 class="text-2xl font-bold text-slate-800 mb-6">Log Book</h2>
-            <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-                <ul id="history-list" class="divide-y divide-slate-100">
+            <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-6">Log Book</h2>
+            <div
+                class="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden transition-colors duration-300">
+                <ul id="history-list" class="divide-y divide-slate-100 dark:divide-slate-700/50">
                     <!-- List items injected via JS -->
                 </ul>
             </div>
         </section>
 
-        <!-- Insights View (New Tab) -->
+        <!-- Insights View -->
         <section id="insights-view" class="p-6 hidden fade-in">
-            <h2 class="text-2xl font-bold text-slate-800 mb-6">Insights</h2>
+            <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-6">Insights</h2>
 
-            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 mb-6">
-                <div class="flex items-center gap-3 mb-4 text-emerald-600">
+            <div
+                class="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 mb-6 transition-colors duration-300">
+                <div class="flex items-center gap-3 mb-4 text-emerald-600 dark:text-emerald-500">
                     <i class="ph-fill ph-chart-bar text-2xl"></i>
-                    <h3 class="font-bold text-slate-800">Overall Statistics</h3>
+                    <h3 class="font-bold text-slate-800 dark:text-white">Overall Statistics</h3>
                 </div>
 
                 <div class="space-y-4">
-                    <div class="flex justify-between items-center pb-4 border-b border-slate-50">
-                        <span class="text-slate-500 font-medium">Highest Weight</span>
-                        <span class="text-lg font-bold text-slate-800" id="insight-highest">-- kg</span>
+                    <div
+                        class="flex justify-between items-center pb-4 border-b border-slate-50 dark:border-slate-700/50">
+                        <span class="text-slate-500 dark:text-slate-400 font-medium">Highest Weight</span>
+                        <span class="text-lg font-bold text-slate-800 dark:text-white" id="insight-highest">-- kg</span>
                     </div>
-                    <div class="flex justify-between items-center pb-4 border-b border-slate-50">
-                        <span class="text-slate-500 font-medium">Lowest Weight</span>
-                        <span class="text-lg font-bold text-slate-800" id="insight-lowest">-- kg</span>
+                    <div
+                        class="flex justify-between items-center pb-4 border-b border-slate-50 dark:border-slate-700/50">
+                        <span class="text-slate-500 dark:text-slate-400 font-medium">Lowest Weight</span>
+                        <span class="text-lg font-bold text-slate-800 dark:text-white" id="insight-lowest">-- kg</span>
                     </div>
-                    <div class="flex justify-between items-center pb-4 border-b border-slate-50">
-                        <span class="text-slate-500 font-medium">Average Weight</span>
-                        <span class="text-lg font-bold text-slate-800" id="insight-average">-- kg</span>
+                    <div
+                        class="flex justify-between items-center pb-4 border-b border-slate-50 dark:border-slate-700/50">
+                        <span class="text-slate-500 dark:text-slate-400 font-medium">Average Weight</span>
+                        <span class="text-lg font-bold text-slate-800 dark:text-white" id="insight-average">-- kg</span>
                     </div>
                     <div class="flex justify-between items-center pt-1">
-                        <span class="text-slate-500 font-medium">Total Change</span>
-                        <span class="text-lg font-bold text-slate-800" id="insight-change">-- kg</span>
+                        <span class="text-slate-500 dark:text-slate-400 font-medium">Total Change</span>
+                        <span class="text-lg font-bold text-slate-800 dark:text-white" id="insight-change">-- kg</span>
                     </div>
                 </div>
             </div>
@@ -213,76 +244,106 @@
 
         <!-- Settings View -->
         <section id="settings-view" class="p-6 hidden fade-in">
-            <h2 class="text-2xl font-bold text-slate-800 mb-6">Settings</h2>
+            <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-6">Settings</h2>
 
-            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-6">
+            <div
+                class="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 space-y-6 transition-colors duration-300">
+
+                <!-- Theme Selection -->
                 <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-2">Height (cm)</label>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">Appearance</label>
+                    <div class="relative">
+                        <i
+                            class="ph ph-palette absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 text-lg"></i>
+                        <select id="setting-theme"
+                            class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors appearance-none">
+                            <option value="light">Light Mode</option>
+                            <option value="dark">Dark Mode</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">Height (cm)</label>
                     <div class="relative">
                         <i
                             class="ph ph-ruler absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 text-lg"></i>
                         <input type="number" id="setting-height" placeholder="e.g., 175"
-                            class="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-colors">
+                            class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors">
                     </div>
                     <p class="text-xs text-slate-400 mt-2">Required to calculate your BMI.</p>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-2">Target Goal Weight (kg)</label>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">Target Goal Weight
+                        (kg)</label>
                     <div class="relative">
                         <i
                             class="ph ph-flag-checkered absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 text-lg"></i>
                         <input type="number" step="0.1" id="setting-goal" placeholder="e.g., 70"
-                            class="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-colors">
+                            class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors">
                     </div>
                 </div>
 
                 <button onclick="saveSettings()"
-                    class="w-full bg-slate-800 text-white font-bold py-4 rounded-xl shadow-lg shadow-slate-200 active:scale-95 transition-transform flex justify-center items-center gap-2">
+                    class="w-full bg-slate-800 dark:bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-slate-200 dark:shadow-none active:scale-95 transition-transform flex justify-center items-center gap-2">
                     <i class="ph ph-floppy-disk text-lg"></i> Save Settings
                 </button>
+
+                <!-- Data Management -->
+                <div class="pt-6 border-t border-slate-100 dark:border-slate-700 flex flex-col gap-3">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-1">Data
+                        Management</label>
+                    <button onclick="downloadData()"
+                        class="w-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-bold py-3 rounded-xl active:scale-95 transition-transform flex justify-center items-center gap-2">
+                        <i class="ph ph-download-simple text-lg"></i> Export Data (JSON)
+                    </button>
+                    <button onclick="requestResetData()"
+                        class="w-full bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-bold py-3 rounded-xl active:scale-95 transition-transform flex justify-center items-center gap-2">
+                        <i class="ph ph-warning-circle text-lg"></i> Reset All Data
+                    </button>
+                </div>
+
             </div>
         </section>
 
     </main>
 
     <!-- Bottom Navigation -->
-    <nav class="bg-white border-t border-slate-100 fixed bottom-0 w-full pb-safe z-20">
-        <!-- 5-column grid to ensure exact centering -->
+    <nav
+        class="bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 fixed bottom-0 w-full pb-safe z-20 transition-colors duration-300">
         <div class="grid grid-cols-5 h-16 max-w-md mx-auto">
-
             <button onclick="switchTab('dashboard')"
-                class="nav-btn flex flex-col items-center justify-center gap-1 text-emerald-600 transition-colors"
+                class="nav-btn flex flex-col items-center justify-center gap-1 text-emerald-600 dark:text-emerald-500 transition-colors"
                 data-tab="dashboard">
                 <i class="ph-fill ph-squares-four text-2xl"></i>
                 <span class="text-[10px] font-semibold">Home</span>
             </button>
 
             <button onclick="switchTab('history')"
-                class="nav-btn flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-emerald-600 transition-colors"
+                class="nav-btn flex flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                 data-tab="history">
                 <i class="ph ph-list-dashes text-2xl"></i>
                 <span class="text-[10px] font-medium">History</span>
             </button>
 
-            <!-- Floating Action Button for Add (Centered) -->
+            <!-- Floating Action Button for Add -->
             <div class="flex justify-center items-start">
                 <button onclick="openAddModal()"
-                    class="w-14 h-14 bg-emerald-600 text-white rounded-full flex items-center justify-center shadow-xl shadow-emerald-200 active:scale-90 transition-transform border-4 border-slate-50 -mt-6 relative z-30">
+                    class="w-14 h-14 bg-emerald-600 dark:bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-xl shadow-emerald-200 dark:shadow-none active:scale-90 transition-transform border-4 border-slate-50 dark:border-slate-900 -mt-6 relative z-30">
                     <i class="ph ph-plus text-2xl font-bold"></i>
                 </button>
             </div>
 
-            <!-- New Insights Tab -->
             <button onclick="switchTab('insights')"
-                class="nav-btn flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-emerald-600 transition-colors"
+                class="nav-btn flex flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                 data-tab="insights">
                 <i class="ph ph-chart-line-up text-2xl"></i>
                 <span class="text-[10px] font-medium">Insights</span>
             </button>
 
             <button onclick="switchTab('settings')"
-                class="nav-btn flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-emerald-600 transition-colors"
+                class="nav-btn flex flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                 data-tab="settings">
                 <i class="ph ph-gear text-2xl"></i>
                 <span class="text-[10px] font-medium">Settings</span>
@@ -292,37 +353,37 @@
 
     <!-- Add/Edit Weight Modal (Bottom Sheet style) -->
     <div id="add-modal" class="fixed inset-0 z-50 hidden">
-        <!-- Backdrop -->
-        <div class="absolute inset-0 bg-slate-900 bg-opacity-40 backdrop-blur-sm transition-opacity"
+        <div class="absolute inset-0 bg-slate-900 bg-opacity-40 dark:bg-opacity-70 backdrop-blur-sm transition-opacity"
             onclick="closeAddModal()"></div>
 
-        <!-- Sheet -->
-        <div class="absolute bottom-0 w-full bg-white rounded-t-3xl shadow-2xl transform translate-y-full transition-transform duration-300 ease-out"
+        <div class="absolute bottom-0 w-full bg-white dark:bg-slate-800 rounded-t-3xl shadow-2xl transform translate-y-full transition-transform duration-300 ease-out"
             id="modal-sheet">
-            <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mt-3 mb-5"></div>
+            <div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-600 rounded-full mx-auto mt-3 mb-5"></div>
 
             <div class="px-6 pb-8 pt-2">
-                <h3 id="modal-title" class="text-2xl font-bold text-slate-800 mb-6 text-center">Log Weight</h3>
+                <h3 id="modal-title" class="text-2xl font-bold text-slate-800 dark:text-white mb-6 text-center">Log
+                    Weight</h3>
 
                 <form id="add-form" onsubmit="submitWeight(event)">
                     <div class="mb-5">
-                        <label class="block text-sm font-bold text-slate-700 mb-2">Weight (kg)</label>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">Weight
+                            (kg)</label>
                         <div class="relative">
                             <input type="number" step="0.1" min="0.1" id="input-weight" required placeholder="0.0"
-                                class="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-4 py-4 text-xl font-bold text-center focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-colors">
+                                class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-4 py-4 text-xl font-bold text-center focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors">
                             <span
                                 class="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 font-bold">kg</span>
                         </div>
                     </div>
 
                     <div class="mb-8">
-                        <label class="block text-sm font-bold text-slate-700 mb-2">Date</label>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">Date</label>
                         <input type="date" id="input-date" required
-                            class="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-colors appearance-none">
+                            class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors appearance-none">
                     </div>
 
                     <button type="submit"
-                        class="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-emerald-200 active:scale-95 transition-transform">
+                        class="w-full bg-emerald-600 dark:bg-emerald-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-emerald-200 dark:shadow-none active:scale-95 transition-transform">
                         Save Entry
                     </button>
                 </form>
@@ -330,9 +391,35 @@
         </div>
     </div>
 
+    <!-- Custom Confirm Modal -->
+    <div id="confirm-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-slate-900 bg-opacity-50 dark:bg-opacity-70 backdrop-blur-sm transition-opacity"
+            onclick="closeConfirmModal()"></div>
+
+        <!-- Dialog -->
+        <div class="relative bg-white dark:bg-slate-800 w-11/12 max-w-sm rounded-2xl shadow-2xl p-6 transform scale-95 opacity-0 transition-all duration-200"
+            id="confirm-dialog">
+            <h3 id="confirm-title" class="text-xl font-bold text-slate-800 dark:text-white mb-2">Confirm Action</h3>
+            <p id="confirm-message" class="text-slate-500 dark:text-slate-400 mb-6">Are you sure you want to proceed?
+            </p>
+
+            <div class="flex gap-3">
+                <button onclick="closeConfirmModal()"
+                    class="flex-1 py-3 rounded-xl font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 active:scale-95 transition-transform">
+                    Cancel
+                </button>
+                <button id="confirm-btn"
+                    class="flex-1 py-3 rounded-xl font-bold bg-red-600 text-white active:scale-95 transition-transform shadow-lg shadow-red-200 dark:shadow-none">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div id="toast"
-        class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full shadow-xl opacity-0 transition-opacity duration-300 pointer-events-none z-50 font-medium text-sm flex items-center gap-2">
+        class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-slate-800 dark:bg-slate-700 text-white px-6 py-3 rounded-full shadow-xl opacity-0 transition-opacity duration-300 pointer-events-none z-[70] font-medium text-sm flex items-center gap-2">
         <i class="ph-fill ph-check-circle text-emerald-400 text-lg"></i>
         <span id="toast-msg">Saved!</span>
     </div>
@@ -341,8 +428,9 @@
     <script>
         // Local State
         let weightEntries = [];
-        let userSettings = { height: 170, goal: null }; // Default height 170cm
+        let userSettings = { height: 170, goal: null, theme: 'light' };
         let chartInstance = null;
+        let confirmActionCallback = null;
 
         // Local Storage Keys
         const STORAGE_ENTRIES_KEY = 'trackfit_weight_entries';
@@ -389,13 +477,27 @@
             return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         }
 
+        // Apply Theme
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            if (chartInstance) updateChart(); // Re-render chart to match theme colors
+        }
+
         // Initialize Application
         function initApp() {
-            loadData(); // Load saved data first
+            loadData();
 
             // Populate settings fields
             document.getElementById('setting-height').value = userSettings.height || '';
             document.getElementById('setting-goal').value = userSettings.goal || '';
+            document.getElementById('setting-theme').value = userSettings.theme || 'light';
+
+            // Apply visual theme
+            applyTheme(userSettings.theme);
 
             // Hide loading view and setup UI
             document.getElementById('loading-view').classList.add('hidden');
@@ -405,37 +507,72 @@
             updateInsightsUI();
         }
 
+        // Custom Confirm Modal Logic
+        function showConfirmModal(title, message, btnText, onConfirm) {
+            document.getElementById('confirm-title').innerText = title;
+            document.getElementById('confirm-message').innerText = message;
+
+            const btn = document.getElementById('confirm-btn');
+            btn.innerText = btnText;
+
+            confirmActionCallback = onConfirm;
+
+            const modal = document.getElementById('confirm-modal');
+            const dialog = document.getElementById('confirm-dialog');
+
+            modal.classList.remove('hidden');
+
+            setTimeout(() => {
+                dialog.classList.remove('scale-95', 'opacity-0');
+                dialog.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        window.closeConfirmModal = () => {
+            const modal = document.getElementById('confirm-modal');
+            const dialog = document.getElementById('confirm-dialog');
+
+            dialog.classList.remove('scale-100', 'opacity-100');
+            dialog.classList.add('scale-95', 'opacity-0');
+
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                confirmActionCallback = null;
+            }, 200);
+        }
+
+        document.getElementById('confirm-btn').addEventListener('click', () => {
+            if (confirmActionCallback) confirmActionCallback();
+            closeConfirmModal();
+        });
+
+
         // Global functions for HTML interaction
         window.switchTab = (tabId) => {
-            // Hide all views
             ['dashboard-view', 'history-view', 'insights-view', 'settings-view'].forEach(id => {
                 document.getElementById(id).classList.add('hidden');
             });
-            // Show target view
             document.getElementById(`${tabId}-view`).classList.remove('hidden');
 
-            // Update Nav styling
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 const icon = btn.querySelector('i');
                 const text = btn.querySelector('span');
+                const isDark = document.documentElement.classList.contains('dark');
 
                 if (btn.dataset.tab === tabId) {
-                    btn.classList.add('text-emerald-600');
-                    btn.classList.remove('text-slate-400');
-                    // Toggle filled icon style
+                    btn.classList.add(isDark ? 'text-emerald-400' : 'text-emerald-600');
+                    btn.classList.remove(isDark ? 'text-slate-500' : 'text-slate-400');
                     icon.className = icon.className.replace('ph ', 'ph-fill ');
                     text.classList.add('font-semibold');
                     text.classList.remove('font-medium');
                 } else {
-                    btn.classList.remove('text-emerald-600');
-                    btn.classList.add('text-slate-400');
-                    // Revert to outline icon style
+                    btn.classList.remove('text-emerald-600', 'text-emerald-400');
+                    btn.classList.add(isDark ? 'text-slate-500' : 'text-slate-400');
                     icon.className = icon.className.replace('ph-fill ', 'ph ');
                     text.classList.remove('font-semibold');
                     text.classList.add('font-medium');
                 }
 
-                // Explicit icon mapping to ensure correct filled/outline pairs
                 const tabIcons = {
                     'dashboard': 'ph-squares-four',
                     'history': 'ph-list-dashes',
@@ -458,14 +595,12 @@
 
         window.openAddModal = () => {
             document.getElementById('modal-title').innerText = 'Log Weight';
-
-            // Set max date dynamically to prevent future dates from being selected in UI
             const todayStr = getTodayDateString();
             document.getElementById('input-date').max = todayStr;
             document.getElementById('input-date').value = todayStr;
 
             if (weightEntries.length > 0) {
-                document.getElementById('input-weight').value = weightEntries[0].weight; // prepopulate with last
+                document.getElementById('input-weight').value = weightEntries[0].weight;
             } else {
                 document.getElementById('input-weight').value = '';
             }
@@ -474,7 +609,6 @@
             const sheet = document.getElementById('modal-sheet');
 
             modal.classList.remove('hidden');
-            // Small delay to allow display:block to apply before animating transform
             setTimeout(() => {
                 sheet.classList.remove('translate-y-full');
             }, 10);
@@ -505,7 +639,7 @@
             sheet.classList.add('translate-y-full');
             setTimeout(() => {
                 modal.classList.add('hidden');
-            }, 300); // Wait for transition
+            }, 300);
         };
 
         window.submitWeight = (e) => {
@@ -516,7 +650,6 @@
 
             if (isNaN(weight) || !dateStr) return;
 
-            // Form validations
             if (weight <= 0) {
                 showToast("Weight must be greater than 0", true);
                 return;
@@ -529,7 +662,6 @@
                 return;
             }
 
-            // Update if date exists, else add new
             const existingIndex = weightEntries.findIndex(entry => entry.date === dateStr);
             if (existingIndex >= 0) {
                 weightEntries[existingIndex].weight = weight;
@@ -542,10 +674,8 @@
                 });
             }
 
-            // Sort descending (newest first)
             weightEntries.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-            saveData(); // Save to localStorage
+            saveData();
 
             closeAddModal();
             showToast("Entry saved!");
@@ -560,26 +690,80 @@
         };
 
         window.deleteEntry = (dateId) => {
-            weightEntries = weightEntries.filter(entry => entry.id !== dateId);
-            saveData(); // Save to localStorage
-            showToast("Entry deleted.");
-            updateDashboardUI();
-            updateHistoryUI();
-            updateInsightsUI();
+            showConfirmModal(
+                "Delete Entry",
+                "Are you sure you want to delete this weight log? This cannot be undone.",
+                "Delete",
+                () => {
+                    weightEntries = weightEntries.filter(entry => entry.id !== dateId);
+                    saveData();
+                    showToast("Entry deleted.");
+                    updateDashboardUI();
+                    updateHistoryUI();
+                    updateInsightsUI();
+                }
+            );
         };
 
         window.saveSettings = () => {
             const height = parseFloat(document.getElementById('setting-height').value);
             const goal = parseFloat(document.getElementById('setting-goal').value);
+            const theme = document.getElementById('setting-theme').value;
 
             userSettings.height = isNaN(height) ? null : height;
             userSettings.goal = isNaN(goal) ? null : goal;
+            userSettings.theme = theme;
 
-            saveData(); // Save to localStorage
-
+            saveData();
+            applyTheme(theme);
             showToast("Settings saved!");
             updateDashboardUI();
         };
+
+        window.downloadData = () => {
+            const exportData = {
+                app: "TrackFit Weight Tracker",
+                settings: userSettings,
+                entries: weightEntries
+            };
+
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `trackfit_data_${getTodayDateString()}.json`;
+            document.body.appendChild(a);
+            a.click();
+
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast("Data downloaded!");
+        };
+
+        window.requestResetData = () => {
+            showConfirmModal(
+                "Reset All Data",
+                "Are you completely sure? This will delete all your weight history and settings. This cannot be undone.",
+                "Reset Everything",
+                () => {
+                    weightEntries = [];
+                    userSettings = { height: 170, goal: null, theme: 'light' };
+                    saveData();
+
+                    document.getElementById('setting-height').value = userSettings.height;
+                    document.getElementById('setting-goal').value = '';
+                    document.getElementById('setting-theme').value = 'light';
+                    applyTheme('light');
+
+                    showToast("All data wiped.");
+                    updateDashboardUI();
+                    updateHistoryUI();
+                    updateInsightsUI();
+                }
+            );
+        }
 
         function showToast(message, isError = false) {
             const toast = document.getElementById('toast');
@@ -617,7 +801,6 @@
             const latest = weightEntries[0];
             document.getElementById('current-weight').innerText = latest.weight.toFixed(1);
 
-            // Trend indicator (compare with previous entry)
             const trendEl = document.getElementById('trend-indicator');
             if (weightEntries.length > 1) {
                 const previous = weightEntries[1];
@@ -627,10 +810,10 @@
                 } else if (diff < 0) {
                     trendEl.innerHTML = `<i class="ph-fill ph-trend-down text-emerald-500 text-lg"></i> <span class="text-emerald-500">${diff.toFixed(1)} kg since last</span>`;
                 } else {
-                    trendEl.innerHTML = `<i class="ph-fill ph-minus text-slate-400 text-lg"></i> <span class="text-slate-500">No change</span>`;
+                    trendEl.innerHTML = `<i class="ph-fill ph-minus text-slate-400 dark:text-slate-500 text-lg"></i> <span class="text-slate-500 dark:text-slate-400">No change</span>`;
                 }
             } else {
-                trendEl.innerHTML = `<span class="text-slate-400">First entry!</span>`;
+                trendEl.innerHTML = `<span class="text-slate-400 dark:text-slate-500">First entry!</span>`;
             }
 
             // BMI Calculation
@@ -641,13 +824,14 @@
                 const bmi = latest.weight / (heightM * heightM);
                 bmiDisplay.innerText = bmi.toFixed(1);
 
-                if (bmi < 18.5) { bmiCategory.innerText = "Underweight"; bmiCategory.className = "text-xs mt-1 text-blue-500"; }
-                else if (bmi < 25) { bmiCategory.innerText = "Normal weight"; bmiCategory.className = "text-xs mt-1 text-emerald-500"; }
-                else if (bmi < 30) { bmiCategory.innerText = "Overweight"; bmiCategory.className = "text-xs mt-1 text-orange-500"; }
-                else { bmiCategory.innerText = "Obese"; bmiCategory.className = "text-xs mt-1 text-red-500"; }
+                if (bmi < 18.5) { bmiCategory.innerText = "Underweight"; bmiCategory.className = "text-xs mt-1 text-blue-500 dark:text-blue-400"; }
+                else if (bmi < 25) { bmiCategory.innerText = "Normal weight"; bmiCategory.className = "text-xs mt-1 text-emerald-500 dark:text-emerald-400"; }
+                else if (bmi < 30) { bmiCategory.innerText = "Overweight"; bmiCategory.className = "text-xs mt-1 text-orange-500 dark:text-orange-400"; }
+                else { bmiCategory.innerText = "Obese"; bmiCategory.className = "text-xs mt-1 text-red-500 dark:text-red-400"; }
             } else {
                 bmiDisplay.innerText = "--";
                 bmiCategory.innerText = "Set height in settings";
+                bmiCategory.className = "text-xs mt-1 text-slate-500 dark:text-slate-400";
             }
 
             // Goal Progress
@@ -677,23 +861,23 @@
 
             weightEntries.forEach(entry => {
                 const li = document.createElement('li');
-                li.className = "px-6 py-4 flex items-center justify-between group hover:bg-slate-50 transition-colors";
+                li.className = "px-6 py-4 flex items-center justify-between group hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors";
 
                 li.innerHTML = `
                     <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+                        <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400">
                             <i class="ph ph-calendar-blank"></i>
                         </div>
                         <div>
-                            <p class="font-bold text-slate-800">${entry.weight.toFixed(1)} kg</p>
-                            <p class="text-xs text-slate-500">${formatDateDisplay(entry.date)}</p>
+                            <p class="font-bold text-slate-800 dark:text-white">${entry.weight.toFixed(1)} kg</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">${formatDateDisplay(entry.date)}</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-1">
-                        <button onclick="editEntry('${entry.id}')" class="text-slate-300 hover:text-blue-500 transition-colors p-2 rounded-full hover:bg-blue-50">
+                        <button onclick="editEntry('${entry.id}')" class="text-slate-300 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 transition-colors p-2 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/30">
                             <i class="ph-fill ph-pencil-simple text-lg"></i>
                         </button>
-                        <button onclick="deleteEntry('${entry.id}')" class="text-slate-300 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50">
+                        <button onclick="deleteEntry('${entry.id}')" class="text-slate-300 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 transition-colors p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/30">
                             <i class="ph-fill ph-trash text-lg"></i>
                         </button>
                     </div>
@@ -716,7 +900,6 @@
             const min = Math.min(...weights);
             const avg = weights.reduce((a, b) => a + b, 0) / weights.length;
 
-            // Weight entries are sorted newest first. Change = newest - oldest.
             const oldest = weightEntries[weightEntries.length - 1].weight;
             const newest = weightEntries[0].weight;
             const change = newest - oldest;
@@ -728,13 +911,13 @@
             const changeEl = document.getElementById('insight-change');
             if (change > 0) {
                 changeEl.innerText = '+' + change.toFixed(1) + ' kg';
-                changeEl.className = 'text-lg font-bold text-red-500';
+                changeEl.className = 'text-lg font-bold text-red-500 dark:text-red-400';
             } else if (change < 0) {
                 changeEl.innerText = change.toFixed(1) + ' kg';
-                changeEl.className = 'text-lg font-bold text-emerald-500';
+                changeEl.className = 'text-lg font-bold text-emerald-500 dark:text-emerald-400';
             } else {
                 changeEl.innerText = '0 kg';
-                changeEl.className = 'text-lg font-bold text-slate-800';
+                changeEl.className = 'text-lg font-bold text-slate-800 dark:text-white';
             }
         }
 
@@ -748,7 +931,6 @@
                 dataSlice = dataSlice.slice(0, parseInt(range));
             }
 
-            // Reverse for chronological order on chart (left to right)
             dataSlice.reverse();
 
             const labels = dataSlice.map(e => {
@@ -763,9 +945,10 @@
                 chartInstance.destroy();
             }
 
-            // Create gradient for area
+            const isDark = document.documentElement.classList.contains('dark');
+
             const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-            gradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)'); // emerald-500 with opacity
+            gradient.addColorStop(0, isDark ? 'rgba(16, 185, 129, 0.4)' : 'rgba(16, 185, 129, 0.2)');
             gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
 
             chartInstance = new Chart(ctx, {
@@ -778,13 +961,13 @@
                         borderColor: '#10b981', // emerald-500
                         backgroundColor: gradient,
                         borderWidth: 3,
-                        pointBackgroundColor: '#ffffff',
+                        pointBackgroundColor: isDark ? '#1e293b' : '#ffffff',
                         pointBorderColor: '#10b981',
                         pointBorderWidth: 2,
                         pointRadius: 4,
                         pointHoverRadius: 6,
                         fill: true,
-                        tension: 0.4 // Smooth curves
+                        tension: 0.4
                     }]
                 },
                 options: {
@@ -793,7 +976,7 @@
                     plugins: {
                         legend: { display: false },
                         tooltip: {
-                            backgroundColor: '#1e293b',
+                            backgroundColor: isDark ? '#0f172a' : '#1e293b',
                             padding: 10,
                             titleFont: { size: 13 },
                             bodyFont: { size: 14, weight: 'bold' },
@@ -806,12 +989,11 @@
                     scales: {
                         x: {
                             grid: { display: false, drawBorder: false },
-                            ticks: { color: '#94a3b8', font: { size: 10 } }
+                            ticks: { color: isDark ? '#64748b' : '#94a3b8', font: { size: 10 } }
                         },
                         y: {
-                            grid: { color: '#f1f5f9', borderDash: [5, 5], drawBorder: false },
-                            ticks: { color: '#94a3b8', font: { size: 10 }, padding: 10 },
-                            // Add a little padding to the top and bottom of the scale
+                            grid: { color: isDark ? '#334155' : '#f1f5f9', borderDash: [5, 5], drawBorder: false },
+                            ticks: { color: isDark ? '#64748b' : '#94a3b8', font: { size: 10 }, padding: 10 },
                             suggestedMin: Math.min(...dataPoints) - 2,
                             suggestedMax: Math.max(...dataPoints) + 2
                         }
