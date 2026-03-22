@@ -103,10 +103,10 @@
             <i class="ph-fill ph-activity text-2xl"></i>
             <h1 class="text-xl font-bold tracking-tight text-slate-800 dark:text-white">TrackFit</h1>
         </div>
-        <div
+        <!-- <div
             class="w-8 h-8 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center text-emerald-700 dark:text-emerald-400 font-bold">
             <i class="ph ph-user"></i>
-        </div>
+        </div> -->
     </header>
 
     <!-- Main Content Area -->
@@ -610,13 +610,7 @@
             const todayStr = getTodayDateString();
             document.getElementById('input-date').max = todayStr;
             document.getElementById('input-date').value = todayStr;
-
-            if (weightEntries.length > 0) {
-                document.getElementById('input-weight').value = weightEntries[0].weight;
-            } else {
-                document.getElementById('input-weight').value = '';
-            }
-
+            document.getElementById('input-weight').value = '';
             const modal = document.getElementById('add-modal');
             const sheet = document.getElementById('modal-sheet');
 
