@@ -381,7 +381,7 @@
                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">Weight
                             (kg)</label>
                         <div class="relative">
-                            <input type="number" step="0.1" min="0.1" id="input-weight" required placeholder="0.0"
+                            <input type="number" step="0.01" min="0.1" id="input-weight" required placeholder="0.00"
                                 class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-4 py-4 text-xl font-bold text-center focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors">
                             <span
                                 class="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 font-bold">kg</span>
@@ -813,16 +813,16 @@
             content.classList.remove('hidden');
 
             const latest = weightEntries[0];
-            document.getElementById('current-weight').innerText = latest.weight.toFixed(1);
+            document.getElementById('current-weight').innerText = latest.weight.toFixed(2);
 
             const trendEl = document.getElementById('trend-indicator');
             if (weightEntries.length > 1) {
                 const previous = weightEntries[1];
                 const diff = latest.weight - previous.weight;
                 if (diff > 0) {
-                    trendEl.innerHTML = `<i class="ph-fill ph-trend-up text-red-500 text-lg"></i> <span class="text-red-500">+${diff.toFixed(1)} kg since last</span>`;
+                    trendEl.innerHTML = `<i class="ph-fill ph-trend-up text-red-500 text-lg"></i> <span class="text-red-500">+${diff.toFixed(2)} kg since last</span>`;
                 } else if (diff < 0) {
-                    trendEl.innerHTML = `<i class="ph-fill ph-trend-down text-emerald-500 text-lg"></i> <span class="text-emerald-500">${diff.toFixed(1)} kg since last</span>`;
+                    trendEl.innerHTML = `<i class="ph-fill ph-trend-down text-emerald-500 text-lg"></i> <span class="text-emerald-500">${diff.toFixed(2)} kg since last</span>`;
                 } else {
                     trendEl.innerHTML = `<i class="ph-fill ph-minus text-slate-400 dark:text-slate-500 text-lg"></i> <span class="text-slate-500 dark:text-slate-400">No change</span>`;
                 }
@@ -836,7 +836,7 @@
             if (userSettings.height) {
                 const heightM = userSettings.height / 100;
                 const bmi = latest.weight / (heightM * heightM);
-                bmiDisplay.innerText = bmi.toFixed(1);
+                bmiDisplay.innerText = bmi.toFixed(2);
 
                 if (bmi < 18.5) { bmiCategory.innerText = "Underweight"; bmiCategory.className = "text-xs mt-1 text-blue-500 dark:text-blue-400"; }
                 else if (bmi < 25) { bmiCategory.innerText = "Normal weight"; bmiCategory.className = "text-xs mt-1 text-emerald-500 dark:text-emerald-400"; }
@@ -855,9 +855,9 @@
                 goalDisplay.innerText = `${userSettings.goal} kg`;
                 const diff = latest.weight - userSettings.goal;
                 if (diff > 0) {
-                    goalDiff.innerText = `${Math.abs(diff).toFixed(1)} kg to lose`;
+                    goalDiff.innerText = `${Math.abs(diff).toFixed(2)} kg to lose`;
                 } else if (diff < 0) {
-                    goalDiff.innerText = `${Math.abs(diff).toFixed(1)} kg to gain`;
+                    goalDiff.innerText = `${Math.abs(diff).toFixed(2)} kg to gain`;
                 } else {
                     goalDiff.innerText = "Goal reached! 🎉";
                 }
@@ -889,7 +889,7 @@
                             <i class="ph ph-calendar-blank"></i>
                         </div>
                         <div>
-                            <p class="font-bold text-slate-800 dark:text-white">${entry.weight.toFixed(1)} kg</p>
+                            <p class="font-bold text-slate-800 dark:text-white">${entry.weight.toFixed(2)} kg</p>
                             <p class="text-xs text-slate-500 dark:text-slate-400">${formatDateDisplay(entry.date)}</p>
                         </div>
                     </div>
@@ -924,16 +924,16 @@
             const newest = weightEntries[0].weight;
             const change = newest - oldest;
 
-            document.getElementById('insight-highest').innerText = max.toFixed(1) + ' kg';
-            document.getElementById('insight-lowest').innerText = min.toFixed(1) + ' kg';
-            document.getElementById('insight-average').innerText = avg.toFixed(1) + ' kg';
+            document.getElementById('insight-highest').innerText = max.toFixed(2) + ' kg';
+            document.getElementById('insight-lowest').innerText = min.toFixed(2) + ' kg';
+            document.getElementById('insight-average').innerText = avg.toFixed(2) + ' kg';
 
             const changeEl = document.getElementById('insight-change');
             if (change > 0) {
-                changeEl.innerText = '+' + change.toFixed(1) + ' kg';
+                changeEl.innerText = '+' + change.toFixed(2) + ' kg';
                 changeEl.className = 'text-lg font-bold text-red-500 dark:text-red-400';
             } else if (change < 0) {
-                changeEl.innerText = change.toFixed(1) + ' kg';
+                changeEl.innerText = change.toFixed(2) + ' kg';
                 changeEl.className = 'text-lg font-bold text-emerald-500 dark:text-emerald-400';
             } else {
                 changeEl.innerText = '0 kg';
