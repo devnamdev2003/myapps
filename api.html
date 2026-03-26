@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Advanced API Tester</title>
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
             /* Theme Variables - Dark Mode Default */
@@ -29,8 +31,34 @@
             --method-patch: #8b5cf6;
             --method-delete: #ef4444;
 
+            /* JSON Syntax Highlighting Colors (Dark Default) */
+            --json-key: #79c0ff;
+            /* Light Blue */
+            --json-string: #a5d6ff;
+            /* Pale Blue/Cyan */
+            --json-number: #f2cc60;
+            /* Yellow/Orange */
+            --json-boolean: #ff7b72;
+            /* Soft Red */
+            --json-null: #d2a8ff;
+            /* Purple */
+
             --border-radius: 8px;
             --transition: all 0.2s ease;
+        }
+
+        [data-theme="light"] {
+            /* JSON Syntax Highlighting Colors (Light Override) */
+            --json-key: #0550ae;
+            /* Deep Blue */
+            --json-string: #0a3069;
+            /* Dark Blue */
+            --json-number: #953800;
+            /* Dark Orange */
+            --json-boolean: #cf222e;
+            /* Red */
+            --json-null: #8250df;
+            /* Deep Purple */
         }
 
         * {
@@ -154,6 +182,15 @@
             display: flex;
             flex-direction: column;
             z-index: 10;
+            transition: width 0.3s ease, min-width 0.3s ease, opacity 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            width: 0;
+            min-width: 0;
+            border-right: none;
+            opacity: 0;
+            overflow: hidden;
         }
 
         .main-content {
@@ -162,6 +199,17 @@
             flex-direction: column;
             overflow: hidden;
             background-color: var(--bg-color);
+        }
+
+        .workspace {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .workspace[data-layout="row"] {
+            flex-direction: row;
         }
 
         .pane {
@@ -174,9 +222,16 @@
         .pane-top {
             flex: none;
             height: 45%;
+            width: 100%;
             display: flex;
             flex-direction: column;
             min-height: 150px;
+            min-width: 250px;
+        }
+
+        .workspace[data-layout="row"] .pane-top {
+            height: 100% !important;
+            width: 45%;
         }
 
         .pane-bottom {
@@ -184,12 +239,14 @@
             display: flex;
             flex-direction: column;
             min-height: 150px;
+            min-width: 250px;
             position: relative;
         }
 
         /* Resizer */
         .resizer {
             height: 12px;
+            width: 100%;
             background-color: var(--surface-color);
             border-top: 1px solid var(--border-color);
             border-bottom: 1px solid var(--border-color);
@@ -199,6 +256,18 @@
             align-items: center;
             transition: background-color 0.2s;
             z-index: 5;
+            flex-shrink: 0;
+        }
+
+        .workspace[data-layout="row"] .resizer {
+            width: 12px;
+            height: 100%;
+            border-top: none;
+            border-bottom: none;
+            border-left: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            cursor: ew-resize;
+            flex-direction: column;
         }
 
         .resizer:hover,
@@ -212,6 +281,11 @@
             background-color: var(--border-color);
             border-radius: 2px;
             transition: background-color 0.2s;
+        }
+
+        .workspace[data-layout="row"] .resizer-handle {
+            width: 3px;
+            height: 40px;
         }
 
         .resizer:hover .resizer-handle,
@@ -252,7 +326,6 @@
             padding: 8px;
         }
 
-        /* Collections in Sidebar */
         .collection-group {
             margin-bottom: 4px;
         }
@@ -488,15 +561,15 @@
             flex-direction: column;
         }
 
-        /* Key-Value Editor */
-        .kv-row {
+        /* Key-Value & Test Editor */
+        .kv-row,
+        .test-row {
             display: flex;
             gap: 8px;
             margin-bottom: 8px;
             align-items: center;
         }
 
-        /* Prevent checkbox from taking flex space */
         .kv-row input[type="text"] {
             flex: 1;
         }
@@ -506,6 +579,144 @@
             flex: none;
             margin-right: 4px;
             cursor: pointer;
+        }
+
+        .test-row>select {
+            width: 150px;
+            flex-shrink: 0;
+        }
+
+        .test-row>.test-property {
+            flex: 1;
+        }
+
+        .test-row>.test-expected {
+            flex: 1;
+        }
+
+        .scenario-card {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .scenario-card:hover {
+            background-color: var(--surface-hover);
+        }
+
+        /* Match Results */
+        .match-card {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--border-color);
+        }
+
+        .match-card.matched {
+            border-left-color: var(--success-color);
+            background-color: rgba(16, 185, 129, 0.05);
+        }
+
+        .match-card.not-matched {
+            border-left-color: var(--error-color);
+        }
+
+        .match-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .match-reason {
+            font-size: 13px;
+            color: var(--text-secondary);
+            background: var(--bg-color);
+            padding: 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(2px);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--surface-color);
+            border-radius: var(--border-radius);
+            width: 600px;
+            max-width: 90vw;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            transform: translateY(20px);
+            transition: transform 0.2s;
+            max-height: 90vh;
+        }
+
+        .modal-overlay.active .modal {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .modal-body {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         /* Textarea */
@@ -520,6 +731,58 @@
             border-radius: 4px;
             resize: none;
             line-height: 1.5;
+        }
+
+        /* Markdown Preview Styles */
+        .md-preview {
+            flex: 1;
+            overflow-y: auto;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 16px;
+            border-radius: 4px;
+            line-height: 1.6;
+        }
+
+        .md-preview h1,
+        .md-preview h2,
+        .md-preview h3 {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 6px;
+            margin-top: 16px;
+            margin-bottom: 12px;
+        }
+
+        .md-preview p {
+            margin-bottom: 12px;
+        }
+
+        .md-preview code {
+            background-color: var(--surface-color);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        .md-preview pre {
+            background-color: var(--surface-color);
+            padding: 12px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin-bottom: 12px;
+        }
+
+        .md-preview pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+
+        .md-preview ul,
+        .md-preview ol {
+            margin-left: 20px;
+            margin-bottom: 12px;
         }
 
         /* Response Section */
@@ -545,7 +808,6 @@
             color: var(--text-primary);
         }
 
-        /* Status Badges */
         .badge {
             padding: 4px 8px;
             border-radius: 4px;
@@ -580,16 +842,39 @@
         }
 
         #responseBody,
-        #requestSentBody {
+        #snippetBody {
             margin: 0;
             padding: 40px 16px 16px 16px;
-            /* Extra top padding for buttons */
             flex: 1;
             overflow: auto;
             background-color: var(--bg-color);
             font-family: 'Courier New', Courier, monospace;
             white-space: pre-wrap;
             word-wrap: break-word;
+        }
+
+        /* JSON Syntax Highlighting Classes */
+        .json-key {
+            color: var(--json-key);
+            font-weight: 600;
+        }
+
+        .json-string {
+            color: var(--json-string);
+        }
+
+        .json-number {
+            color: var(--json-number);
+        }
+
+        .json-boolean {
+            color: var(--json-boolean);
+            font-weight: 600;
+        }
+
+        .json-null {
+            color: var(--json-null);
+            font-weight: 600;
         }
 
         .action-buttons-overlay {
@@ -624,7 +909,9 @@
         }
 
         .form-group {
-            margin-bottom: 16px;
+            margin-bottom: 0;
+            display: flex;
+            flex-direction: column;
         }
 
         .form-group label {
@@ -638,7 +925,6 @@
             width: 100%;
         }
 
-        /* Notes / Helpers */
         .help-text {
             font-size: 12px;
             color: var(--text-secondary);
@@ -658,12 +944,59 @@
             gap: 8px;
         }
 
-        /* Image preview */
         .response-image {
             max-width: 100%;
             border-radius: 4px;
             border: 1px solid var(--border-color);
             margin-top: 10px;
+        }
+
+        /* Test Results UI */
+        .test-results-summary {
+            margin-bottom: 16px;
+            padding: 12px;
+            border-radius: 4px;
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .test-result-item {
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            border-radius: 4px;
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            margin-bottom: 8px;
+            border-left: 4px solid;
+        }
+
+        .test-result-item.pass {
+            border-left-color: var(--success-color);
+        }
+
+        .test-result-item.fail {
+            border-left-color: var(--error-color);
+        }
+
+        .test-result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        .test-result-details {
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-family: monospace;
+            background: var(--bg-color);
+            padding: 8px;
+            border-radius: 4px;
         }
 
         /* Toasts */
@@ -730,10 +1063,16 @@
                 border-bottom: 1px solid var(--border-color);
             }
 
-            .request-header {
-                flex-wrap: wrap;
+            .sidebar.collapsed {
+                height: 0;
+                min-height: 0;
+                padding: 0;
+                margin-left: 0;
+                width: 100%;
+                border-bottom: none;
             }
 
+            .request-header,
             .url-bar-container {
                 flex-wrap: wrap;
             }
@@ -741,21 +1080,67 @@
             .method-select {
                 width: 100%;
             }
+
+            .test-row {
+                flex-wrap: wrap;
+            }
+
+            .test-row>select,
+            .test-row>input {
+                width: 100%;
+                flex: 1 1 100%;
+            }
+
+            .workspace[data-layout="row"] {
+                flex-direction: column;
+            }
+
+            .workspace[data-layout="row"] .pane-top {
+                width: 100%;
+                height: 45% !important;
+            }
+
+            .workspace[data-layout="row"] .resizer {
+                width: 100%;
+                height: 12px;
+                cursor: ns-resize;
+                flex-direction: row;
+            }
+
+            .workspace[data-layout="row"] .resizer-handle {
+                width: 40px;
+                height: 3px;
+            }
         }
     </style>
 </head>
 
 <body>
 
+    <!-- Datalist for automatic test field suggestions -->
+    <datalist id="jsonPathSuggestions"></datalist>
+
     <!-- Sidebar: History & Collections -->
     <div class="sidebar">
         <div class="sidebar-header">
-            <h2>Collections</h2>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 32" width="140" height="32">
+                    <rect x="0" y="2" width="28" height="28" rx="6" fill="#6366f1" fill-opacity="0.15" />
+                    <path d="M 11 11 L 6 16 L 11 21" fill="none" stroke="#6366f1" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M 17 11 L 22 16 L 17 21" fill="none" stroke="#6366f1" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M 16 9 L 12 23" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" />
+
+                    <text x="36" y="22" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+                        font-size="18" font-weight="700" fill="#ffffff" letter-spacing="-0.5">Restify</text>
+                </svg>
+            </div>
             <div style="display: flex; gap: 4px;">
-                <button class="btn btn-icon btn-danger" onclick="clearAllHistory()"
-                    title="Clear All History">🗑️</button>
+                <button class="btn btn-icon" onclick="openSettingsModal()" title="Settings">⚙️</button>
                 <button class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;"
                     onclick="createNewRequest()">+ New</button>
+                <input type="file" id="importFile" style="display: none" accept=".json" onchange="importData(event)">
             </div>
         </div>
         <div class="sidebar-search">
@@ -772,17 +1157,27 @@
 
         <!-- Request Header (Name & Actions) -->
         <div class="request-header">
-            <div class="request-name-container">
-                <input type="text" id="reqCollection" class="request-collection-input"
-                    placeholder="Collection (Optional)" title="Folder/Collection Name">
-                <span class="header-divider">/</span>
-                <input type="text" id="reqName" class="request-name-input" placeholder="Untitled Request"
-                    title="Request Name">
+            <div style="display:flex; align-items:center; gap:8px; flex: 1;">
+                <button class="btn-icon" onclick="toggleSidebar()" title="Toggle Sidebar">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="request-name-container" style="flex: 1;">
+                    <input type="text" id="reqCollection" class="request-collection-input"
+                        placeholder="Collection (Optional)" title="Folder/Collection Name">
+                    <span class="header-divider">/</span>
+                    <input type="text" id="reqName" class="request-name-input" placeholder="Untitled Request"
+                        title="Request Name">
+                </div>
             </div>
             <div style="display: flex; gap: 8px;">
                 <button class="btn" onclick="duplicateRequest()" title="Duplicate this request">Clone</button>
                 <button class="btn btn-primary" onclick="executeSaveRequest()">Save</button>
-                <button class="btn btn-icon" onclick="toggleTheme()" title="Toggle Theme">🌓</button>
+                <button class="btn btn-icon" onclick="toggleLayout()" title="Toggle View Layout">◫</button>
             </div>
         </div>
 
@@ -798,115 +1193,314 @@
                 <option value="HEAD">HEAD</option>
             </select>
             <input type="text" id="reqUrl" class="input-base url-input"
-                placeholder="Enter request URL (e.g., https://api.example.com/v1/users)">
+                placeholder="Enter request URL (e.g., {{base_url}}/v1/users)">
             <button class="btn btn-primary" onclick="sendRequest()">Send</button>
         </div>
 
-        <!-- Request Pane -->
-        <div class="pane-top" id="paneTop">
-            <div class="tabs-container">
-                <div class="tab active" onclick="switchReqTab('params')">Query Params</div>
-                <div class="tab" onclick="switchReqTab('headers')">Headers</div>
-                <div class="tab" onclick="switchReqTab('auth')">Authorization</div>
-                <div class="tab" onclick="switchReqTab('body')">Body</div>
+        <!-- Workspace (Wraps Top and Bottom Panes for layout toggling) -->
+        <div class="workspace" id="workspace" data-layout="column">
+
+            <!-- Request Pane -->
+            <div class="pane-top" id="paneTop">
+                <div class="tabs-container">
+                    <div class="tab active" onclick="switchReqTab('params')">Query Params</div>
+                    <div class="tab" onclick="switchReqTab('headers')">Headers</div>
+                    <div class="tab" onclick="switchReqTab('auth')">Authorization</div>
+                    <div class="tab" onclick="switchReqTab('body')">Body</div>
+                    <div class="tab" onclick="switchReqTab('tests')">Tests</div>
+                    <div class="tab" onclick="switchReqTab('scenarios')">Expected Responses</div>
+                    <div class="tab" onclick="switchReqTab('docs')">Docs</div>
+                </div>
+
+                <!-- Params Tab -->
+                <div id="tab-req-params" class="tab-content active">
+                    <div id="paramsContainer"></div>
+                    <button class="btn" style="align-self: flex-start; margin-top: 8px;"
+                        onclick="addKvRow('paramsContainer', '', '', true)">+ Add Parameter</button>
+                </div>
+
+                <!-- Headers Tab -->
+                <div id="tab-req-headers" class="tab-content">
+                    <div id="headersContainer"></div>
+                    <button class="btn" style="align-self: flex-start; margin-top: 8px;"
+                        onclick="addKvRow('headersContainer')">+ Add Header</button>
+                </div>
+
+                <!-- Auth Tab -->
+                <div id="tab-req-auth" class="tab-content">
+                    <div class="auth-container">
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label for="authType">Auth Type</label>
+                            <select id="authType" class="input-base" onchange="toggleAuthFields()">
+                                <option value="none">No Auth</option>
+                                <option value="bearer">Bearer Token</option>
+                                <option value="basic">Basic Auth</option>
+                            </select>
+                        </div>
+                        <div id="bearerTokenGroup" class="form-group" style="display: none; margin-bottom: 16px;">
+                            <label for="authToken">Token</label>
+                            <input type="text" id="authToken" class="input-base"
+                                placeholder="Enter Bearer Token or {{token_variable}}">
+                            <div class="help-text">This will automatically add an 'Authorization: Bearer &lt;token&gt;'
+                                header.</div>
+                        </div>
+                        <div id="basicAuthGroup" class="form-group" style="display: none; margin-bottom: 16px;">
+                            <div style="display: flex; gap: 8px;">
+                                <div class="form-group" style="flex: 1;">
+                                    <label for="authUsername">Username</label>
+                                    <input type="text" id="authUsername" class="input-base"
+                                        placeholder="Username or {{user}}">
+                                </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <label for="authPassword">Password</label>
+                                    <input type="password" id="authPassword" class="input-base"
+                                        placeholder="Password or {{pass}}">
+                                </div>
+                            </div>
+                            <div class="help-text">This automatically computes Base64 credentials and adds an
+                                'Authorization: Basic' header.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Body Tab -->
+                <div id="tab-req-body" class="tab-content">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <div class="form-group"
+                            style="margin: 0; display: flex; flex-direction: row; gap: 10px; align-items: center;">
+                            <label style="margin:0;">Content-Type:</label>
+                            <select id="bodyContentType" class="input-base" style="width: auto;">
+                                <option value="none">None</option>
+                                <option value="application/json">JSON</option>
+                                <option value="text/plain">Text</option>
+                                <option value="application/xml">XML</option>
+                                <option value="application/x-www-form-urlencoded">Form URL Encoded</option>
+                            </select>
+                        </div>
+                        <button class="btn" style="padding: 4px 10px; font-size: 12px;"
+                            onclick="formatRequestBody()">Format JSON</button>
+                    </div>
+                    <textarea id="reqBody" class="code-editor" placeholder='{\n  "key": "value"\n}'></textarea>
+                </div>
+
+                <!-- Tests Tab -->
+                <div id="tab-req-tests" class="tab-content">
+                    <div style="margin-bottom: 12px; color: var(--text-secondary); font-size: 13px;">
+                        Create assertions to automatically verify response headers and JSON field data types.
+                        <br><i>Hint: Expected Responses will populate auto-complete suggestions for JSON fields.</i>
+                    </div>
+                    <div id="testsContainer"></div>
+                    <button class="btn" style="align-self: flex-start; margin-top: 8px;" onclick="addTestRow()">+ Add
+                        Assertion</button>
+                </div>
+
+                <!-- Expected Responses (Scenarios) Tab -->
+                <div id="tab-req-scenarios" class="tab-content">
+                    <div style="margin-bottom: 12px; color: var(--text-secondary); font-size: 13px;">
+                        Define and document expected response structures (e.g., Success, Validation Error).
+                        Adding expected JSON bodies here automatically creates dropdown options in the Tests tab.
+                    </div>
+                    <button class="btn" style="align-self: flex-start; margin-bottom: 16px;"
+                        onclick="openScenarioModal()">+ Add New Scenario</button>
+                    <div id="scenariosContainer"></div>
+                </div>
+
+                <!-- Docs / Markdown Tab -->
+                <div id="tab-req-docs" class="tab-content">
+                    <div
+                        style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="color: var(--text-secondary); font-size: 13px;">
+                            Document your API logic and details here using Markdown.
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn" id="btnDocsEdit" onclick="toggleDocsMode('edit')"
+                                style="display:none; font-size:12px; padding:4px 8px;">Edit Markdown</button>
+                            <button class="btn btn-primary" id="btnDocsPreview" onclick="toggleDocsMode('preview')"
+                                style="font-size:12px; padding:4px 8px;">Preview Docs</button>
+                        </div>
+                    </div>
+                    <textarea id="reqDocsEditor" class="code-editor" style="flex:1;"
+                        placeholder="# API Documentation\n\nDescribe your endpoint logic, requirements, and notes here..."></textarea>
+                    <div id="reqDocsPreview" class="md-preview" style="display:none;"></div>
+                </div>
             </div>
 
-            <!-- Params Tab -->
-            <div id="tab-req-params" class="tab-content active">
-                <div id="paramsContainer"></div>
-                <button class="btn" style="align-self: flex-start; margin-top: 8px;"
-                    onclick="addKvRow('paramsContainer', '', '', true)">+ Add Parameter</button>
+            <!-- Resizer -->
+            <div class="resizer" id="paneResizer" title="Drag to resize">
+                <div class="resizer-handle"></div>
             </div>
 
-            <!-- Headers Tab -->
-            <div id="tab-req-headers" class="tab-content">
-                <div id="headersContainer"></div>
-                <button class="btn" style="align-self: flex-start; margin-top: 8px;"
-                    onclick="addKvRow('headersContainer')">+ Add Header</button>
-            </div>
+            <!-- Response Pane -->
+            <div class="pane-bottom" id="paneBottom">
+                <div class="tabs-container">
+                    <div class="tab active" onclick="switchResTab('body')">Response Body</div>
+                    <div class="tab" onclick="switchResTab('headers')">Response Headers</div>
+                    <div class="tab" onclick="switchResTab('snippets')">Code Snippets</div>
+                    <div class="tab" onclick="switchResTab('tests')" id="resTestsTabTrigger" style="display:none;">Test
+                        Results</div>
+                    <div class="tab" onclick="switchResTab('matches')" id="resMatchesTabTrigger" style="display:none;">
+                        Scenario Matches</div>
+                </div>
 
-            <!-- Auth Tab -->
-            <div id="tab-req-auth" class="tab-content">
-                <div class="auth-container">
-                    <div class="form-group">
-                        <label for="authType">Auth Type</label>
-                        <select id="authType" class="input-base" onchange="toggleAuthFields()">
-                            <option value="none">No Auth</option>
-                            <option value="bearer">Bearer Token</option>
+                <div class="response-meta">
+                    <div class="meta-item">Status: <span id="resStatus" class="meta-value">-</span></div>
+                    <div class="meta-item">Time: <span id="resTime" class="meta-value">-</span></div>
+                    <div class="meta-item">Size: <span id="resSize" class="meta-value">-</span></div>
+                </div>
+
+                <!-- Response Body Tab -->
+                <div id="tab-res-body" class="tab-content active" style="padding:0; position:relative;">
+                    <div class="action-buttons-overlay">
+                        <button class="action-btn" onclick="clearResponse()" title="Clear Response">Clear</button>
+                        <button class="action-btn" onclick="downloadResponse()"
+                            title="Save response to file">Download</button>
+                        <button class="action-btn" onclick="copyResponseText()">Copy</button>
+                    </div>
+                    <div id="responseBody">Enter a URL and click Send to get a response...</div>
+                </div>
+
+                <!-- Response Headers Tab -->
+                <div id="tab-res-headers" class="tab-content">
+                    <div id="responseHeadersList">No headers to display.</div>
+                </div>
+
+                <!-- Code Snippets Tab -->
+                <div id="tab-res-snippets" class="tab-content" style="padding:0; position:relative;">
+                    <div class="action-buttons-overlay">
+                        <select id="snippetLanguage" class="input-base"
+                            style="padding: 2px 6px; font-size: 12px; margin-right: 8px;"
+                            onchange="updateSnippetDisplay()">
+                            <option value="curl">cURL</option>
+                            <option value="fetch">JavaScript (Fetch)</option>
+                            <option value="python">Python (Requests)</option>
                         </select>
+                        <button class="action-btn" onclick="copySnippet()">Copy Snippet</button>
                     </div>
-                    <div id="bearerTokenGroup" class="form-group" style="display: none;">
-                        <label for="authToken">Token</label>
-                        <input type="text" id="authToken" class="input-base" placeholder="Enter Bearer Token">
-                        <div class="help-text">This will automatically add an 'Authorization: Bearer &lt;token&gt;'
-                            header.</div>
+                    <pre id="snippetBody">No request sent yet.</pre>
+                </div>
+
+                <!-- Test Results Tab -->
+                <div id="tab-res-tests" class="tab-content">
+                    <div id="testResultsContainer">No tests executed yet. Send the request to evaluate assertions.</div>
+                </div>
+
+                <!-- Scenario Matches Tab -->
+                <div id="tab-res-matches" class="tab-content">
+                    <div style="margin-bottom: 12px; color: var(--text-secondary); font-size: 13px;">
+                        Evaluates the actual response against your saved "Expected Responses" scenarios.
+                    </div>
+                    <div id="scenarioMatchContainer">Send a request to see which expected scenario matches the response.
                     </div>
                 </div>
             </div>
 
-            <!-- Body Tab -->
-            <div id="tab-req-body" class="tab-content">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <div class="form-group" style="margin: 0; display: flex; gap: 10px; align-items: center;">
-                        <label style="margin:0;">Content-Type:</label>
-                        <select id="bodyContentType" class="input-base" style="width: auto;">
-                            <option value="none">None</option>
-                            <option value="application/json">JSON</option>
-                            <option value="text/plain">Text</option>
-                            <option value="application/xml">XML</option>
-                            <option value="application/x-www-form-urlencoded">Form URL Encoded</option>
-                        </select>
-                    </div>
-                    <button class="btn" style="padding: 4px 10px; font-size: 12px;" onclick="formatRequestBody()">Format
-                        JSON</button>
+        </div> <!-- End Workspace -->
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModalOverlay" class="modal-overlay">
+        <div class="modal" style="width: 400px;">
+            <div class="modal-header">
+                <h3>Settings & Data</h3>
+                <button class="btn-icon" onclick="closeSettingsModal()">✖</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Appearance</label>
+                    <button class="btn" style="width: 100%; justify-content: flex-start;"
+                        onclick="toggleTheme(); closeSettingsModal();">🌓 Toggle Dark / Light Mode</button>
                 </div>
-                <textarea id="reqBody" class="code-editor" placeholder='{\n  "key": "value"\n}'></textarea>
+                <div class="form-group" style="margin-top: 8px;">
+                    <label>Configuration</label>
+                    <button class="btn" style="width: 100%; justify-content: flex-start;"
+                        onclick="closeSettingsModal(); openEnvModal();">🌍 Manage Environment Variables</button>
+                </div>
+                <div class="form-group" style="margin-top: 8px;">
+                    <label>Data Management</label>
+                    <div style="display: flex; gap: 8px; flex-direction: column;">
+                        <button class="btn" style="width: 100%; justify-content: flex-start;"
+                            onclick="exportData(); closeSettingsModal();">⬇️ Export Workspace Backup</button>
+                        <button class="btn" style="width: 100%; justify-content: flex-start;"
+                            onclick="document.getElementById('importFile').click(); closeSettingsModal();">⬆️ Import
+                            Workspace Backup</button>
+                        <button class="btn btn-danger"
+                            style="width: 100%; justify-content: flex-start; border-color: var(--error-color);"
+                            onclick="clearAllHistory(); closeSettingsModal();">🗑️ Clear All Saved History</button>
+                    </div>
+                </div>
             </div>
         </div>
+    </div>
 
-        <!-- Resizer -->
-        <div class="resizer" id="paneResizer" title="Drag to resize">
-            <div class="resizer-handle"></div>
-        </div>
-
-        <!-- Response Pane -->
-        <div class="pane-bottom" id="paneBottom">
-            <div class="tabs-container">
-                <div class="tab active" onclick="switchResTab('body')">Response Body</div>
-                <div class="tab" onclick="switchResTab('headers')">Response Headers</div>
-                <div class="tab" onclick="switchResTab('request')">Request Payload</div>
+    <!-- Environments Modal -->
+    <div id="envModalOverlay" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Environment Variables</h3>
+                <button class="btn-icon" onclick="closeEnvModal()">✖</button>
             </div>
-
-            <div class="response-meta">
-                <div class="meta-item">Status: <span id="resStatus" class="meta-value">-</span></div>
-                <div class="meta-item">Time: <span id="resTime" class="meta-value">-</span></div>
-                <div class="meta-item">Size: <span id="resSize" class="meta-value">-</span></div>
-            </div>
-
-            <!-- Response Body Tab -->
-            <div id="tab-res-body" class="tab-content active" style="padding:0; position:relative;">
-                <div class="action-buttons-overlay">
-                    <button class="action-btn" onclick="downloadResponse()"
-                        title="Save response to file">Download</button>
-                    <button class="action-btn" onclick="copyResponseText()">Copy</button>
+            <div class="modal-body">
+                <div class="help-text"
+                    style="background: rgba(99,102,241,0.1); padding: 10px; border-radius: 4px; border-left: 3px solid var(--accent-color);">
+                    <strong>How to use:</strong> Enclose variable names in double curly braces, e.g.,
+                    <code>{{base_url}}</code>. You can use these in URLs, Headers, Auth tokens, or JSON bodies.
+                    Variables apply based on the selected Collection.
                 </div>
-                <div id="responseBody">Enter a URL and click Send to get a response...</div>
-            </div>
-
-            <!-- Response Headers Tab -->
-            <div id="tab-res-headers" class="tab-content">
-                <div id="responseHeadersList">No headers to display.</div>
-            </div>
-
-            <!-- Request Payload Tab -->
-            <div id="tab-res-request" class="tab-content" style="padding:0; position:relative;">
-                <div class="action-buttons-overlay">
-                    <button class="action-btn" onclick="copyRequestPayload()">Copy</button>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label>Select Environment / Collection Scope</label>
+                    <select id="envCollectionSelect" class="input-base" onchange="loadEnvForCollection()"></select>
                 </div>
-                <pre id="requestSentBody">No request sent yet.</pre>
+                <div class="form-group">
+                    <label>Variables</label>
+                    <div id="envKvContainer"></div>
+                    <button class="btn" style="align-self: flex-start; margin-top: 8px; font-size:12px;"
+                        onclick="addKvRow('envKvContainer')">+ Add Variable</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeEnvModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveEnvironments()">Save Variables</button>
             </div>
         </div>
+    </div>
 
+    <!-- Scenario Modal Form -->
+    <div id="scenarioModalOverlay" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="scenarioModalTitle">Add Expected Response</h3>
+                <button class="btn-icon" onclick="closeScenarioModal()">✖</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="scenarioModalIndex">
+                <div style="display: flex; gap: 16px;">
+                    <div class="form-group" style="flex: 2;">
+                        <label>Scenario Name</label>
+                        <input type="text" id="scenarioModalName" class="input-base" placeholder="e.g., 200 OK Success">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Expected Status</label>
+                        <input type="text" id="scenarioModalStatus" class="input-base" placeholder="e.g., 200">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Expected JSON Body Structure</label>
+                    <textarea id="scenarioModalBody" class="code-editor" style="height: 400px; resize: vertical;" placeholder='{&#10;  "data": {&#10;    "id": 1,&#10;    "name": "Testing"&#10;  }&#10;}'></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div>
+                    <button class="btn" style="font-size:12px;" onclick="generateTestsFromScenario()"
+                        title="Automatically creates type-checking tests based on the JSON fields">Auto-Generate Type
+                        Tests</button>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn" onclick="closeScenarioModal()">Cancel</button>
+                    <button class="btn btn-primary" onclick="saveScenarioFromModal()">Save Scenario</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Toast Notifications -->
@@ -916,154 +1510,34 @@
         // --- State Management ---
         const STATE_KEY = 'api_tester_history';
         const THEME_KEY = 'api_tester_theme';
+        const LAYOUT_KEY = 'api_tester_layout';
+        const ENV_KEY = 'api_tester_environments';
         let currentRequestId = null;
-        let lastResponseData = null; // Store raw response for downloading
+        let lastResponseData = null;
         let lastResponseContentType = null;
+        let currentScenarios = [];
+        let currentSnippetDetails = {};
 
         // --- Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
+            initLayout();
             updateMethodColor(document.getElementById('reqMethod'));
             loadHistoryUI();
 
-            // Add initial empty rows
             addKvRow('paramsContainer', '', '', true);
             addKvRow('headersContainer', 'Accept', '*/*');
 
-            // Initialize resizer & URL sync listeners
             initResizer();
             initUrlSync();
+            renderScenariosList();
+
+            if (typeof marked !== 'undefined') {
+                marked.setOptions({ breaks: true, gfm: true });
+            }
         });
 
-        // --- Filter History Logic ---
-        function filterHistory() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            const collections = document.querySelectorAll('.collection-group');
-
-            collections.forEach(group => {
-                const items = group.querySelectorAll('.history-item');
-                let groupHasMatch = false;
-
-                items.forEach(item => {
-                    const text = item.textContent.toLowerCase();
-                    if (text.includes(query)) {
-                        item.style.display = 'flex';
-                        groupHasMatch = true;
-                    } else {
-                        item.style.display = 'none';
-                    }
-                });
-
-                // Open collection and show/hide based on if it has matching children
-                if (groupHasMatch || query === '') {
-                    group.style.display = 'block';
-                    if (query !== '') group.classList.add('open'); // Auto open if searching
-                } else {
-                    group.style.display = 'none';
-                }
-            });
-        }
-
-        // --- URL <-> Query Params Sync ---
-        function initUrlSync() {
-            const urlInput = document.getElementById('reqUrl');
-
-            // Listen to manual URL typing to update Params Editor
-            urlInput.addEventListener('input', (e) => {
-                const urlStr = e.target.value;
-                if (urlStr.includes('?')) {
-                    try {
-                        // Dummy protocol to force URL class to parse properly
-                        const parseUrl = urlStr.startsWith('http') ? urlStr : 'http://' + urlStr;
-                        const urlObj = new URL(parseUrl);
-                        const paramsArr = [];
-                        for (const [key, value] of urlObj.searchParams.entries()) {
-                            paramsArr.push({ key, value, isActive: true });
-                        }
-                        // Update table silently without triggering loop
-                        setKvDataSilent('paramsContainer', paramsArr);
-                    } catch (err) { }
-                } else {
-                    // Clear params if no ? exists
-                    setKvDataSilent('paramsContainer', []);
-                }
-            });
-        }
-
-        function updateUrlFromParams() {
-            const urlInput = document.getElementById('reqUrl');
-            let urlVal = urlInput.value;
-            if (!urlVal) return;
-
-            const baseUrl = urlVal.split('?')[0];
-            const params = getKvData('paramsContainer').filter(p => p.isActive && p.key);
-
-            if (params.length > 0) {
-                const searchParams = new URLSearchParams();
-                params.forEach(p => searchParams.append(p.key, p.value));
-                urlInput.value = baseUrl + '?' + searchParams.toString();
-            } else {
-                urlInput.value = baseUrl;
-            }
-        }
-
-        // --- Formatting ---
-        function formatRequestBody() {
-            const bodyEditor = document.getElementById('reqBody');
-            const val = bodyEditor.value.trim();
-            if (!val) return;
-
-            try {
-                const parsed = JSON.parse(val);
-                bodyEditor.value = JSON.stringify(parsed, null, 2);
-                showToast("JSON Formatted", "success");
-            } catch (e) {
-                showToast("Invalid JSON: Cannot format", "error");
-            }
-        }
-
-        // --- Resizer Logic ---
-        function initResizer() {
-            const resizer = document.getElementById('paneResizer');
-            const paneTop = document.getElementById('paneTop');
-            let isDragging = false;
-            let startY;
-            let startHeight;
-
-            resizer.addEventListener('mousedown', (e) => {
-                isDragging = true;
-                startY = e.clientY;
-                startHeight = paneTop.getBoundingClientRect().height;
-                resizer.classList.add('dragging');
-                document.body.style.cursor = 'ns-resize';
-                e.preventDefault();
-            });
-
-            document.addEventListener('mousemove', (e) => {
-                if (!isDragging) return;
-                const dy = e.clientY - startY;
-                let newHeight = startHeight + dy;
-
-                if (newHeight < 150) newHeight = 150;
-
-                const containerHeight = document.querySelector('.main-content').clientHeight;
-                const topBarHeights = document.querySelector('.request-header').clientHeight + document.querySelector('.url-bar-container').clientHeight;
-                const maxAvailable = containerHeight - topBarHeights - 150;
-
-                if (newHeight > maxAvailable) newHeight = maxAvailable;
-                paneTop.style.height = `${newHeight}px`;
-            });
-
-            document.addEventListener('mouseup', () => {
-                if (isDragging) {
-                    isDragging = false;
-                    resizer.classList.remove('dragging');
-                    document.body.style.cursor = '';
-                }
-            });
-        }
-
-        // --- UI & Theming Logic ---
+        // --- UI, Theming & Layout Logic ---
         function initTheme() {
             const savedTheme = localStorage.getItem(THEME_KEY) || 'dark';
             applyTheme(savedTheme);
@@ -1095,13 +1569,33 @@
             }
         }
 
+        function initLayout() {
+            const savedLayout = localStorage.getItem(LAYOUT_KEY) || 'column';
+            document.getElementById('workspace').setAttribute('data-layout', savedLayout);
+        }
+
+        function toggleLayout() {
+            const workspace = document.getElementById('workspace');
+            const currentLayout = workspace.getAttribute('data-layout');
+            const newLayout = currentLayout === 'column' ? 'row' : 'column';
+
+            workspace.setAttribute('data-layout', newLayout);
+            localStorage.setItem(LAYOUT_KEY, newLayout);
+
+            document.getElementById('paneTop').style.height = '';
+            document.getElementById('paneTop').style.width = '';
+        }
+
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('collapsed');
+        }
+
         function updateMethodColor(selectElem) {
             const method = selectElem.value.toLowerCase();
             const colorVar = `var(--method-${method}, var(--text-primary))`;
             selectElem.style.color = colorVar;
         }
 
-        // --- Tab Logic ---
         function switchReqTab(tabName) {
             document.querySelectorAll('.pane-top .tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.pane-top .tab-content').forEach(c => c.classList.remove('active'));
@@ -1112,13 +1606,279 @@
         function switchResTab(tabName) {
             document.querySelectorAll('.pane-bottom .tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.pane-bottom .tab-content').forEach(c => c.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('active');
+            } else {
+                const tabs = document.querySelectorAll('.pane-bottom .tab');
+                tabs.forEach(t => {
+                    if (t.getAttribute('onclick').includes(tabName)) t.classList.add('active');
+                });
+            }
             document.getElementById(`tab-res-${tabName}`).classList.add('active');
         }
 
         function toggleAuthFields() {
             const type = document.getElementById('authType').value;
             document.getElementById('bearerTokenGroup').style.display = type === 'bearer' ? 'block' : 'none';
+            document.getElementById('basicAuthGroup').style.display = type === 'basic' ? 'block' : 'none';
+        }
+
+        // --- Settings Modal Logic ---
+        function openSettingsModal() {
+            document.getElementById('settingsModalOverlay').classList.add('active');
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModalOverlay').classList.remove('active');
+        }
+
+        // --- Environments & Export/Import Logic ---
+        function getEnvironments() {
+            return JSON.parse(localStorage.getItem(ENV_KEY) || '{}');
+        }
+
+        function interpolateString(str, collectionName) {
+            if (!str || typeof str !== 'string') return str;
+            const envs = getEnvironments();
+            const globalEnvs = envs['Global'] || [];
+            const collectionEnvs = envs[collectionName] || [];
+
+            const mergedEnvs = {};
+            globalEnvs.forEach(e => mergedEnvs[e.key] = e.value);
+            if (collectionName) {
+                collectionEnvs.forEach(e => mergedEnvs[e.key] = e.value);
+            }
+
+            return str.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
+                return mergedEnvs.hasOwnProperty(key) ? mergedEnvs[key] : match;
+            });
+        }
+
+        function openEnvModal() {
+            const history = getHistory();
+            const collections = new Set(['Global']);
+            history.forEach(item => {
+                if (item.collection && item.collection.trim() !== '') {
+                    collections.add(item.collection.trim());
+                }
+            });
+
+            const select = document.getElementById('envCollectionSelect');
+            select.innerHTML = '';
+            collections.forEach(col => {
+                select.innerHTML += `<option value="${col}">${col}</option>`;
+            });
+
+            const currentCol = document.getElementById('reqCollection').value.trim();
+            if (currentCol && collections.has(currentCol)) {
+                select.value = currentCol;
+            } else {
+                select.value = 'Global';
+            }
+
+            loadEnvForCollection();
+            document.getElementById('envModalOverlay').classList.add('active');
+        }
+
+        function loadEnvForCollection() {
+            const col = document.getElementById('envCollectionSelect').value;
+            const envs = getEnvironments();
+            const vars = envs[col] || [];
+            setKvDataSilent('envKvContainer', vars);
+        }
+
+        function saveEnvironments() {
+            const col = document.getElementById('envCollectionSelect').value;
+            const vars = getKvData('envKvContainer');
+            const envs = getEnvironments();
+            envs[col] = vars;
+            localStorage.setItem(ENV_KEY, JSON.stringify(envs));
+            closeEnvModal();
+            showToast('Environment variables saved', 'success');
+        }
+
+        function closeEnvModal() {
+            document.getElementById('envModalOverlay').classList.remove('active');
+        }
+
+        function exportData() {
+            const data = {
+                history: getHistory(),
+                environments: getEnvironments()
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `api_tester_backup_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Workspace Exported', 'success');
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.history) localStorage.setItem(STATE_KEY, JSON.stringify(data.history));
+                    if (data.environments) localStorage.setItem(ENV_KEY, JSON.stringify(data.environments));
+                    loadHistoryUI();
+                    showToast('Workspace Imported Successfully', 'success');
+                } catch (err) {
+                    showToast('Failed to parse backup file', 'error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // --- Docs / Markdown Logic ---
+        function toggleDocsMode(mode) {
+            const editor = document.getElementById('reqDocsEditor');
+            const preview = document.getElementById('reqDocsPreview');
+            const btnEdit = document.getElementById('btnDocsEdit');
+            const btnPreview = document.getElementById('btnDocsPreview');
+
+            if (mode === 'preview') {
+                if (typeof marked !== 'undefined') {
+                    preview.innerHTML = marked.parse(editor.value || '*No description provided.*');
+                } else {
+                    preview.innerHTML = '<div style="color:var(--error-color)">Marked.js failed to load. Please check your connection.</div>';
+                }
+                editor.style.display = 'none';
+                preview.style.display = 'block';
+                btnPreview.style.display = 'none';
+                btnEdit.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+                editor.style.display = 'block';
+                btnEdit.style.display = 'none';
+                btnPreview.style.display = 'block';
+            }
+        }
+
+        // --- URL <-> Query Params Sync ---
+        function initUrlSync() {
+            const urlInput = document.getElementById('reqUrl');
+            urlInput.addEventListener('input', (e) => {
+                const urlStr = e.target.value;
+                if (urlStr.includes('?')) {
+                    try {
+                        const parseUrl = urlStr.startsWith('http') ? urlStr : 'http://' + urlStr;
+                        const urlObj = new URL(parseUrl);
+                        const paramsArr = [];
+                        for (const [key, value] of urlObj.searchParams.entries()) {
+                            paramsArr.push({ key, value, isActive: true });
+                        }
+                        setKvDataSilent('paramsContainer', paramsArr);
+                    } catch (err) { }
+                } else {
+                    setKvDataSilent('paramsContainer', []);
+                }
+            });
+        }
+
+        function updateUrlFromParams() {
+            const urlInput = document.getElementById('reqUrl');
+            let urlVal = urlInput.value;
+            if (!urlVal) return;
+
+            const baseUrl = urlVal.split('?')[0];
+            const params = getKvData('paramsContainer').filter(p => p.isActive && p.key);
+
+            if (params.length > 0) {
+                const searchParams = new URLSearchParams();
+                params.forEach(p => searchParams.append(p.key, p.value));
+                urlInput.value = baseUrl + '?' + searchParams.toString();
+            } else {
+                urlInput.value = baseUrl;
+            }
+        }
+
+        // --- Formatting & Highlighting ---
+        function formatRequestBody(showNotification = true) {
+            const bodyEditor = document.getElementById('reqBody');
+            const val = bodyEditor.value.trim();
+            if (!val) return;
+            try {
+                const parsed = JSON.parse(val);
+                bodyEditor.value = JSON.stringify(parsed, null, 2);
+                if (showNotification) showToast("JSON Formatted", "success");
+            } catch (e) {
+                if (showNotification) showToast("Invalid JSON: Cannot format", "error");
+            }
+        }
+
+        function syntaxHighlight(jsonStr) {
+            jsonStr = jsonStr.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return jsonStr.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                let cls = 'json-number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'json-key';
+                    } else {
+                        cls = 'json-string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'json-boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'json-null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
+
+        // --- Resizer Logic ---
+        function initResizer() {
+            const resizer = document.getElementById('paneResizer');
+            const paneTop = document.getElementById('paneTop');
+            const workspace = document.getElementById('workspace');
+            let isDragging = false;
+            let startPos, startSize;
+
+            resizer.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                const isRowLayout = workspace.getAttribute('data-layout') === 'row';
+
+                startPos = isRowLayout ? e.clientX : e.clientY;
+                startSize = isRowLayout ? paneTop.getBoundingClientRect().width : paneTop.getBoundingClientRect().height;
+
+                resizer.classList.add('dragging');
+                document.body.style.cursor = isRowLayout ? 'ew-resize' : 'ns-resize';
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const isRowLayout = workspace.getAttribute('data-layout') === 'row';
+
+                const delta = (isRowLayout ? e.clientX : e.clientY) - startPos;
+                let newSize = startSize + delta;
+
+                if (newSize < 150) newSize = 150;
+
+                if (isRowLayout) {
+                    const maxAvailable = workspace.clientWidth - 150;
+                    if (newSize > maxAvailable) newSize = maxAvailable;
+                    paneTop.style.width = `${newSize}px`;
+                } else {
+                    const maxAvailable = workspace.clientHeight - 150;
+                    if (newSize > maxAvailable) newSize = maxAvailable;
+                    paneTop.style.height = `${newSize}px`;
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    resizer.classList.remove('dragging');
+                    document.body.style.cursor = '';
+                }
+            });
         }
 
         // --- Key-Value Editor Logic ---
@@ -1133,7 +1893,6 @@
                 <button class="btn-icon btn-danger kv-delete" title="Remove">✖</button>
             `;
 
-            // Add Listeners if it's the Params container to sync URL
             if (isParam) {
                 row.querySelectorAll('input').forEach(inp => inp.addEventListener('input', updateUrlFromParams));
                 row.querySelector('.kv-check').addEventListener('change', updateUrlFromParams);
@@ -1144,20 +1903,16 @@
             } else {
                 row.querySelector('.kv-delete').addEventListener('click', function () { this.parentElement.remove(); });
             }
-
             container.appendChild(row);
         }
 
         function getKvData(containerId) {
             const data = [];
-            const rows = document.getElementById(containerId).querySelectorAll('.kv-row');
-            rows.forEach(row => {
+            document.getElementById(containerId).querySelectorAll('.kv-row').forEach(row => {
                 const isActive = row.querySelector('.kv-check').checked;
                 const key = row.querySelector('.kv-key').value.trim();
                 const value = row.querySelector('.kv-value').value;
-                if (key) {
-                    data.push({ key, value, isActive });
-                }
+                if (key) data.push({ key, value, isActive });
             });
             return data;
         }
@@ -1171,43 +1926,561 @@
                 return;
             }
             dataArray.forEach(item => {
-                const row = document.createElement('div');
-                row.className = 'kv-row';
-                row.innerHTML = `
-                    <input type="checkbox" class="kv-check" ${item.isActive !== false ? 'checked' : ''} title="Include in request">
-                    <input type="text" class="input-base kv-key" placeholder="Key" value="${item.key || ''}">
-                    <input type="text" class="input-base kv-value" placeholder="Value" value="${item.value || ''}">
-                    <button class="btn-icon btn-danger kv-delete" title="Remove">✖</button>
-                `;
-
-                if (isParam) {
-                    row.querySelectorAll('input').forEach(inp => inp.addEventListener('input', updateUrlFromParams));
-                    row.querySelector('.kv-check').addEventListener('change', updateUrlFromParams);
-                    row.querySelector('.kv-delete').addEventListener('click', function () {
-                        this.parentElement.remove();
-                        updateUrlFromParams();
-                    });
-                } else {
-                    row.querySelector('.kv-delete').addEventListener('click', function () { this.parentElement.remove(); });
+                addKvRow(containerId, item.key, item.value, isParam);
+                if (item.isActive === false) {
+                    container.lastElementChild.querySelector('.kv-check').checked = false;
                 }
-                container.appendChild(row);
             });
         }
 
-        // Similar to setKvData but does not attach URL sync listeners to avoid infinite loops when typing in URL bar
         function setKvDataSilent(containerId, dataArray) {
             const container = document.getElementById(containerId);
             container.innerHTML = '';
+            const isParam = containerId === 'paramsContainer';
             if (!dataArray || dataArray.length === 0) {
-                addKvRow(containerId, '', '', true);
+                addKvRow(containerId, '', '', isParam);
                 return;
             }
             dataArray.forEach(item => {
-                addKvRow(containerId, item.key, item.value, true);
+                addKvRow(containerId, item.key, item.value, isParam);
+                if (item.isActive === false && container.lastElementChild) {
+                    container.lastElementChild.querySelector('.kv-check').checked = false;
+                }
             });
         }
 
-        // --- Clipboard & Download Helpers ---
+        // --- Test Builder UI Logic ---
+        function addTestRow(target = 'status', property = '', operator = 'equals', expected = '') {
+            const container = document.getElementById('testsContainer');
+            const row = document.createElement('div');
+            row.className = 'test-row';
+
+            row.innerHTML = `
+                <select class="input-base test-target" onchange="handleTestTargetChange(this)">
+                    <option value="status" ${target === 'status' ? 'selected' : ''}>Status Code</option>
+                    <option value="time" ${target === 'time' ? 'selected' : ''}>Response Time (ms)</option>
+                    <option value="header" ${target === 'header' ? 'selected' : ''}>Header</option>
+                    <option value="json_type" ${target === 'json_type' || target === 'json' ? 'selected' : ''}>JSON Field Type</option>
+                </select>
+                <input type="text" class="input-base test-property" placeholder="Property name" list="jsonPathSuggestions" value="${property}">
+                <select class="input-base test-operator" onchange="handleTestOperatorChange(this)"></select>
+                <input type="text" class="input-base test-expected" placeholder="Expected Value" value="${expected}">
+                <button class="btn-icon btn-danger test-delete" title="Remove">✖</button>
+            `;
+
+            row.querySelector('.test-delete').addEventListener('click', function () { this.parentElement.remove(); });
+            container.appendChild(row);
+
+            handleTestTargetChange(row.querySelector('.test-target'), operator);
+        }
+
+        function handleTestTargetChange(selectElem, initialOperator = null) {
+            const row = selectElem.parentElement;
+            const propertyInput = row.querySelector('.test-property');
+            const operatorSelect = row.querySelector('.test-operator');
+            const expectedInput = row.querySelector('.test-expected');
+            const target = selectElem.value;
+
+            operatorSelect.innerHTML = '';
+
+            if (target === 'json_type') {
+                propertyInput.style.display = 'block';
+                propertyInput.placeholder = 'JSON Path (e.g. data.id)';
+
+                const types = [
+                    { val: 'is_string', label: 'Is String' },
+                    { val: 'is_number', label: 'Is Number' },
+                    { val: 'is_boolean', label: 'Is Boolean' },
+                    { val: 'is_array', label: 'Is Array' },
+                    { val: 'is_object', label: 'Is Object' },
+                    { val: 'is_null', label: 'Is Null' }
+                ];
+                types.forEach(t => {
+                    operatorSelect.innerHTML += `<option value="${t.val}">${t.label}</option>`;
+                });
+                expectedInput.style.display = 'none';
+            } else {
+                if (target === 'header') {
+                    propertyInput.style.display = 'block';
+                    propertyInput.placeholder = 'Header name (e.g. content-type)';
+                } else {
+                    propertyInput.style.display = 'none';
+                }
+
+                const ops = [
+                    { val: 'equals', label: 'Equals' },
+                    { val: 'not_equals', label: 'Not Equals' },
+                    { val: 'contains', label: 'Contains' },
+                    { val: 'gt', label: 'Greater Than' },
+                    { val: 'lt', label: 'Less Than' },
+                    { val: 'exists', label: 'Exists / Not Null' }
+                ];
+                ops.forEach(op => {
+                    operatorSelect.innerHTML += `<option value="${op.val}">${op.label}</option>`;
+                });
+                expectedInput.style.display = 'block';
+            }
+
+            if (initialOperator) {
+                operatorSelect.value = initialOperator;
+            }
+            handleTestOperatorChange(operatorSelect);
+        }
+
+        function handleTestOperatorChange(selectElem) {
+            const row = selectElem.parentElement;
+            const target = row.querySelector('.test-target').value;
+            const expectedInput = row.querySelector('.test-expected');
+
+            if (selectElem.value === 'exists' || target === 'json_type') {
+                expectedInput.style.display = 'none';
+            } else {
+                expectedInput.style.display = 'block';
+            }
+        }
+
+        function getTestsData() {
+            const tests = [];
+            document.getElementById('testsContainer').querySelectorAll('.test-row').forEach(row => {
+                tests.push({
+                    target: row.querySelector('.test-target').value,
+                    property: row.querySelector('.test-property').value.trim(),
+                    operator: row.querySelector('.test-operator').value,
+                    expected: row.querySelector('.test-expected').value
+                });
+            });
+            return tests;
+        }
+
+        function setTestsData(testsArray) {
+            const container = document.getElementById('testsContainer');
+            container.innerHTML = '';
+            if (testsArray && testsArray.length > 0) {
+                testsArray.forEach(test => addTestRow(test.target, test.property, test.operator, test.expected));
+            }
+        }
+
+        // --- Scenarios (Expected Responses) Logic with Modal, Auto-complete & Auto-generate Tests ---
+
+        function extractPathsAndTypes(obj, prefix = '', resultArr = []) {
+            if (typeof obj === 'object' && obj !== null) {
+                if (Array.isArray(obj)) {
+                    if (obj.length > 0) {
+                        extractPathsAndTypes(obj[0], `${prefix}0.`, resultArr);
+                    }
+                } else {
+                    for (const key in obj) {
+                        const path = prefix ? `${prefix}${key}` : key;
+                        const val = obj[key];
+
+                        let type = typeof val;
+                        if (val === null) type = 'null';
+                        else if (Array.isArray(val)) type = 'array';
+
+                        resultArr.push({ path, type });
+
+                        if (type === 'object' || type === 'array') {
+                            extractPathsAndTypes(val, `${path}.`, resultArr);
+                        }
+                    }
+                }
+            }
+            return resultArr;
+        }
+
+        function updateJsonPathSuggestions() {
+            const datalist = document.getElementById('jsonPathSuggestions');
+            datalist.innerHTML = '';
+            const allPaths = new Set();
+
+            currentScenarios.forEach(scenario => {
+                if (!scenario.body) return;
+                try {
+                    const obj = JSON.parse(scenario.body);
+                    const pt = [];
+                    extractPathsAndTypes(obj, '', pt);
+                    pt.forEach(item => allPaths.add(item.path));
+                } catch (e) { }
+            });
+
+            allPaths.forEach(path => {
+                const option = document.createElement('option');
+                option.value = path;
+                datalist.appendChild(option);
+            });
+        }
+
+        function renderScenariosList() {
+            const container = document.getElementById('scenariosContainer');
+            container.innerHTML = '';
+
+            if (currentScenarios.length === 0) {
+                container.innerHTML = `<div style="padding: 12px; border: 1px dashed var(--border-color); border-radius: 4px; text-align: center; color: var(--text-secondary);">No expected responses saved yet.</div>`;
+            } else {
+                currentScenarios.forEach((s, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'scenario-card';
+                    card.onclick = () => openScenarioModal(index);
+                    card.innerHTML = `
+                        <div style="flex: 1;">
+                            <strong style="color:var(--text-primary); font-size:14px;">${s.name || 'Unnamed Scenario'}</strong> 
+                        </div>
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <span class="badge" style="background:var(--bg-color); border:1px solid var(--border-color); color:var(--text-secondary);">HTTP ${s.status}</span>
+                            <button class="btn-icon btn-danger" onclick="deleteScenario(event, ${index})" title="Delete Scenario">🗑️</button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            }
+            updateJsonPathSuggestions();
+        }
+
+        function openScenarioModal(index = null) {
+            const overlay = document.getElementById('scenarioModalOverlay');
+            const title = document.getElementById('scenarioModalTitle');
+            const idxInput = document.getElementById('scenarioModalIndex');
+            const nameInput = document.getElementById('scenarioModalName');
+            const statusInput = document.getElementById('scenarioModalStatus');
+            const bodyInput = document.getElementById('scenarioModalBody');
+
+            if (index !== null && currentScenarios[index]) {
+                title.textContent = 'Edit Expected Response';
+                idxInput.value = index;
+                nameInput.value = currentScenarios[index].name;
+                statusInput.value = currentScenarios[index].status;
+                bodyInput.value = currentScenarios[index].body;
+            } else {
+                title.textContent = 'Add Expected Response';
+                idxInput.value = '';
+                nameInput.value = '';
+                statusInput.value = '200';
+                bodyInput.value = '';
+            }
+
+            overlay.classList.add('active');
+        }
+
+        function closeScenarioModal() {
+            document.getElementById('scenarioModalOverlay').classList.remove('active');
+        }
+
+        function saveScenarioFromModal() {
+            const idx = document.getElementById('scenarioModalIndex').value;
+            const name = document.getElementById('scenarioModalName').value.trim();
+            const status = document.getElementById('scenarioModalStatus').value.trim();
+            let body = document.getElementById('scenarioModalBody').value.trim();
+
+            if (body) {
+                try {
+                    body = JSON.stringify(JSON.parse(body), null, 2);
+                } catch (e) { }
+            }
+
+            const scenarioObj = { name: name || 'Untitled', status: status || '200', body };
+
+            if (idx !== '') {
+                currentScenarios[parseInt(idx)] = scenarioObj;
+            } else {
+                currentScenarios.push(scenarioObj);
+            }
+
+            renderScenariosList();
+            closeScenarioModal();
+            showToast('Scenario saved. JSON fields added to test options.', 'success');
+        }
+
+        function deleteScenario(event, index) {
+            event.stopPropagation();
+            currentScenarios.splice(index, 1);
+            renderScenariosList();
+        }
+
+        function generateTestsFromScenario() {
+            const bodyStr = document.getElementById('scenarioModalBody').value;
+            try {
+                const obj = JSON.parse(bodyStr);
+                const pathsAndTypes = [];
+                extractPathsAndTypes(obj, '', pathsAndTypes);
+
+                pathsAndTypes.forEach(pt => {
+                    let op = 'is_string';
+                    if (pt.type === 'number') op = 'is_number';
+                    else if (pt.type === 'boolean') op = 'is_boolean';
+                    else if (pt.type === 'array') op = 'is_array';
+                    else if (pt.type === 'object') op = 'is_object';
+                    else if (pt.type === 'null') op = 'is_null';
+
+                    addTestRow('json_type', pt.path, op, '');
+                });
+
+                showToast('Type checking tests automatically generated!', 'success');
+                saveScenarioFromModal();
+                switchReqTab('tests');
+            } catch (e) {
+                showToast('Invalid JSON structure. Cannot generate tests.', 'error');
+            }
+        }
+
+        // --- Match Evaluation Logic ---
+        function evaluateScenariosMatch(actualStatus, actualJson) {
+            const tabTrigger = document.getElementById('resMatchesTabTrigger');
+            const container = document.getElementById('scenarioMatchContainer');
+
+            if (currentScenarios.length === 0) {
+                tabTrigger.style.display = 'none';
+                return;
+            }
+
+            tabTrigger.style.display = 'block';
+            let resultsHtml = '';
+            let totalMatches = 0;
+
+            currentScenarios.forEach((scenario) => {
+                let isMatch = true;
+                let reasons = [];
+
+                if (scenario.status && String(scenario.status) !== String(actualStatus)) {
+                    isMatch = false;
+                    reasons.push(`Status code mismatch. Expected: ${scenario.status}, Got: ${actualStatus}`);
+                } else if (scenario.status) {
+                    reasons.push(`✓ Status matched (${scenario.status})`);
+                }
+
+                if (scenario.body) {
+                    try {
+                        const expectedJson = JSON.parse(scenario.body);
+                        const expectedPathsArr = [];
+                        extractPathsAndTypes(expectedJson, '', expectedPathsArr);
+                        const expectedPaths = expectedPathsArr.map(pt => pt.path);
+
+                        if (!actualJson && expectedPaths.length > 0) {
+                            isMatch = false;
+                            reasons.push(`Response is not valid JSON, cannot match expected body structure.`);
+                        } else {
+                            let missingPaths = [];
+                            expectedPaths.forEach(path => {
+                                if (getJsonPathValue(actualJson, path) === undefined) {
+                                    missingPaths.push(path);
+                                }
+                            });
+
+                            if (missingPaths.length > 0) {
+                                isMatch = false;
+                                reasons.push(`Missing expected JSON paths: \n  - ${missingPaths.join('\n  - ')}`);
+                            } else {
+                                reasons.push(`✓ All expected JSON structural fields are present.`);
+                            }
+                        }
+                    } catch (e) {
+                        reasons.push(`Warning: Scenario expected body is invalid JSON, skipped structure check.`);
+                    }
+                }
+
+                if (isMatch) totalMatches++;
+
+                const cardClass = isMatch ? 'matched' : 'not-matched';
+                const statusIcon = isMatch ? '✅ MATCHED' : '❌ NO MATCH';
+
+                resultsHtml += `
+                    <div class="match-card ${cardClass}">
+                        <div class="match-header">
+                            <span>${scenario.name || 'Unnamed Scenario'}</span>
+                            <span class="badge" style="background:transparent;">${statusIcon}</span>
+                        </div>
+                        <div class="match-reason">${reasons.join('\n')}</div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = resultsHtml;
+            tabTrigger.innerHTML = `Matches <span class="badge" style="background:var(--bg-color); color:${totalMatches > 0 ? 'var(--success-color)' : 'var(--text-secondary)'}; margin-left:6px;">${totalMatches}</span>`;
+        }
+
+        // --- Test Execution Logic ---
+        function getJsonPathValue(obj, path) {
+            if (!path) return obj;
+            const properties = path.split('.');
+            let current = obj;
+            for (let i = 0; i < properties.length; i++) {
+                if (current === undefined || current === null) return undefined;
+                current = current[properties[i]];
+            }
+            return current;
+        }
+
+        function evaluateCondition(actual, operator, expectedStr) {
+            if (operator === 'exists') return actual !== undefined && actual !== null;
+
+            if (operator === 'is_string') return typeof actual === 'string';
+            if (operator === 'is_number') return typeof actual === 'number' && !isNaN(actual);
+            if (operator === 'is_boolean') return typeof actual === 'boolean';
+            if (operator === 'is_array') return Array.isArray(actual);
+            if (operator === 'is_object') return typeof actual === 'object' && actual !== null && !Array.isArray(actual);
+            if (operator === 'is_null') return actual === null;
+
+            if (actual === undefined || actual === null) return false;
+
+            let expectedNum = Number(expectedStr);
+            let isNumericComparison = !isNaN(expectedNum) && !isNaN(Number(actual));
+
+            switch (operator) {
+                case 'equals': return isNumericComparison ? Number(actual) === expectedNum : String(actual).toLowerCase() === String(expectedStr).toLowerCase();
+                case 'not_equals': return isNumericComparison ? Number(actual) !== expectedNum : String(actual).toLowerCase() !== String(expectedStr).toLowerCase();
+                case 'contains': return typeof actual === 'object' ? JSON.stringify(actual).includes(expectedStr) : String(actual).toLowerCase().includes(String(expectedStr).toLowerCase());
+                case 'gt': return isNumericComparison ? Number(actual) > expectedNum : false;
+                case 'lt': return isNumericComparison ? Number(actual) < expectedNum : false;
+                default: return false;
+            }
+        }
+
+        function executeTests(resStatus, resTime, resHeaders, rawBody, parsedJson) {
+            const tests = getTestsData();
+            const tabTrigger = document.getElementById('resTestsTabTrigger');
+            const container = document.getElementById('testResultsContainer');
+
+            if (tests.length === 0) {
+                tabTrigger.style.display = 'none';
+                return;
+            }
+
+            tabTrigger.style.display = 'block';
+            tabTrigger.innerHTML = `Test Results <span class="badge" style="background:var(--bg-color); color:var(--text-secondary); margin-left:6px;">Evaluating...</span>`;
+
+            let passedCount = 0;
+            let resultsHtml = '';
+
+            tests.forEach((test, index) => {
+                let actualValue;
+                let targetName = '';
+                let passed = false;
+                let errorMsg = null;
+
+                try {
+                    switch (test.target) {
+                        case 'status': actualValue = resStatus; targetName = 'Status Code'; break;
+                        case 'time': actualValue = resTime; targetName = 'Response Time'; break;
+                        case 'header':
+                            if (!test.property) throw new Error("Header name is required.");
+                            actualValue = resHeaders.get(test.property.toLowerCase());
+                            targetName = `Header '${test.property}'`;
+                            break;
+                        case 'json':
+                        case 'json_type':
+                            if (!test.property) throw new Error("JSON path is required.");
+                            if (!parsedJson) throw new Error("Response body is not valid JSON.");
+                            actualValue = getJsonPathValue(parsedJson, test.property);
+                            targetName = `JSON '${test.property}'`;
+                            break;
+                    }
+
+                    passed = evaluateCondition(actualValue, test.operator, test.expected);
+                    if (passed) passedCount++;
+                } catch (e) {
+                    passed = false;
+                    errorMsg = e.message;
+                }
+
+                const opDisplay = test.operator.replace('_', ' ').toUpperCase();
+                const typeOperators = ['is_string', 'is_number', 'is_boolean', 'is_array', 'is_object', 'is_null'];
+                const expDisplay = (test.operator === 'exists' || typeOperators.includes(test.operator)) ? '' : test.expected;
+                const actualDisplay = typeof actualValue === 'object' ? JSON.stringify(actualValue) : String(actualValue);
+
+                const statusClass = passed ? 'pass' : 'fail';
+                const statusIcon = passed ? '✅ PASS' : '❌ FAIL';
+
+                resultsHtml += `
+                    <div class="test-result-item ${statusClass}">
+                        <div class="test-result-header">
+                            <span>Test ${index + 1}: ${targetName} ${opDisplay} ${expDisplay}</span>
+                            <span class="badge" style="background:transparent">${statusIcon}</span>
+                        </div>
+                        <div class="test-result-details">
+                            ${errorMsg ? `<span style="color:var(--error-color)">Error: ${errorMsg}</span>` :
+                        `<div><strong>Actual:</strong> ${actualDisplay !== 'undefined' ? actualDisplay : '<em>null/undefined</em>'}</div>
+                                 ${test.operator !== 'exists' && !typeOperators.includes(test.operator) ? `<div><strong>Expected:</strong> ${expDisplay}</div>` : ''}`
+                    }
+                        </div>
+                    </div>
+                `;
+            });
+
+            const summaryClass = passedCount === tests.length ? 'status-success' : 'status-warning';
+            const htmlHeader = `
+                <div class="test-results-summary ${summaryClass}">
+                    <strong>Tests Completed: ${passedCount} / ${tests.length} Passed</strong>
+                </div>
+            `;
+
+            container.innerHTML = htmlHeader + resultsHtml;
+            tabTrigger.innerHTML = `Test Results <span class="badge" style="background:var(--bg-color); color:${passedCount === tests.length ? 'var(--success-color)' : 'var(--error-color)'}; margin-left:6px;">${passedCount}/${tests.length}</span>`;
+
+            switchResTab('tests');
+        }
+
+        // --- Snippet Generation & Helpers ---
+        function updateSnippetDisplay() {
+            if (!currentSnippetDetails || !currentSnippetDetails.url) return;
+            const lang = document.getElementById('snippetLanguage').value;
+            const { method, url, headers, body, hasBody } = currentSnippetDetails;
+            let code = '';
+
+            if (lang === 'curl') {
+                code = `curl -X ${method} '${url}'`;
+                for (const [key, value] of Object.entries(headers)) {
+                    code += ` \\\n  -H '${key}: ${value}'`;
+                }
+                if (hasBody && body) {
+                    const escapedBody = body.replace(/'/g, "'\\''");
+                    code += ` \\\n  -d '${escapedBody}'`;
+                }
+            } else if (lang === 'fetch') {
+                code = `fetch('${url}', {\n  method: '${method}',\n  headers: {\n`;
+                for (const [key, value] of Object.entries(headers)) {
+                    code += `    '${key}': '${value.replace(/'/g, "\\'")}',\n`;
+                }
+                code += `  }`;
+                if (hasBody && body) {
+                    code += `,\n  body: \`${body.replace(/`/g, "\\`")}\`\n`;
+                } else {
+                    code += '\n';
+                }
+                code += `})\n.then(response => response.text())\n.then(data => console.log(data))\n.catch(error => console.error('Error:', error));`;
+            } else if (lang === 'python') {
+                code = `import requests\n\nurl = "${url}"\n\nheaders = {\n`;
+                for (const [key, value] of Object.entries(headers)) {
+                    code += `    "${key}": "${value.replace(/"/g, '\\"')}",\n`;
+                }
+                code += `}\n`;
+                if (hasBody && body) {
+                    code += `\npayload = """${body}"""\n`;
+                    code += `\nresponse = requests.request("${method}", url, headers=headers, data=payload)\n`;
+                } else {
+                    code += `\nresponse = requests.request("${method}", url, headers=headers)\n`;
+                }
+                code += `\nprint(response.text)`;
+            }
+
+            document.getElementById('snippetBody').textContent = code;
+        }
+
+        function copySnippet() {
+            const text = document.getElementById('snippetBody').innerText;
+            if (!text || text.includes('No request sent yet.')) return;
+
+            navigator.clipboard.writeText(text).then(() => {
+                showToast("Snippet copied to clipboard", "success");
+            }).catch(() => {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try { document.execCommand('copy'); showToast("Snippet copied", "success"); }
+                catch (err) { showToast("Failed to copy", "error"); }
+                document.body.removeChild(textArea);
+            });
+        }
+
         function copyResponseText() {
             const text = document.getElementById('responseBody').innerText;
             if (!text || text.includes('Waiting for response...')) return;
@@ -1229,23 +2502,14 @@
             });
         }
 
-        function copyRequestPayload() {
-            const text = document.getElementById('requestSentBody').innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                showToast("Copied request details", "success");
-            });
-        }
-
         function downloadResponse() {
             if (!lastResponseData) {
                 showToast("No response data to download", "warning");
                 return;
             }
-
             let blob;
             let ext = 'txt';
 
-            // Check if it's binary or text
             if (lastResponseData instanceof Blob) {
                 blob = lastResponseData;
                 if (lastResponseContentType.includes('image/png')) ext = 'png';
@@ -1269,55 +2533,110 @@
             URL.revokeObjectURL(url);
         }
 
+        function clearResponse() {
+            document.getElementById('responseBody').innerHTML = "<pre style='color:var(--text-secondary);'>Response cleared.</pre>";
+            document.getElementById('resStatus').textContent = "-";
+            document.getElementById('resStatus').className = "meta-value";
+            document.getElementById('resTime').textContent = "-";
+            document.getElementById('resSize').textContent = "-";
+            document.getElementById('responseHeadersList').innerHTML = "No headers to display.";
+            document.getElementById('testResultsContainer').innerHTML = "No tests executed yet.";
+            document.getElementById('scenarioMatchContainer').innerHTML = "No scenarios matched.";
+
+            document.getElementById('resTestsTabTrigger').style.display = 'none';
+            document.getElementById('resMatchesTabTrigger').style.display = 'none';
+            lastResponseData = null;
+        }
+
         // --- Request Execution ---
         async function sendRequest() {
-            let baseUrl = document.getElementById('reqUrl').value.trim();
+            let currentCollection = document.getElementById('reqCollection').value.trim();
+
+            let rawUrl = document.getElementById('reqUrl').value.trim();
+            let baseUrl = interpolateString(rawUrl, currentCollection);
+
             if (!baseUrl) {
                 showToast("Please enter a valid URL", "error");
                 return;
             }
 
-            // Append http if missing
             if (!/^https?:\/\//i.test(baseUrl)) {
                 baseUrl = 'https://' + baseUrl;
-                document.getElementById('reqUrl').value = baseUrl;
+                // Don't modify the input field to keep the variable visible
             }
 
             const method = document.getElementById('reqMethod').value;
             const finalUrl = baseUrl;
 
-            // 1. Process Headers
-            const headersList = getKvData('headersContainer').filter(h => h.isActive);
-            const headers = new Headers();
-            headersList.forEach(h => headers.append(h.key, h.value));
-
-            // 2. Process Auth
-            const authType = document.getElementById('authType').value;
-            if (authType === 'bearer') {
-                const token = document.getElementById('authToken').value.trim();
-                if (token) headers.set('Authorization', `Bearer ${token}`);
+            // Compute query params correctly if needed via fetch, but user usually enters them in URL directly
+            // Sync params explicitly into URL here just in case they typed in KV directly before hitting send
+            const params = getKvData('paramsContainer').filter(p => p.isActive && p.key);
+            let fetchUrl;
+            try {
+                fetchUrl = new URL(finalUrl);
+                params.forEach(p => {
+                    const pKey = interpolateString(p.key, currentCollection);
+                    const pVal = interpolateString(p.value, currentCollection);
+                    fetchUrl.searchParams.set(pKey, pVal);
+                });
+            } catch (e) {
+                showToast("Invalid URL formatting", "error");
+                return;
             }
 
-            // 3. Process Body
-            let body = null;
-            const hasBody = !['GET', 'HEAD', 'OPTIONS'].includes(method);
-            if (hasBody) {
-                body = document.getElementById('reqBody').value;
-                const contentType = document.getElementById('bodyContentType').value;
-                if (contentType !== 'none' && !headers.has('Content-Type')) {
-                    headers.set('Content-Type', contentType);
+            const headersList = getKvData('headersContainer').filter(h => h.isActive && h.key.trim() !== '');
+            const headers = new Headers();
+            const interpolatedHeadersForCurl = {};
+
+            headersList.forEach(h => {
+                const iKey = interpolateString(h.key, currentCollection);
+                const iVal = interpolateString(h.value, currentCollection);
+                headers.append(iKey, iVal);
+                interpolatedHeadersForCurl[iKey] = iVal;
+            });
+
+            const authType = document.getElementById('authType').value;
+            if (authType === 'bearer') {
+                const rawToken = document.getElementById('authToken').value.trim();
+                const token = interpolateString(rawToken, currentCollection);
+                if (token) {
+                    headers.set('Authorization', `Bearer ${token}`);
+                    interpolatedHeadersForCurl['Authorization'] = `Bearer ${token}`;
+                }
+            } else if (authType === 'basic') {
+                const rawUser = document.getElementById('authUsername').value;
+                const rawPass = document.getElementById('authPassword').value;
+                const user = interpolateString(rawUser, currentCollection);
+                const pass = interpolateString(rawPass, currentCollection);
+                if (user || pass) {
+                    const encoded = btoa(`${user}:${pass}`);
+                    headers.set('Authorization', `Basic ${encoded}`);
+                    interpolatedHeadersForCurl['Authorization'] = `Basic ${encoded}`;
                 }
             }
 
-            // 4. Setup UI for Loading
+            let body = null;
+            const hasBody = !['GET', 'HEAD', 'OPTIONS'].includes(method);
+            if (hasBody) {
+                const rawBody = document.getElementById('reqBody').value;
+                body = interpolateString(rawBody, currentCollection);
+
+                const contentType = document.getElementById('bodyContentType').value;
+                if (contentType !== 'none' && !headers.has('Content-Type')) {
+                    headers.set('Content-Type', contentType);
+                    interpolatedHeadersForCurl['Content-Type'] = contentType;
+                }
+            }
+
+            // UI Reset for new request
             const resBodyEl = document.getElementById('responseBody');
             const resStatusEl = document.getElementById('resStatus');
             const resTimeEl = document.getElementById('resTime');
             const resSizeEl = document.getElementById('resSize');
             const resHeadersEl = document.getElementById('responseHeadersList');
-            const reqSentEl = document.getElementById('requestSentBody');
+            const reqSentEl = document.getElementById('snippetBody');
 
-            resBodyEl.innerHTML = "<pre>Sending request...\nWaiting for response...</pre>";
+            resBodyEl.innerHTML = "<pre style='color: var(--accent-color); font-weight: bold;'>Sending request...</pre>";
             resStatusEl.textContent = "-";
             resStatusEl.className = "meta-value";
             resTimeEl.textContent = "-";
@@ -1326,16 +2645,22 @@
             lastResponseData = null;
             lastResponseContentType = null;
 
-            // Populate Request Payload Tab
-            let requestLog = `${method} ${finalUrl}\n`;
-            headers.forEach((value, key) => { requestLog += `${key}: ${value}\n`; });
-            if (hasBody && body) { requestLog += `\n${body}`; }
-            reqSentEl.textContent = requestLog;
+            document.getElementById('resTestsTabTrigger').style.display = 'none';
+            document.getElementById('resMatchesTabTrigger').style.display = 'none';
 
-            // 5. Fetch
+            if (document.getElementById('tab-res-tests').classList.contains('active') || document.getElementById('tab-res-matches').classList.contains('active')) {
+                switchResTab('body');
+            }
+
+            // Store snippet data globally and update view
+            currentSnippetDetails = {
+                method, url: fetchUrl.toString(), headers: interpolatedHeadersForCurl, body, hasBody
+            };
+            updateSnippetDisplay();
+
             const startTime = performance.now();
             try {
-                const response = await fetch(finalUrl, {
+                const response = await fetch(fetchUrl.toString(), {
                     method,
                     headers,
                     body: hasBody ? body : undefined,
@@ -1346,55 +2671,58 @@
                 const duration = Math.round(endTime - startTime);
                 resTimeEl.textContent = `${duration} ms`;
 
-                // Status Badge UI
                 resStatusEl.textContent = `${response.status} ${response.statusText}`;
                 if (response.status >= 200 && response.status < 300) resStatusEl.className = "meta-value badge status-success";
                 else if (response.status >= 400) resStatusEl.className = "meta-value badge status-error";
                 else resStatusEl.className = "meta-value badge status-warning";
 
-                // Headers processing
                 let resHeadersHtml = '<div style="display:grid; grid-template-columns: auto 1fr; gap: 8px 16px;">';
                 response.headers.forEach((value, key) => {
-                    resHeadersHtml += `<strong style="color:var(--accent-color)">${key}:</strong> <span>${value}</span>`;
+                    resHeadersHtml += `<strong style="color:var(--accent-color)">${key}:</strong> <span style="word-break: break-all;">${value}</span>`;
                 });
                 resHeadersHtml += '</div>';
                 resHeadersEl.innerHTML = resHeadersHtml || 'No headers returned.';
 
-                // Body processing
                 const responseType = response.headers.get("content-type") || "";
                 lastResponseContentType = responseType;
 
+                let parsedJsonBody = null;
+
                 if (responseType.includes("image/")) {
-                    // Handle Images explicitly
                     const blob = await response.blob();
                     lastResponseData = blob;
                     resSizeEl.textContent = formatBytes(blob.size);
-
                     const imgUrl = URL.createObjectURL(blob);
                     resBodyEl.innerHTML = `<img src="${imgUrl}" class="response-image" alt="Response Image">`;
+
+                    executeTests(response.status, duration, response.headers, blob, null);
+                    evaluateScenariosMatch(response.status, null);
                 } else {
-                    // Handle Text / JSON
                     let responseData = await response.text();
                     lastResponseData = responseData;
                     resSizeEl.textContent = formatBytes(new Blob([responseData]).size);
 
                     if (responseType.includes("application/json") && responseData.trim().length > 0) {
                         try {
-                            const json = JSON.parse(responseData);
-                            resBodyEl.innerHTML = `<pre>${JSON.stringify(json, null, 2)}</pre>`;
+                            parsedJsonBody = JSON.parse(responseData);
+                            const prettyJsonString = JSON.stringify(parsedJsonBody, null, 2);
+                            resBodyEl.innerHTML = `<pre>${syntaxHighlight(prettyJsonString)}</pre>`;
                         } catch (e) {
-                            resBodyEl.innerHTML = `<pre>${responseData}</pre>`; // Fallback to raw text
+                            resBodyEl.innerHTML = `<pre>${responseData}</pre>`;
                         }
                     } else {
-                        // Prevent HTML injection from APIs returning HTML text
                         const escapedText = responseData.replace(/</g, "&lt;").replace(/>/g, "&gt;");
                         resBodyEl.innerHTML = `<pre>${escapedText}</pre>`;
                     }
+
+                    executeTests(response.status, duration, response.headers, responseData, parsedJsonBody);
+                    evaluateScenariosMatch(response.status, parsedJsonBody);
                 }
 
             } catch (error) {
                 const endTime = performance.now();
-                resTimeEl.textContent = `${Math.round(endTime - startTime)} ms`;
+                const duration = Math.round(endTime - startTime);
+                resTimeEl.textContent = `${duration} ms`;
                 resStatusEl.textContent = "Network Error";
                 resStatusEl.className = "meta-value badge status-error";
                 resSizeEl.textContent = "0 Bytes";
@@ -1406,17 +2734,47 @@
                     <pre>This usually happens due to one of the following reasons:
 1. <strong>CORS Policy:</strong> The server blocks cross-origin requests from browsers.
 2. <strong>Network Offline:</strong> Check your internet connection.
-3. <strong>Invalid URL:</strong> Ensure the server is running and the URL is reachable.
+3. <strong>Invalid URL:</strong> Ensure the server is reachable.
 
 <em>Error Details: ${error.message}</em></pre>
                 `;
                 showToast("Request failed", "error");
+
+                executeTests(0, duration, new Headers(), null, null);
+                evaluateScenariosMatch(0, null);
             }
         }
 
         // --- LocalStorage History Logic ---
         function getHistory() {
             return JSON.parse(localStorage.getItem(STATE_KEY) || '[]');
+        }
+
+        function filterHistory() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const collections = document.querySelectorAll('.collection-group');
+
+            collections.forEach(group => {
+                const items = group.querySelectorAll('.history-item');
+                let groupHasMatch = false;
+
+                items.forEach(item => {
+                    const text = item.textContent.toLowerCase();
+                    if (text.includes(query)) {
+                        item.style.display = 'flex';
+                        groupHasMatch = true;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+
+                if (groupHasMatch || query === '') {
+                    group.style.display = 'block';
+                    if (query !== '') group.classList.add('open');
+                } else {
+                    group.style.display = 'none';
+                }
+            });
         }
 
         function saveToHistory(requestData) {
@@ -1444,21 +2802,34 @@
 
             setKvData('paramsContainer', []);
             setKvData('headersContainer', [{ key: 'Accept', value: '*/*', isActive: true }]);
+            setTestsData([]);
+            currentScenarios = [];
+            renderScenariosList();
+
+            document.getElementById('reqDocsEditor').value = '';
+            toggleDocsMode('edit');
 
             document.getElementById('authType').value = 'none';
             document.getElementById('authToken').value = '';
+            document.getElementById('authUsername').value = '';
+            document.getElementById('authPassword').value = '';
             toggleAuthFields();
 
             document.getElementById('bodyContentType').value = 'none';
             document.getElementById('reqBody').value = '';
 
-            // Clear response
             document.getElementById('responseBody').innerHTML = '<pre>Enter a URL and click Send to get a response...</pre>';
-            document.getElementById('requestSentBody').textContent = 'No request sent yet.';
+            document.getElementById('snippetBody').textContent = 'No request sent yet.';
             document.getElementById('resStatus').textContent = '-';
             document.getElementById('resTime').textContent = '-';
             document.getElementById('resSize').textContent = '-';
             document.getElementById('resStatus').className = 'meta-value';
+
+            document.getElementById('resTestsTabTrigger').style.display = 'none';
+            document.getElementById('resMatchesTabTrigger').style.display = 'none';
+
+            switchReqTab('params');
+            switchResTab('body');
         }
 
         function duplicateRequest() {
@@ -1493,13 +2864,24 @@
 
             setKvData('paramsContainer', item.params);
             setKvData('headersContainer', item.headers);
+            setTestsData(item.tests || []);
+
+            currentScenarios = item.scenarios || [];
+            renderScenariosList();
+
+            document.getElementById('reqDocsEditor').value = item.description || '';
+            toggleDocsMode('preview');
 
             document.getElementById('authType').value = item.authType || 'none';
             document.getElementById('authToken').value = item.token || '';
+            document.getElementById('authUsername').value = item.basicUser || '';
+            document.getElementById('authPassword').value = item.basicPass || '';
             toggleAuthFields();
 
             document.getElementById('bodyContentType').value = item.contentType || 'none';
             document.getElementById('reqBody').value = item.body || '';
+
+            if (item.contentType === 'application/json' && item.body) formatRequestBody(false); // Silent formatting
         }
 
         function deleteHistoryItem(event, id) {
@@ -1522,7 +2904,6 @@
                 return;
             }
 
-            // Group history items by collection
             const collections = {};
             history.forEach(item => {
                 const colName = item.collection && item.collection.trim() !== '' ? item.collection.trim() : 'Uncategorized';
@@ -1530,14 +2911,12 @@
                 collections[colName].push(item);
             });
 
-            // Sort collections alphabetically (Uncategorized at bottom)
             const sortedColNames = Object.keys(collections).sort((a, b) => {
                 if (a === 'Uncategorized') return 1;
                 if (b === 'Uncategorized') return -1;
                 return a.localeCompare(b);
             });
 
-            // Render Collections
             sortedColNames.forEach(colName => {
                 const items = collections[colName];
                 const groupDiv = document.createElement('div');
@@ -1580,7 +2959,6 @@
                 historyList.appendChild(groupDiv);
             });
 
-            // Re-apply filter if search input is not empty
             filterHistory();
         }
 
@@ -1601,14 +2979,20 @@
                 url: document.getElementById('reqUrl').value,
                 params: getKvData('paramsContainer'),
                 headers: getKvData('headersContainer'),
+                tests: getTestsData(),
+                scenarios: currentScenarios,
+                description: document.getElementById('reqDocsEditor').value,
                 authType: document.getElementById('authType').value,
                 token: document.getElementById('authToken').value,
+                basicUser: document.getElementById('authUsername').value,
+                basicPass: document.getElementById('authPassword').value,
                 contentType: document.getElementById('bodyContentType').value,
                 body: document.getElementById('reqBody').value,
                 timestamp: Date.now()
             };
 
             saveToHistory(requestData);
+            toggleDocsMode('preview'); // Auto-switch to preview mode upon save
         }
 
         function showToast(message, type = 'info') {
@@ -1624,14 +3008,12 @@
             toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
             container.appendChild(toast);
 
-            // Remove after 3 seconds
             setTimeout(() => {
                 toast.style.animation = 'fadeOut 0.3s ease forwards';
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
         }
 
-        // --- Utils ---
         function formatBytes(bytes, decimals = 2) {
             if (bytes === 0) return '0 Bytes';
             const k = 1024;
