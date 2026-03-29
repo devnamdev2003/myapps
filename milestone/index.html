@@ -891,7 +891,7 @@
                     card.innerHTML = `
                         <div class="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none transition-opacity group-hover:opacity-10" style="background: linear-gradient(to bottom right, ${wb.color}, transparent);"></div>
                         
-                        <div class="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                        <div class="absolute top-4 right-4 flex space-x-2 transition-opacity z-10">
                             <button onclick="event.stopPropagation(); editWorkbook('${wb.id}')" class="text-gray-400 hover:text-blue-500 bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 rounded-full w-9 h-9 flex items-center justify-center shadow-sm hover:shadow transition-all" title="Edit Topic"><i class="fa-solid fa-pen text-xs"></i></button>
                             <button onclick="event.stopPropagation(); deleteWorkbook('${wb.id}')" class="text-gray-400 hover:text-red-500 bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 rounded-full w-9 h-9 flex items-center justify-center shadow-sm hover:shadow transition-all" title="Delete Topic"><i class="fa-solid fa-trash text-xs"></i></button>
                         </div>
