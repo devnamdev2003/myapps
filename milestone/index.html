@@ -307,11 +307,6 @@
                         title="Global Settings">
                         <i class="fa-solid fa-gear"></i>
                     </button>
-                    <div
-                        class="text-sm font-bold text-brand bg-brand/10 px-4 py-2 rounded-xl hidden sm:flex items-center space-x-2">
-                        <i class="fa-solid fa-circle-check"></i>
-                        <span>Milestone Tracking</span>
-                    </div>
                 </div>
             </header>
 
@@ -694,6 +689,10 @@
             try { history.pushState(state, title, url); } catch (e) { }
         }
 
+        function generateSlug(text) {
+            return text.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/[\s-]+/g, '-');
+        }
+
         // ==========================================
         // CORE STATE & LOCALSTORAGE KEYS
         // ==========================================
@@ -806,12 +805,19 @@
 
             try {
                 const urlParams = new URLSearchParams(window.location.search);
-                const wbId = urlParams.get('wb');
+                const wbParam = urlParams.get('wb');
                 const labId = urlParams.get('lab');
-                if (wbId && appState.workbooks.find(w => w.id === wbId)) {
-                    const url = labId ? `?wb=${wbId}&lab=${labId}` : `?wb=${wbId}`;
-                    safeReplaceState({ view: 'workbook', wbId: wbId, labId: labId }, '', url);
-                    openWorkbook(wbId, false, labId);
+                if (wbParam) {
+                    const matchedWb = appState.workbooks.find(w => generateSlug(w.title) === wbParam || w.id === wbParam);
+                    if (matchedWb) {
+                        const wbSlug = generateSlug(matchedWb.title);
+                        const url = labId ? `?wb=${wbSlug}&lab=${labId}` : `?wb=${wbSlug}`;
+                        safeReplaceState({ view: 'workbook', wbId: matchedWb.id, labId: labId }, '', url);
+                        openWorkbook(matchedWb.id, false, labId);
+                    } else {
+                        safeReplaceState({ view: 'dashboard' }, '', window.location.pathname);
+                        showDashboard(false);
+                    }
                 } else {
                     safeReplaceState({ view: 'dashboard' }, '', window.location.pathname);
                     showDashboard(false);
@@ -877,7 +883,8 @@
             activeLabId = targetLabId;
 
             if (pushHistory) {
-                const url = targetLabId ? `?wb=${wbId}&lab=${targetLabId}` : `?wb=${wbId}`;
+                const wbSlug = generateSlug(wb.title);
+                const url = targetLabId ? `?wb=${wbSlug}&lab=${targetLabId}` : `?wb=${wbSlug}`;
                 safePushState({ view: 'workbook', wbId: wbId, labId: targetLabId }, '', url);
             }
 
@@ -906,7 +913,11 @@
 
         function backToCategories() {
             activeLabId = null;
-            safePushState({ view: 'workbook', wbId: activeWorkbookId, labId: null }, '', `?wb=${activeWorkbookId}`);
+            const wb = getActiveWorkbook();
+            if (wb) {
+                const wbSlug = generateSlug(wb.title);
+                safePushState({ view: 'workbook', wbId: activeWorkbookId, labId: null }, '', `?wb=${wbSlug}`);
+            }
             renderSidebar();
             renderLabContent(null);
         }
@@ -1073,7 +1084,9 @@
         function selectLab(labId, pushHistory = true) {
             activeLabId = labId;
             if (pushHistory) {
-                safePushState({ view: 'workbook', wbId: activeWorkbookId, labId: labId }, '', `?wb=${activeWorkbookId}&lab=${labId}`);
+                const wb = getActiveWorkbook();
+                const wbSlug = wb ? generateSlug(wb.title) : activeWorkbookId;
+                safePushState({ view: 'workbook', wbId: activeWorkbookId, labId: labId }, '', `?wb=${wbSlug}&lab=${labId}`);
             }
             renderSidebar();
             renderLabContent(labId);
@@ -1339,6 +1352,7 @@
             const stepLabel = document.getElementById('wbFormStepLabel').value.trim() || 'Checkpoint';
 
             let isValid = true;
+            const titleRegex = /^[a-zA-Z0-9\s]+$/;
 
             // Reset previous error styles
             [titleInput].forEach(input => {
@@ -1349,6 +1363,18 @@
             if (!title) {
                 titleInput.classList.add('border-red-500', 'ring-2', 'ring-red-500');
                 isValid = false;
+            } else if (!titleRegex.test(title)) {
+                alert("Workbook name can only contain letters, numbers, and spaces.");
+                titleInput.classList.add('border-red-500', 'ring-2', 'ring-red-500');
+                isValid = false;
+            } else {
+                const slug = generateSlug(title);
+                const duplicate = appState.workbooks.find(w => generateSlug(w.title) === slug && w.id !== id);
+                if (duplicate) {
+                    alert("A workbook with this name already exists. Please choose a unique name.");
+                    titleInput.classList.add('border-red-500', 'ring-2', 'ring-red-500');
+                    isValid = false;
+                }
             }
 
             // Stop if invalid
@@ -1375,7 +1401,7 @@
 
             // If the active workbook was edited, reflect changes dynamically
             if (id === activeWorkbookId) {
-                openWorkbook(id, false, activeLabId);
+                openWorkbook(id, true, activeLabId); // Update URL in case title changed
             }
         }
 
