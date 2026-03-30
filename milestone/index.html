@@ -694,6 +694,22 @@
         }
 
         // ==========================================
+        // XSS PREVENTION HELPER
+        // ==========================================
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str.replace(/[&<>'"]/g,
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
+        }
+
+        // ==========================================
         // CORE STATE & LOCALSTORAGE KEYS
         // ==========================================
         const APP_STORAGE_KEY = 'milestone_appData';
@@ -828,7 +844,12 @@
         }
 
         function saveState() {
-            localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(appState));
+            try {
+                localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(appState));
+            } catch (e) {
+                console.error("Storage Error:", e);
+                alert("Unable to save your progress. Your browser storage might be full.");
+            }
         }
 
         // ==========================================
@@ -858,7 +879,7 @@
 
         function updateIconPreview(inputId, previewId) {
             const val = document.getElementById(inputId).value;
-            document.getElementById(previewId).className = val + ' text-xl';
+            document.getElementById(previewId).className = escapeHTML(val) + ' text-xl';
         }
 
         function openWorkbook(wbId, pushHistory = true, targetLabId = null) {
@@ -894,11 +915,11 @@
             const mainTitle = document.getElementById('mainWbTitle');
             mainTitle.innerText = wb.title;
             mainTitle.title = wb.title;
-            document.getElementById('mainWbIcon').className = `${wb.icon} text-brand shrink-0 transition-colors`;
+            document.getElementById('mainWbIcon').className = `${escapeHTML(wb.icon)} text-brand shrink-0 transition-colors`;
 
             // Setup Sidebar Footer
-            document.getElementById('btnSidebarAddModule').innerHTML = `<i class="fa-solid fa-plus-circle mr-2"></i> <span>Add New ${wb.moduleLabel}</span>`;
-            document.getElementById('btnSidebarImport').title = `Import ${wb.moduleLabel}s to this Workbook`;
+            document.getElementById('btnSidebarAddModule').innerHTML = `<i class="fa-solid fa-plus-circle mr-2"></i> <span>Add New ${escapeHTML(wb.moduleLabel)}</span>`;
+            document.getElementById('btnSidebarImport').title = `Import ${escapeHTML(wb.moduleLabel)}s to this Workbook`;
 
             document.getElementById('homeView').classList.add('hidden');
             document.getElementById('workbookView').classList.remove('hidden');
@@ -973,28 +994,28 @@
 
                     // Add subtle background gradient using brand color
                     card.innerHTML = `
-                        <div class="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none transition-opacity group-hover:opacity-10" style="background: linear-gradient(to bottom right, ${wb.color}, transparent);"></div>
+                        <div class="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none transition-opacity group-hover:opacity-10" style="background: linear-gradient(to bottom right, ${escapeHTML(wb.color)}, transparent);"></div>
                         
                         <div class="absolute top-4 right-4 flex space-x-2 transition-opacity z-10">
-                            <button onclick="event.stopPropagation(); editWorkbook('${wb.id}')" class="text-gray-400 hover:text-blue-500 bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 rounded-full w-9 h-9 flex items-center justify-center shadow-sm hover:shadow transition-all" title="Edit Topic"><i class="fa-solid fa-pen text-xs"></i></button>
-                            <button onclick="event.stopPropagation(); deleteWorkbook('${wb.id}')" class="text-gray-400 hover:text-red-500 bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 rounded-full w-9 h-9 flex items-center justify-center shadow-sm hover:shadow transition-all" title="Delete Topic"><i class="fa-solid fa-trash text-xs"></i></button>
+                            <button onclick="event.stopPropagation(); editWorkbook('${escapeHTML(wb.id)}')" class="text-gray-400 hover:text-blue-500 bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 rounded-full w-9 h-9 flex items-center justify-center shadow-sm hover:shadow transition-all" title="Edit Topic"><i class="fa-solid fa-pen text-xs"></i></button>
+                            <button onclick="event.stopPropagation(); deleteWorkbook('${escapeHTML(wb.id)}')" class="text-gray-400 hover:text-red-500 bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 rounded-full w-9 h-9 flex items-center justify-center shadow-sm hover:shadow transition-all" title="Delete Topic"><i class="fa-solid fa-trash text-xs"></i></button>
                         </div>
                         
-                        <div class="w-16 h-16 rounded-2xl flex items-center justify-center mb-5 text-white text-3xl shadow-md transform group-hover:scale-105 transition-transform duration-300 relative z-10" style="background-color: ${wb.color}; box-shadow: 0 4px 14px 0 ${wb.color}40;">
-                            <i class="${wb.icon}"></i>
+                        <div class="w-16 h-16 rounded-2xl flex items-center justify-center mb-5 text-white text-3xl shadow-md transform group-hover:scale-105 transition-transform duration-300 relative z-10" style="background-color: ${escapeHTML(wb.color)}; box-shadow: 0 4px 14px 0 ${escapeHTML(wb.color)}40;">
+                            <i class="${escapeHTML(wb.icon)}"></i>
                         </div>
                         
-                        <h3 class="text-xl font-extrabold text-gray-800 dark:text-white mb-2 truncate relative z-10 tracking-tight" title="${wb.title}">${wb.title}</h3>
-                        ${wb.description ? `<p class="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-2 relative z-10 font-medium" title="${wb.description}">${wb.description}</p>` : ''}
-                        <p class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-6 relative z-10">${totalModules} ${modLabel}s &bull; ${totalSteps} ${stepLabel}s</p>
+                        <h3 class="text-xl font-extrabold text-gray-800 dark:text-white mb-2 truncate relative z-10 tracking-tight" title="${escapeHTML(wb.title)}">${escapeHTML(wb.title)}</h3>
+                        ${wb.description ? `<p class="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-2 relative z-10 font-medium" title="${escapeHTML(wb.description)}">${escapeHTML(wb.description)}</p>` : ''}
+                        <p class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-6 relative z-10">${totalModules} ${escapeHTML(modLabel)}s &bull; ${totalSteps} ${escapeHTML(stepLabel)}s</p>
                         
                         <div class="mt-auto relative z-10">
-                            <div class="flex justify-between text-xs font-extrabold mb-2" style="color: ${wb.color}">
+                            <div class="flex justify-between text-xs font-extrabold mb-2" style="color: ${escapeHTML(wb.color)}">
                                 <span>PROGRESS</span>
                                 <span>${progPerc}%</span>
                             </div>
                             <div class="w-full bg-gray-100 dark:bg-gray-700/50 rounded-full h-2 overflow-hidden border border-gray-200 dark:border-gray-600">
-                                <div class="h-2 rounded-full transition-all duration-700 ease-out relative" style="width: ${progPerc}%; background-color: ${wb.color}">
+                                <div class="h-2 rounded-full transition-all duration-700 ease-out relative" style="width: ${progPerc}%; background-color: ${escapeHTML(wb.color)}">
                                     <div class="absolute inset-0 bg-white/20"></div>
                                 </div>
                             </div>
@@ -1027,7 +1048,7 @@
 
                 const header = document.createElement('div');
                 header.className = "nav-header text-[10px] font-bold text-gray-400/80 uppercase tracking-widest mb-3 px-1 flex items-center";
-                header.innerHTML = `<span>${group.category}</span><div class="ml-3 h-px flex-1 bg-gray-700/50"></div>`;
+                header.innerHTML = `<span>${escapeHTML(group.category)}</span><div class="ml-3 h-px flex-1 bg-gray-700/50"></div>`;
                 groupContainer.appendChild(header);
 
                 const itemsContainer = document.createElement('div');
@@ -1059,8 +1080,8 @@
 
                     btn.innerHTML = `
                         <div class="flex items-center space-x-3 truncate pr-2">
-                            <i class="${lab.icon} ${isActive ? 'text-white' : 'text-gray-500'} w-5 text-center text-sm"></i>
-                            <span class="nav-text truncate font-bold text-[13px]" title="${lab.title}">${lab.title}</span>
+                            <i class="${escapeHTML(lab.icon)} ${isActive ? 'text-white' : 'text-gray-500'} w-5 text-center text-sm"></i>
+                            <span class="nav-text truncate font-bold text-[13px]" title="${escapeHTML(lab.title)}">${escapeHTML(lab.title)}</span>
                         </div>
                         <div class="nav-text flex items-center shrink-0">
                             ${isFullyComplete
@@ -1107,13 +1128,13 @@
                         <div class="flex flex-col items-center justify-center h-[60vh] text-gray-500 text-center animate-fade-in px-4">
                             <div class="bg-white dark:bg-gray-800 p-10 sm:p-14 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700 max-w-lg w-full">
                                 <div class="w-20 h-20 bg-brand/10 text-brand rounded-2xl flex items-center justify-center mx-auto mb-6 rotate-3">
-                                    <i class="${wb ? wb.icon : 'fa-solid fa-book'} text-4xl"></i>
+                                    <i class="${escapeHTML(wb ? wb.icon : 'fa-solid fa-book')} text-4xl"></i>
                                 </div>
-                                <h3 class="text-2xl font-extrabold text-gray-800 dark:text-white mb-3 tracking-tight">${wb ? wb.title : 'Milestone'}</h3>
-                                <p class="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed font-medium">Get started by creating your first ${wb ? wb.moduleLabel.toLowerCase() : 'module'}. You can group them into categories to keep everything organized.</p>
+                                <h3 class="text-2xl font-extrabold text-gray-800 dark:text-white mb-3 tracking-tight">${escapeHTML(wb ? wb.title : 'Milestone')}</h3>
+                                <p class="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed font-medium">Get started by creating your first ${escapeHTML(wb ? wb.moduleLabel.toLowerCase() : 'module')}. You can group them into categories to keep everything organized.</p>
                                 <button onclick="openManageLabModal()" class="bg-brand text-white px-8 py-3.5 rounded-xl font-bold hover:brightness-110 shadow-lg shadow-brand/30 transition-all w-full flex items-center justify-center space-x-2">
                                     <i class="fa-solid fa-plus"></i>
-                                    <span>Create New ${wb ? wb.moduleLabel : 'Module'}</span>
+                                    <span>Create New ${escapeHTML(wb ? wb.moduleLabel : 'Module')}</span>
                                 </button>
                             </div>
                         </div>`;
@@ -1135,16 +1156,16 @@
                         const prog = catSteps === 0 ? 0 : Math.round((compSteps / catSteps) * 100);
 
                         html += `
-                        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col group relative overflow-hidden" onclick="${firstLabId ? `selectLab('${firstLabId}')` : `openManageLabModal()`}">
+                        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col group relative overflow-hidden" onclick="${firstLabId ? `selectLab('${escapeHTML(firstLabId)}')` : `openManageLabModal()`}">
                             <div class="absolute inset-0 bg-brand opacity-0 group-hover:opacity-5 transition-opacity"></div>
                             <div class="flex justify-between items-start mb-4 relative z-10">
-                                <h4 class="font-extrabold text-lg text-gray-800 dark:text-white group-hover:text-brand transition-colors pr-2 leading-tight">${cat.category}</h4>
+                                <h4 class="font-extrabold text-lg text-gray-800 dark:text-white group-hover:text-brand transition-colors pr-2 leading-tight">${escapeHTML(cat.category)}</h4>
                                 <div class="flex items-center space-x-2">
-                                    <span class="bg-brand/10 text-brand text-xs font-bold px-3 py-1.5 rounded-lg shrink-0">${totalLabs} ${wb.moduleLabel}s</span>
-                                    <button onclick="openEditCategoryModal('${cat.category.replace(/'/g, "\\'")}', event)" class="text-gray-400 hover:text-blue-500 bg-gray-50 dark:bg-gray-700/50 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition p-1.5 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-blue-200 dark:hover:border-blue-800 shrink-0 shadow-sm" title="Edit Category">
+                                    <span class="bg-brand/10 text-brand text-xs font-bold px-3 py-1.5 rounded-lg shrink-0">${totalLabs} ${escapeHTML(wb.moduleLabel)}s</span>
+                                    <button onclick="openEditCategoryModal('${escapeHTML(cat.category)}', event)" class="text-gray-400 hover:text-blue-500 bg-gray-50 dark:bg-gray-700/50 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition p-1.5 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-blue-200 dark:hover:border-blue-800 shrink-0 shadow-sm" title="Edit Category">
                                         <i class="fa-solid fa-pen text-sm"></i>
                                     </button>
-                                    <button onclick="deleteCategory('${cat.category.replace(/'/g, "\\'")}', event)" class="text-gray-400 hover:text-red-500 bg-gray-50 dark:bg-gray-700/50 hover:bg-red-50 dark:hover:bg-red-900/30 transition p-1.5 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-red-200 dark:hover:border-red-800 shrink-0 shadow-sm" title="Delete Category">
+                                    <button onclick="deleteCategory('${escapeHTML(cat.category)}', event)" class="text-gray-400 hover:text-red-500 bg-gray-50 dark:bg-gray-700/50 hover:bg-red-50 dark:hover:bg-red-900/30 transition p-1.5 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-red-200 dark:hover:border-red-800 shrink-0 shadow-sm" title="Delete Category">
                                         <i class="fa-solid fa-trash text-sm"></i>
                                     </button>
                                 </div>
@@ -1189,28 +1210,28 @@
                         <div class="absolute top-0 left-0 w-2 h-full bg-brand"></div>
                         <div class="flex items-start space-x-5 pl-2">
                             <div class="bg-brand/10 p-4 rounded-2xl text-brand shrink-0">
-                                <i class="${foundLab.icon} text-3xl"></i>
+                                <i class="${escapeHTML(foundLab.icon)} text-3xl"></i>
                             </div>
                             <div class="flex-1 min-w-0">
                                 <div class="flex justify-between items-start gap-4">
-                                    <h3 class="text-2xl font-extrabold text-gray-800 dark:text-white mb-2 leading-tight">${foundLab.title}</h3>
+                                    <h3 class="text-2xl font-extrabold text-gray-800 dark:text-white mb-2 leading-tight">${escapeHTML(foundLab.title)}</h3>
                                     <div class="flex shrink-0 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700 p-1">
-                                        <button onclick="openManageLabModal('${foundLab.id}')" class="text-gray-400 hover:text-blue-500 hover:bg-white dark:hover:bg-gray-700 transition px-2.5 py-1.5 rounded mr-1" title="Edit ${wb.moduleLabel}">
+                                        <button onclick="openManageLabModal('${escapeHTML(foundLab.id)}')" class="text-gray-400 hover:text-blue-500 hover:bg-white dark:hover:bg-gray-700 transition px-2.5 py-1.5 rounded mr-1" title="Edit ${escapeHTML(wb.moduleLabel)}">
                                             <i class="fa-solid fa-pen text-sm"></i>
                                         </button>
-                                        <button onclick="deleteLab('${foundLab.id}')" class="text-gray-400 hover:text-red-500 hover:bg-white dark:hover:bg-gray-700 transition px-2.5 py-1.5 rounded" title="Delete ${wb.moduleLabel}">
+                                        <button onclick="deleteLab('${escapeHTML(foundLab.id)}')" class="text-gray-400 hover:text-red-500 hover:bg-white dark:hover:bg-gray-700 transition px-2.5 py-1.5 rounded" title="Delete ${escapeHTML(wb.moduleLabel)}">
                                             <i class="fa-solid fa-trash text-sm"></i>
                                         </button>
                                     </div>
                                 </div>
-                                <p class="text-gray-600 dark:text-gray-400 leading-relaxed font-medium mt-1">${foundLab.description}</p>
+                                <p class="text-gray-600 dark:text-gray-400 leading-relaxed font-medium mt-1">${escapeHTML(foundLab.description)}</p>
                             </div>
                         </div>
                     </div>
                     
                     <div class="flex items-center justify-between mb-4 px-2">
-                        <h4 class="font-extrabold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-xs">${wb.stepLabel}s</h4>
-                        <span class="text-xs bg-brand/20 text-brand font-bold px-3 py-1.5 rounded-lg">${foundLab.steps.length} ${wb.stepLabel}s</span>
+                        <h4 class="font-extrabold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-xs">${escapeHTML(wb.stepLabel)}s</h4>
+                        <span class="text-xs bg-brand/20 text-brand font-bold px-3 py-1.5 rounded-lg">${foundLab.steps.length} ${escapeHTML(wb.stepLabel)}s</span>
                     </div>
 
                     <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden divide-y divide-gray-100 dark:divide-gray-700/50">
@@ -1220,30 +1241,34 @@
             foundLab.steps.forEach((step, idx) => {
                 const checked = appState.progressData[step.id];
                 if (checked) labComp++;
+
+                // Safe markdown rendering fallback in case library fails to load
+                const renderDesc = (typeof marked !== 'undefined') ? marked.parse(step.description) : escapeHTML(step.description);
+
                 html += `
                     <div class="group relative">
                         ${checked ? `<div class="absolute left-0 top-0 bottom-0 w-1 bg-brand transition-all duration-300 z-10"></div>` : ''}
                         <label class="flex items-start p-5 sm:p-6 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
                             <div class="relative flex items-center pt-0.5 shrink-0">
                                 <input type="checkbox" ${checked ? 'checked' : ''} 
-                                    onchange="toggleStep('${step.id}')"
+                                    onchange="toggleStep('${escapeHTML(step.id)}')"
                                     class="peer appearance-none w-6 h-6 border-2 border-gray-300 dark:border-gray-500 rounded-lg checked:bg-brand checked:border-brand transition-all cursor-pointer shadow-sm hover:border-brand">
                                 <i class="fa-solid fa-check absolute left-[7px] top-[10px] text-white text-[10px] font-bold opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"></i>
                             </div>
                             <div class="ml-5 flex-1 flex items-start justify-between min-w-0">
                                 <div class="flex items-start flex-1 min-w-0">
                                     <span class="text-sm font-bold text-gray-400 dark:text-gray-500 w-8 shrink-0 mt-0.5">${idx + 1}.</span>
-                                    <span class="text-lg leading-snug font-medium ${checked ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-200'} transition-all pr-4">${step.text}</span>
+                                    <span class="text-lg leading-snug font-medium ${checked ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-200'} transition-all pr-4">${escapeHTML(step.text)}</span>
                                 </div>
                                 ${step.description ? `
-                                <button type="button" onclick="toggleStepDesc(event, 'desc-${step.id}')" class="ml-2 p-1.5 text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-brand/10 hover:text-brand rounded-lg transition shrink-0 border border-gray-200 dark:border-gray-700 hover:border-brand/30 shadow-sm" title="Show Description">
-                                    <i class="fa-solid fa-chevron-down transition-transform duration-300 text-sm" id="icon-${step.id}"></i>
+                                <button type="button" onclick="toggleStepDesc(event, 'desc-${escapeHTML(step.id)}')" class="ml-2 p-1.5 text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-brand/10 hover:text-brand rounded-lg transition shrink-0 border border-gray-200 dark:border-gray-700 hover:border-brand/30 shadow-sm" title="Show Description">
+                                    <i class="fa-solid fa-chevron-down transition-transform duration-300 text-sm" id="icon-${escapeHTML(step.id)}"></i>
                                 </button>
                                 ` : ''}
                             </div>
                         </label>
                         ${step.description ? `
-                        <div id="desc-${step.id}" class="hidden px-6 pb-6 ml-[3.75rem] sm:ml-[4rem] pl-4 border-l-2 border-brand/20 text-sm prose prose-slate dark:prose-invert max-w-none">${marked.parse(step.description)}</div>
+                        <div id="desc-${escapeHTML(step.id)}" class="hidden px-6 pb-6 ml-[3.75rem] sm:ml-[4rem] pl-4 border-l-2 border-brand/20 text-sm prose prose-slate dark:prose-invert max-w-none">${renderDesc}</div>
                         ` : ''}
                     </div>
                 `;
@@ -1258,8 +1283,8 @@
                             <i class="fa-solid fa-award text-4xl"></i>
                         </div>
                         <div>
-                            <h4 class="font-extrabold text-2xl text-green-800 dark:text-green-400 mb-1">${wb.moduleLabel} Complete!</h4>
-                            <p class="text-green-700 dark:text-green-300 font-medium">You've successfully mastered all ${wb.stepLabel.toLowerCase()}s for this module.</p>
+                            <h4 class="font-extrabold text-2xl text-green-800 dark:text-green-400 mb-1">${escapeHTML(wb.moduleLabel)} Complete!</h4>
+                            <p class="text-green-700 dark:text-green-300 font-medium">You've successfully mastered all ${escapeHTML(wb.stepLabel.toLowerCase())}s for this module.</p>
                         </div>
                     </div>
                 `;
@@ -1437,12 +1462,12 @@
             document.getElementById('labFormId').value = typeof labId === 'string' ? labId : '';
 
             // Dynamic Label Changes
-            document.getElementById('labFormModalTitle').innerHTML = `<i class="fa-solid fa-puzzle-piece mr-3 text-brand"></i> ${(typeof labId === 'string' ? `Edit ` : `Add `) + wb.moduleLabel}`;
-            document.getElementById('lblLabFormTitle').innerText = `${wb.moduleLabel} Title`;
-            document.getElementById('labFormTitle').placeholder = `e.g., Intro to ${wb.title}`;
-            document.getElementById('lblLabFormSteps').innerText = `${wb.stepLabel}s`;
-            document.getElementById('btnLabFormAddStep').innerHTML = `<i class="fa-solid fa-plus mr-2"></i> Add Another ${wb.stepLabel}`;
-            document.getElementById('btnLabFormSave').innerText = `Save ${wb.moduleLabel}`;
+            document.getElementById('labFormModalTitle').innerHTML = `<i class="fa-solid fa-puzzle-piece mr-3 text-brand"></i> ${(typeof labId === 'string' ? `Edit ` : `Add `) + escapeHTML(wb.moduleLabel)}`;
+            document.getElementById('lblLabFormTitle').innerText = `${escapeHTML(wb.moduleLabel)} Title`;
+            document.getElementById('labFormTitle').placeholder = `e.g., Intro to ${escapeHTML(wb.title)}`;
+            document.getElementById('lblLabFormSteps').innerText = `${escapeHTML(wb.stepLabel)}s`;
+            document.getElementById('btnLabFormAddStep').innerHTML = `<i class="fa-solid fa-plus mr-2"></i> Add Another ${escapeHTML(wb.stepLabel)}`;
+            document.getElementById('btnLabFormSave').innerText = `Save ${escapeHTML(wb.moduleLabel)}`;
 
             document.getElementById('categoryInputGroup').classList.remove('hidden');
             document.getElementById('categorySuggestions').classList.add('hidden');
@@ -1468,16 +1493,16 @@
                         const div = document.createElement('div');
                         div.className = "step-item flex flex-col space-y-3 border border-gray-200 dark:border-gray-700 p-4 rounded-xl relative bg-white dark:bg-gray-900 shadow-sm";
                         div.innerHTML = `
-                            <input type="hidden" name="stepInputId" value="${step.id}">
+                            <input type="hidden" name="stepInputId" value="${escapeHTML(step.id)}">
                             <div class="flex space-x-3">
-                                <input type="text" name="stepInputText" value="${step.text.replace(/"/g, '&quot;')}" class="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand outline-none bg-gray-50 dark:bg-gray-800 font-medium">
+                                <input type="text" name="stepInputText" value="${escapeHTML(step.text)}" class="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand outline-none bg-gray-50 dark:bg-gray-800 font-medium">
                                 <div class="flex space-x-1 shrink-0">
                                     <button type="button" onclick="moveStepUp(this)" class="text-gray-500 bg-gray-100 dark:bg-gray-800 hover:text-brand px-3 py-2 rounded-lg transition border border-gray-200 dark:border-gray-700" title="Move Up"><i class="fa-solid fa-arrow-up"></i></button>
                                     <button type="button" onclick="moveStepDown(this)" class="text-gray-500 bg-gray-100 dark:bg-gray-800 hover:text-brand px-3 py-2 rounded-lg transition border border-gray-200 dark:border-gray-700" title="Move Down"><i class="fa-solid fa-arrow-down"></i></button>
                                     <button type="button" onclick="this.closest('.step-item').remove()" class="text-red-500 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/30 px-3 py-2 rounded-lg transition border border-red-100 dark:border-red-900/30" title="Remove Item"><i class="fa-solid fa-trash"></i></button>
                                 </div>
                             </div>
-                            <textarea name="stepInputDesc" rows="2" placeholder="Optional details, markdown supported..." class="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand outline-none bg-gray-50 dark:bg-gray-800 text-sm">${step.description ? step.description.replace(/</g, '&lt;').replace(/>/g, '&gt;') : ''}</textarea>
+                            <textarea name="stepInputDesc" rows="2" placeholder="Optional details, markdown supported..." class="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand outline-none bg-gray-50 dark:bg-gray-800 text-sm">${escapeHTML(step.description)}</textarea>
                         `;
                         stepsContainer.appendChild(div);
                     });
@@ -1490,7 +1515,7 @@
                     <div class="step-item flex flex-col space-y-3 border border-gray-200 dark:border-gray-700 p-4 rounded-xl relative bg-white dark:bg-gray-900 shadow-sm">
                         <input type="hidden" name="stepInputId" value="">
                         <div class="flex space-x-3">
-                            <input type="text" name="stepInputText" placeholder="${wb.stepLabel} text..." class="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand outline-none bg-gray-50 dark:bg-gray-800 font-medium">
+                            <input type="text" name="stepInputText" placeholder="${escapeHTML(wb.stepLabel)} text..." class="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand outline-none bg-gray-50 dark:bg-gray-800 font-medium">
                             <div class="flex space-x-1 shrink-0">
                                 <button type="button" onclick="moveStepUp(this)" class="text-gray-500 bg-gray-100 dark:bg-gray-800 hover:text-brand px-3 py-2 rounded-lg transition border border-gray-200 dark:border-gray-700" title="Move Up"><i class="fa-solid fa-arrow-up"></i></button>
                                 <button type="button" onclick="moveStepDown(this)" class="text-gray-500 bg-gray-100 dark:bg-gray-800 hover:text-brand px-3 py-2 rounded-lg transition border border-gray-200 dark:border-gray-700" title="Move Down"><i class="fa-solid fa-arrow-down"></i></button>
@@ -1527,7 +1552,7 @@
 
             if (matches.length > 0) {
                 suggestionsEl.innerHTML = matches.map(c =>
-                    `<li onclick="selectCategorySuggestion('${c.replace(/'/g, "\\'")}')" class="px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm font-medium border-b border-gray-100 dark:border-gray-700 last:border-0 transition-colors">${c}</li>`
+                    `<li onclick="selectCategorySuggestion('${escapeHTML(c.replace(/'/g, "\\'"))}')" class="px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm font-medium border-b border-gray-100 dark:border-gray-700 last:border-0 transition-colors">${escapeHTML(c)}</li>`
                 ).join('');
                 suggestionsEl.classList.remove('hidden');
             } else {
@@ -1559,7 +1584,7 @@
             div.innerHTML = `
                 <input type="hidden" name="stepInputId" value="">
                 <div class="flex space-x-3">
-                    <input type="text" name="stepInputText" placeholder="Next ${wb ? wb.stepLabel.toLowerCase() : 'item'}..." class="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand outline-none bg-gray-50 dark:bg-gray-800 font-medium">
+                    <input type="text" name="stepInputText" placeholder="Next ${escapeHTML(wb ? wb.stepLabel.toLowerCase() : 'item')}..." class="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand outline-none bg-gray-50 dark:bg-gray-800 font-medium">
                     <div class="flex space-x-1 shrink-0">
                         <button type="button" onclick="moveStepUp(this)" class="text-gray-500 bg-gray-100 dark:bg-gray-800 hover:text-brand px-3 py-2 rounded-lg transition border border-gray-200 dark:border-gray-700" title="Move Up"><i class="fa-solid fa-arrow-up"></i></button>
                         <button type="button" onclick="moveStepDown(this)" class="text-gray-500 bg-gray-100 dark:bg-gray-800 hover:text-brand px-3 py-2 rounded-lg transition border border-gray-200 dark:border-gray-700" title="Move Down"><i class="fa-solid fa-arrow-down"></i></button>
@@ -1635,6 +1660,21 @@
             });
 
             if (labIdInput) {
+                // Cleanup orphaned progress data if a step was completely removed during editing
+                let oldLab = null;
+                for (const cat of wb.categories) {
+                    oldLab = cat.labs.find(l => l.id === labIdInput);
+                    if (oldLab) break;
+                }
+                if (oldLab) {
+                    const newStepIds = mappedSteps.map(s => s.id);
+                    oldLab.steps.forEach(oldStep => {
+                        if (!newStepIds.includes(oldStep.id)) {
+                            delete appState.progressData[oldStep.id]; // Delete orphaned data from localstorage
+                        }
+                    });
+                }
+
                 // Safely remove old lab from its old category (in case category changed)
                 for (let cIdx = wb.categories.length - 1; cIdx >= 0; cIdx--) {
                     const cat = wb.categories[cIdx];
@@ -1647,8 +1687,8 @@
                 }
             }
 
-            // Push into existing or newly created category
-            let category = wb.categories.find(c => c.category === categoryName);
+            // Case-Insensitive matching: Push into existing or newly created category
+            let category = wb.categories.find(c => c.category.toLowerCase() === categoryName.toLowerCase());
             if (!category) {
                 category = { category: categoryName, labs: [] };
                 wb.categories.push(category);
@@ -1675,7 +1715,6 @@
                         if (cat.labs.length === 0) wb.categories.splice(cIdx, 1);
                     }
                 });
-
 
                 stepIds.forEach(id => {
                     delete appState.progressData[id];
@@ -1837,12 +1876,12 @@
         function openImportModal() {
             const wb = getActiveWorkbook();
             if (wb) {
-                document.getElementById('importModalTitle').innerHTML = `<i class="fa-solid fa-file-import mr-3 text-brand"></i> Import Data to ${wb.title}`;
+                document.getElementById('importModalTitle').innerHTML = `<i class="fa-solid fa-file-import mr-3 text-brand"></i> Import Data to ${escapeHTML(wb.title)}`;
 
                 const modKey = wb.moduleLabel.toLowerCase() + 's';
                 const stepKey = wb.stepLabel.toLowerCase() + 's';
 
-                document.getElementById('importSampleHint').innerHTML = `The parser automatically looks for arrays named <strong>"${modKey}"</strong> and inner items named <strong>"${stepKey}"</strong>.`;
+                document.getElementById('importSampleHint').innerHTML = `The parser automatically looks for arrays named <strong>"${escapeHTML(modKey)}"</strong> and inner items named <strong>"${escapeHTML(stepKey)}"</strong>.`;
 
                 const sampleJson = `[
   {
@@ -1899,6 +1938,9 @@
                 const expectedStepKey = wb.stepLabel.toLowerCase() + 's';
 
                 importedCategories.forEach(newCat => {
+                    // Safe import structure evaluation
+                    if (typeof newCat !== 'object' || newCat === null) return;
+
                     // Flexible module detection: Find expected key, or just grab the first array property
                     const arrayKeys = Object.keys(newCat).filter(k => Array.isArray(newCat[k]));
                     const moduleKeyToUse = Array.isArray(newCat[expectedModKey]) ? expectedModKey : (arrayKeys.length > 0 ? arrayKeys[0] : null);
@@ -1913,6 +1955,8 @@
                     }
 
                     importModules.forEach(newMod => {
+                        if (typeof newMod !== 'object' || newMod === null) return;
+
                         // Flexible step detection: Find expected key, or just grab the first array property
                         const stepArrayKeys = Object.keys(newMod).filter(k => Array.isArray(newMod[k]));
                         const stepKeyToUse = Array.isArray(newMod[expectedStepKey]) ? expectedStepKey : (stepArrayKeys.length > 0 ? stepArrayKeys[0] : null);
