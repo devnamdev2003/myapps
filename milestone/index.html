@@ -1032,15 +1032,15 @@
                 // Flag 1 (Updated) or 0 (Created)
                 if (response.ok && (data.flag === 1 || data.flag === 0)) {
                     // Construct URL logic requested: "hostname/myapps/share?wb=15484353"
-                    const urlObj = new URL(window.location.href);
-                    let basePath = urlObj.pathname.replace(/\/index\.html$/, '');
-                    if (basePath.endsWith('/')) basePath = basePath.slice(0, -1);
+                    // const urlObj = new URL(window.location.href);
+                    // let basePath = urlObj.pathname.replace(/\/index\.html$/, '');
+                    // if (basePath.endsWith('/')) basePath = basePath.slice(0, -1);
 
-                    // Use standard /share formatting, or fallback directly to file if no server routes are active
-                    let shareUrl = urlObj.origin + basePath + '/share?wb=' + shareId;
-                    if (!basePath.includes('/myapps')) {
-                        shareUrl = window.location.href.split('?')[0] + '?shared_wb=' + shareId;
-                    }
+                    // // Use standard /share formatting, or fallback directly to file if no server routes are active
+                    // let shareUrl = urlObj.origin + basePath + '/share?wb=' + shareId;
+                    // if (!basePath.includes('/myapps')) {
+                    shareUrl = window.location.href.split('?')[0] + '?shared_wb=' + shareId;
+                    // }
 
                     document.getElementById('shareLoadingState').classList.add('hidden');
                     document.getElementById('shareSuccessState').classList.remove('hidden');
