@@ -1,0 +1,269 @@
+[
+    {
+        "category": "Phase 1: Interface & Core Concepts",
+        "modules": [
+            {
+                "title": "The Milestone Philosophy",
+                "icon": "fa-solid fa-rocket",
+                "description": "Understand the foundation of the application and why it uses a hierarchical structure.",
+                "steps": [
+                    {
+                        "text": "The 3-Tier Architecture",
+                        "description": "Milestone replaces flat to-do lists with a strict hierarchy: **Workbooks** (Your main goal) -> **Categories** (Sections/Phases) -> **Modules & Steps** (The actionable tasks). This structure reduces cognitive load and makes massive goals achievable."
+                    },
+                    {
+                        "text": "Local-First Data Privacy",
+                        "description": "Your data is not stored on a cloud server. Everything lives securely in your browser's `localStorage`. This means the app is lightning-fast, highly private, and works 100% offline."
+                    }
+                ]
+            },
+            {
+                "title": "Mastering the Interface",
+                "icon": "fa-solid fa-desktop",
+                "description": "Learn to navigate the UI, reduce distractions, and customize your viewing experience.",
+                "steps": [
+                    {
+                        "text": "Toggle Dark and Light Mode",
+                        "description": "Click the Moon/Sun icon in the top right corner. Use Light Mode for daytime focus and Dark Mode for late-night coding or reading sessions to reduce eye strain."
+                    },
+                    {
+                        "text": "Collapse the Sidebar for Deep Work",
+                        "description": "When reading long markdown notes, the sidebar can be distracting. Click the 'hamburger' menu icon (three lines) next to the dashboard back button to collapse the sidebar and enter full-screen reading mode."
+                    },
+                    {
+                        "text": "Use Next/Previous Quick Navigation",
+                        "description": "At the bottom of every module, you will find 'Next' and 'Previous' buttons. Use these to seamlessly flow through your curriculum without needing to open the sidebar."
+                    },
+                    {
+                        "text": "Return to the Global Dashboard",
+                        "description": "Click the 'Dashboard' back button at the top of the sidebar, or click the Milestone logo in the top left corner, to return to your main Workbook grid."
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "category": "Phase 2: Workbooks & Terminology",
+        "modules": [
+            {
+                "title": "Creating Your First Environment",
+                "icon": "fa-solid fa-book-open",
+                "description": "Build a personalized workbook tailored to your specific project or learning goal.",
+                "steps": [
+                    {
+                        "text": "Initialize a Workbook",
+                        "description": "On the main dashboard, click the blue `New Workbook` button. Give your project a clear, actionable title like 'Mastering React.js' or 'Marathon Training Prep'."
+                    },
+                    {
+                        "text": "Apply Custom Branding (Color & Icon)",
+                        "description": "Pick a Theme Color. This color will instantly apply to all progress bars, buttons, and active states inside the workbook. Next, assign a FontAwesome icon (e.g., `fa-brands fa-js`) to represent it visually."
+                    },
+                    {
+                        "text": "Hack the Terminology",
+                        "description": "This is crucial: Change the default words to match your goal. \n\n- Learning to code? Use **Labs** and **Checkpoints**.\n- Reading a book? Use **Chapters** and **Pages**.\n- Exercising? Use **Weeks** and **Workouts**.\n\nThe entire app will rewrite its UI to speak your chosen language."
+                    }
+                ]
+            },
+            {
+                "title": "Managing Existing Workbooks",
+                "icon": "fa-solid fa-pen-to-square",
+                "description": "Learn how to edit or safely delete your high-level projects.",
+                "steps": [
+                    {
+                        "text": "Edit Workbook Settings",
+                        "description": "Hover over any Workbook card on the dashboard. Click the small Pencil icon in the top right corner to change the title, color, icon, or terminology at any time."
+                    },
+                    {
+                        "text": "Delete a Workbook Safely",
+                        "description": "Hover over a Workbook card and click the Trash icon. **Warning:** This will permanently delete the workbook and every single module, step, and piece of progress inside it."
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "category": "Phase 3: Architecting the Curriculum",
+        "modules": [
+            {
+                "title": "Categories and Modules",
+                "icon": "fa-solid fa-layer-group",
+                "description": "Organize your knowledge logically to create a clear roadmap.",
+                "steps": [
+                    {
+                        "text": "Create a New Category",
+                        "description": "Inside a Workbook, click `Add New Module` in the sidebar. In the 'Category/Section' field, type a new name like 'Beginner Concepts'. Categories group your modules together visually."
+                    },
+                    {
+                        "text": "Edit or Delete Categories",
+                        "description": "On the main category overview screen, hover over a category title. Click the Pencil icon to rename it, or the Trash icon to delete it (which also deletes all modules inside it!)."
+                    },
+                    {
+                        "text": "Add a Module",
+                        "description": "Modules are the specific lessons. Give your module an action-oriented title (e.g., 'Understanding Variables') and assign it a unique icon."
+                    }
+                ]
+            },
+            {
+                "title": "Steps and Rich Markdown",
+                "icon": "fa-brands fa-markdown",
+                "description": "Write beautiful, detailed checklists using markdown formatting.",
+                "steps": [
+                    {
+                        "text": "Draft Granular Steps",
+                        "description": "At the bottom of the module form, add your specific tasks. Break big tasks down! If a task takes more than 2 hours, make it a separate step."
+                    },
+                    {
+                        "text": "Reorder Steps Logically",
+                        "description": "Use the Up and Down arrow buttons next to the step inputs in the module form to perfectly sequence your learning path."
+                    },
+                    {
+                        "text": "Format Text with Markdown",
+                        "description": "The description box is a powerful notepad. Use `**bold**`, `*italics*`, `> blockquotes`, and `- lists` to format your notes perfectly."
+                    },
+                    {
+                        "text": "Embed Code Blocks",
+                        "description": "Writing a coding curriculum? Use backticks to embed code. Inline code looks like `npm start`. Triple backticks allow you to paste massive multi-line configuration files safely."
+                    },
+                    {
+                        "text": "Expand and Collapse Notes",
+                        "description": "To keep the UI clean, step descriptions are hidden by default. Click the Chevron (arrow) icon next to a step title to expand and read your rich markdown notes."
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "category": "Phase 4: Progress & Tracking",
+        "modules": [
+            {
+                "title": "The Three Levels of Progress",
+                "icon": "fa-solid fa-chart-line",
+                "description": "Understand how Milestone motivates you mathematically.",
+                "steps": [
+                    {
+                        "text": "Level 1: Module Progress",
+                        "description": "When you check a box, look at the sidebar. The percentage next to your current module will instantly increase. Hit 100% and it turns into a green checkmark."
+                    },
+                    {
+                        "text": "Level 2: Category Progress",
+                        "description": "Click the 'Back to Categories' button. You will see progress bars for every section. This macro view shows you exactly where you are falling behind."
+                    },
+                    {
+                        "text": "Level 3: Global Progress",
+                        "description": "Look at the top of your screen. The master progress bar calculates the total percentage of every step in the entire workbook. This is your ultimate finish line."
+                    }
+                ]
+            },
+            {
+                "title": "Managing Your Completion State",
+                "icon": "fa-solid fa-rotate-left",
+                "description": "How to handle iterative learning and reviewing.",
+                "steps": [
+                    {
+                        "text": "Uncheck to Review",
+                        "description": "Forgot a concept? Simply uncheck the step. Your progress bars will dynamically recalculate downwards, allowing you to honestly track what you actually know."
+                    },
+                    {
+                        "text": "Reset the Entire Workbook",
+                        "description": "Finished a course but want to take it again to solidify your knowledge? Click the `Reset WB` button in the sidebar footer. This instantly unchecks all steps so you can start fresh."
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "category": "Phase 5: Data, Security & Sharing",
+        "modules": [
+            {
+                "title": "Backups and Factory Resets",
+                "icon": "fa-solid fa-hard-drive",
+                "description": "Because your data is local, you must manage your own backups.",
+                "steps": [
+                    {
+                        "text": "Export a Global JSON Backup",
+                        "description": "Click the `Settings` gear icon in the top right of the main dashboard. Click `Export All Data`. This downloads a file to your computer containing everything. **Do this regularly!**"
+                    },
+                    {
+                        "text": "Restore from a Backup",
+                        "description": "Changed browsers? Cleared your cache accidentally? Go to `Settings`, click `Import Data (Restore)`, select your backup file, and your entire workspace will reappear."
+                    },
+                    {
+                        "text": "The Factory Reset Button",
+                        "description": "Located in the settings menu, this button will permanently delete ALL data from your browser's local storage. Use this only if you want to completely destroy your workspace."
+                    }
+                ]
+            },
+            {
+                "title": "Sharing and Collaboration",
+                "icon": "fa-solid fa-share-nodes",
+                "description": "Share your hard work with friends without risking your data.",
+                "steps": [
+                    {
+                        "text": "Generate a Share Link",
+                        "description": "On the main dashboard, hover over any workbook card and look for the `Share` (link) icon. Click it to generate a unique URL."
+                    },
+                    {
+                        "text": "Understand Read-Only Mode",
+                        "description": "When someone opens your shared link, Milestone enters Read-Only mode. They can read your markdown and browse your modules, but they cannot check boxes, edit text, or delete your data."
+                    },
+                    {
+                        "text": "Exporting Specific Workbooks",
+                        "description": "Alternatively, you can export a workbook as JSON and email it to a friend. They can use the `Import` button inside an empty workbook to load your curriculum onto their machine."
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "category": "Phase 6: AI Automation Magic",
+        "modules": [
+            {
+                "title": "Generating Courses with AI",
+                "icon": "fa-solid fa-wand-magic-sparkles",
+                "description": "Use ChatGPT or Gemini to build 50-step courses in 10 seconds.",
+                "steps": [
+                    {
+                        "text": "Step 1: Get the JSON Schema",
+                        "description": "Open any workbook, click `Import` in the sidebar footer, and click 'View Sample JSON Format'. Copy that block of code."
+                    },
+                    {
+                        "text": "Step 2: Prompt the AI",
+                        "description": "Go to ChatGPT and type: 'I want to learn [Topic]. Create a 20-step learning roadmap for me. Output the result strictly as a raw JSON array matching this exact schema: [Paste Schema Here]'"
+                    },
+                    {
+                        "text": "Step 3: Import the Magic",
+                        "description": "Copy the AI's JSON output, go back to the Milestone Import modal, paste it into the text area, and hit `Import JSON`. The app will instantly build the entire course."
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "category": "Phase 7: Creative Playbooks",
+        "modules": [
+            {
+                "title": "Hacking Milestone for Unique Uses",
+                "icon": "fa-solid fa-lightbulb",
+                "description": "Milestone is a chameleon. Change the terminology to use it for anything.",
+                "steps": [
+                    {
+                        "text": "Build a Flashcard Deck",
+                        "description": "Set the step title as the Question. Hide the Answer in the markdown description. Expand to reveal, and check the box if you get it right."
+                    },
+                    {
+                        "text": "Gamify Your Chores (RPG Mode)",
+                        "description": "Set Module Term to `Quest` and Item Term to `Objective`. Give the workbook a sword icon. Completing chores now fills up your 'Experience' bar."
+                    },
+                    {
+                        "text": "Daily Habit Tracking",
+                        "description": "Create categories for 'Weeks'. Create modules for 'Days'. Your steps are your daily habits (Drink Water, Meditate). Track your discipline percentage over the month."
+                    },
+                    {
+                        "text": "Interactive Quizzes",
+                        "description": "Make the Module title the Question. Make the Steps the multiple-choice options. Use the markdown descriptions to explain why an option is right or wrong."
+                    }
+                ]
+            }
+        ]
+    }
+]
