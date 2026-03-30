@@ -1426,8 +1426,10 @@
             renderLabContent(labId);
         }
 
-        function renderLabContent(labId) {
+        function renderLabContent(labId, preserveScroll = false) {
             const contentEl = document.getElementById('labContent');
+            const scrollParent = contentEl.parentElement;
+            const currentScroll = scrollParent.scrollTop;
             const wb = getActiveWorkbook();
             const titleEl = document.getElementById('currentModuleTitle');
 
@@ -1500,17 +1502,30 @@
                     });
                     html += `</div></div>`;
                     contentEl.innerHTML = html;
+                    if (preserveScroll) {
+                        scrollParent.scrollTop = currentScroll;
+                    } else {
+                        scrollParent.scrollTop = 0;
+                    }
                 }
                 return;
             }
 
             let foundLab = null;
+            let allLabsList = [];
+
             wb.categories.forEach(cat => {
-                const l = cat.labs.find(x => x.id === labId);
-                if (l) foundLab = l;
+                cat.labs.forEach(l => {
+                    allLabsList.push(l);
+                    if (l.id === labId) foundLab = l;
+                });
             });
 
             if (!foundLab) return;
+
+            const currentLabIndex = allLabsList.findIndex(l => l.id === labId);
+            const prevLab = currentLabIndex > 0 ? allLabsList[currentLabIndex - 1] : null;
+            const nextLab = currentLabIndex < allLabsList.length - 1 ? allLabsList[currentLabIndex + 1] : null;
 
             titleEl.innerText = foundLab.title;
             titleEl.title = foundLab.title;
@@ -1609,14 +1624,38 @@
                 `;
             }
 
+            // Add Next/Prev Navigation
+            html += `
+                <div class="mt-8 flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
+                    ${prevLab ? `
+                        <button onclick="selectLab('${escapeHTML(prevLab.id)}')" class="flex items-center px-5 py-2.5 rounded-xl bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-bold shadow-sm border border-gray-200 dark:border-gray-700 hover:text-brand hover:border-brand dark:hover:border-brand transition">
+                            <i class="fa-solid fa-arrow-left mr-2"></i> Previous
+                        </button>
+                    ` : `<div></div>`}
+                    
+                    ${nextLab ? `
+                        <button onclick="selectLab('${escapeHTML(nextLab.id)}')" class="flex items-center px-5 py-2.5 rounded-xl bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-bold shadow-sm border border-gray-200 dark:border-gray-700 hover:text-brand hover:border-brand dark:hover:border-brand transition">
+                            Next <i class="fa-solid fa-arrow-right ml-2"></i>
+                        </button>
+                    ` : `<div></div>`}
+                </div>
+            `;
+
             html += `</div>`;
             contentEl.innerHTML = html;
+
+            // Scroll behavior
+            if (preserveScroll) {
+                scrollParent.scrollTop = currentScroll;
+            } else {
+                scrollParent.scrollTop = 0;
+            }
         }
 
         function toggleStep(stepId) {
             appState.progressData[stepId] = !appState.progressData[stepId];
             saveState();
-            renderLabContent(activeLabId);
+            renderLabContent(activeLabId, true);
             renderSidebar();
         }
 
