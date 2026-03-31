@@ -317,6 +317,12 @@
                         <i class="fa-solid fa-file-import"></i>
                         <span>Import</span>
                     </button>
+                    <button onclick="exportCurrentWorkbook()" id="btnSidebarExport"
+                        class="w-full flex items-center justify-center space-x-2 border border-gray-700 hover:bg-gray-800 hover:border-gray-600 text-gray-300 py-2.5 px-2 rounded-xl text-xs transition font-semibold"
+                        title="Export this Workbook to JSON">
+                        <i class="fa-solid fa-file-export"></i>
+                        <span>Export</span>
+                    </button>
                     <button onclick="resetCurrentWorkbookProgress()"
                         class="w-full flex items-center justify-center space-x-2 border border-gray-700 hover:bg-gray-800 hover:border-gray-600 text-gray-300 py-2.5 px-2 rounded-xl text-xs transition font-semibold"
                         title="Reset Progress for this Workbook">
@@ -482,6 +488,11 @@
                                 <span>Import Data (Restore)</span>
                             </button>
                         </div>
+                        <button onclick="hardRefresh()"
+                            class="w-full flex items-center justify-center space-x-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white py-3.5 px-4 rounded-xl font-bold transition">
+                            <i class="fa-solid fa-rotate-right text-brand"></i>
+                            <span>Hard Refresh</span>
+                        </button>
                     </div>
                 </div>
 
@@ -2189,6 +2200,34 @@
         // ==========================================
         function openGlobalSettingsModal() { document.getElementById('globalSettingsModal').classList.remove('hidden'); }
         function closeGlobalSettingsModal() { document.getElementById('globalSettingsModal').classList.add('hidden'); }
+
+        function hardRefresh() {
+            // Adds a unique timestamp to the URL to bypass the browser cache on reload
+            const url = new URL(window.location.href);
+            url.searchParams.set('t', new Date().getTime());
+            window.location.href = url.href;
+        }
+
+        function exportCurrentWorkbook() {
+            const wb = getActiveWorkbook();
+            if (!wb) return;
+
+            // We export ONLY the categories array, which is exactly what the Import function expects
+            const dataStr = JSON.stringify(wb.categories, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            // Generate a clean filename based on the workbook title
+            const safeTitle = wb.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+            a.download = `milestone_${safeTitle}_export.json`;
+
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
 
         function exportAllData() {
             const dataStr = JSON.stringify(appState, null, 2);
