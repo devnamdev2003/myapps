@@ -834,20 +834,80 @@
             </div>
 
             <div
-                class="flex border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shrink-0 px-6 pt-2">
-                <button type="button" id="tabWrite" onclick="switchMarkdownTab('write')"
-                    class="px-4 py-2.5 border-b-2 border-brand text-brand font-bold text-sm outline-none transition-colors">Write</button>
-                <button type="button" id="tabPreview" onclick="switchMarkdownTab('preview')"
-                    class="px-4 py-2.5 border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 font-bold text-sm outline-none transition-colors">Preview</button>
+                class="flex flex-wrap items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shrink-0 px-4 sm:px-6 pt-2">
+
+                <div class="flex">
+                    <button type="button" id="tabWrite" onclick="switchMarkdownTab('write')"
+                        class="px-4 py-2.5 border-b-2 border-brand text-brand font-bold text-sm outline-none transition-colors">Write</button>
+                    <button type="button" id="tabPreview" onclick="switchMarkdownTab('preview')"
+                        class="px-4 py-2.5 border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 font-bold text-sm outline-none transition-colors">Preview</button>
+                </div>
+
+                <div id="mdToolbar" class="flex items-center flex-wrap gap-0.5 sm:gap-1 pb-1">
+                    <button type="button" onclick="insertMarkdown('bold')"
+                        class="p-1.5 sm:p-2 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                        title="Bold">
+                        <i class="fa-solid fa-bold w-4 text-center"></i>
+                    </button>
+                    <button type="button" onclick="insertMarkdown('italic')"
+                        class="p-1.5 sm:p-2 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                        title="Italic">
+                        <i class="fa-solid fa-italic w-4 text-center"></i>
+                    </button>
+                    <button type="button" onclick="insertMarkdown('strikethrough')"
+                        class="p-1.5 sm:p-2 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                        title="Strikethrough">
+                        <i class="fa-solid fa-strikethrough w-4 text-center"></i>
+                    </button>
+
+                    <div class="w-px h-4 sm:h-5 bg-gray-300 dark:bg-gray-600 mx-0.5 sm:mx-1"></div>
+
+                    <button type="button" onclick="insertMarkdown('link')"
+                        class="p-1.5 sm:p-2 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                        title="Insert Link">
+                        <i class="fa-solid fa-link w-4 text-center"></i>
+                    </button>
+                    <button type="button" onclick="insertMarkdown('image')"
+                        class="p-1.5 sm:p-2 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                        title="Insert Image">
+                        <i class="fa-solid fa-image w-4 text-center"></i>
+                    </button>
+
+                    <div class="w-px h-4 sm:h-5 bg-gray-300 dark:bg-gray-600 mx-0.5 sm:mx-1"></div>
+
+                    <button type="button" onclick="insertMarkdown('code')"
+                        class="p-1.5 sm:p-2 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                        title="Inline Code">
+                        <i class="fa-solid fa-code w-4 text-center"></i>
+                    </button>
+                    <button type="button" onclick="insertMarkdown('codeblock')"
+                        class="p-1.5 sm:p-2 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                        title="Code Block">
+                        <i class="fa-solid fa-file-code w-4 text-center"></i>
+                    </button>
+
+                    <div class="w-px h-4 sm:h-5 bg-gray-300 dark:bg-gray-600 mx-0.5 sm:mx-1"></div>
+
+                    <button type="button" onclick="insertMarkdown('ul')"
+                        class="p-1.5 sm:p-2 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                        title="Bullet List">
+                        <i class="fa-solid fa-list-ul w-4 text-center"></i>
+                    </button>
+                    <button type="button" onclick="insertMarkdown('ol')"
+                        class="p-1.5 sm:p-2 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                        title="Numbered List">
+                        <i class="fa-solid fa-list-ol w-4 text-center"></i>
+                    </button>
+                </div>
             </div>
 
             <div class="flex-1 overflow-hidden flex flex-col bg-gray-50 dark:bg-gray-900/50">
                 <textarea id="mdEditorTextarea"
-                    class="w-full h-full p-6 resize-none outline-none bg-transparent text-gray-800 dark:text-gray-200 font-mono text-sm leading-relaxed"
-                    placeholder="Write your markdown description here... Use **bold**, *italics*, and `code` blocks."></textarea>
+                    class="flex-1 w-full h-full p-4 sm:p-6 resize-none outline-none bg-transparent text-gray-800 dark:text-gray-200 font-mono text-sm leading-relaxed"
+                    placeholder="Write your markdown description here..."></textarea>
 
                 <div id="mdEditorPreview"
-                    class="w-full h-full p-6 overflow-y-auto hidden prose prose-slate dark:prose-invert max-w-none bg-white dark:bg-gray-900">
+                    class="flex-1 w-full h-full p-4 sm:p-6 overflow-y-auto hidden prose prose-slate dark:prose-invert max-w-none bg-white dark:bg-gray-900">
                 </div>
             </div>
 
@@ -2789,10 +2849,7 @@
             currentMdTargetInput = container.querySelector('input[name="stepInputDesc"]');
             currentMdTargetBtn = container.querySelector('.desc-btn-text');
 
-            // Populate textarea with existing value
             document.getElementById('mdEditorTextarea').value = currentMdTargetInput.value;
-
-            // Default to Write tab
             switchMarkdownTab('write');
             document.getElementById('markdownEditorModal').classList.remove('hidden');
         }
@@ -2806,20 +2863,19 @@
         function saveMarkdownEditor() {
             if (currentMdTargetInput && currentMdTargetBtn) {
                 const val = document.getElementById('mdEditorTextarea').value;
-                currentMdTargetInput.value = val; // Store back in hidden input
+                currentMdTargetInput.value = val;
 
-                // Update button UI based on if content exists
                 const btnParent = currentMdTargetBtn.closest('button');
                 const icon = btnParent.querySelector('i');
 
                 if (val.trim() !== '') {
                     currentMdTargetBtn.innerText = 'Edit Description';
                     icon.className = 'fa-solid fa-pen-to-square';
-                    btnParent.className = 'flex items-center space-x-2 text-sm font-bold px-4 py-2.5 rounded-lg transition border bg-brand/10 text-brand border-brand/30 hover:bg-brand/20';
+                    btnParent.className = 'flex items-center space-x-2 text-sm font-bold px-4 py-2 rounded-lg transition border bg-brand/10 text-brand border-brand/30 hover:bg-brand/20';
                 } else {
                     currentMdTargetBtn.innerText = 'Add Description';
                     icon.className = 'fa-solid fa-plus';
-                    btnParent.className = 'flex items-center space-x-2 text-sm font-bold px-4 py-2.5 rounded-lg transition border bg-gray-50 dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-700 hover:text-brand';
+                    btnParent.className = 'flex items-center space-x-2 text-sm font-bold px-4 py-2 rounded-lg transition border bg-gray-50 dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-700 hover:text-brand';
                 }
             }
             closeMarkdownEditor();
@@ -2830,6 +2886,7 @@
             const btnPreview = document.getElementById('tabPreview');
             const areaWrite = document.getElementById('mdEditorTextarea');
             const areaPreview = document.getElementById('mdEditorPreview');
+            const toolbar = document.getElementById('mdToolbar');
 
             const activeTabClass = 'px-4 py-2.5 border-b-2 border-brand text-brand font-bold text-sm outline-none transition-colors';
             const inactiveTabClass = 'px-4 py-2.5 border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 font-bold text-sm outline-none transition-colors';
@@ -2838,16 +2895,54 @@
                 btnWrite.className = activeTabClass;
                 btnPreview.className = inactiveTabClass;
                 areaWrite.classList.remove('hidden');
+                toolbar.classList.remove('hidden'); // Show toolbar
                 areaPreview.classList.add('hidden');
             } else {
                 btnPreview.className = activeTabClass;
                 btnWrite.className = inactiveTabClass;
                 areaWrite.classList.add('hidden');
+                toolbar.classList.add('hidden'); // Hide toolbar in preview
                 areaPreview.classList.remove('hidden');
 
-                // Parse markdown to HTML
                 const rawMd = areaWrite.value;
                 areaPreview.innerHTML = (typeof marked !== 'undefined') ? marked.parse(rawMd) : escapeHTML(rawMd);
+            }
+        }
+
+        // --- NEW LOGIC FOR FORMATTING TOOLBAR ---
+        function insertMarkdown(type) {
+            const textarea = document.getElementById('mdEditorTextarea');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+            const selectedText = text.substring(start, end);
+
+            let prefix = '', suffix = '', placeholder = '';
+
+            switch (type) {
+                case 'bold': prefix = '**'; suffix = '**'; placeholder = 'bold text'; break;
+                case 'italic': prefix = '*'; suffix = '*'; placeholder = 'italic text'; break;
+                case 'strikethrough': prefix = '~~'; suffix = '~~'; placeholder = 'strikethrough text'; break;
+                case 'code': prefix = '`'; suffix = '`'; placeholder = 'code'; break;
+                case 'codeblock': prefix = '\n```\n'; suffix = '\n```\n'; placeholder = 'code block'; break;
+                case 'link': prefix = '['; suffix = '](https://link-url.com)'; placeholder = 'link text'; break;
+                case 'image': prefix = '!['; suffix = '](https://image-url.com/img.png)'; placeholder = 'alt text'; break;
+                case 'ul': prefix = '\n- '; suffix = ''; placeholder = 'list item'; break;
+                case 'ol': prefix = '\n1. '; suffix = ''; placeholder = 'list item'; break;
+            }
+
+            const insertText = selectedText || placeholder;
+            const replacement = prefix + insertText + suffix;
+
+            textarea.value = text.substring(0, start) + replacement + text.substring(end);
+
+            textarea.focus();
+            if (!selectedText) {
+                // If nothing was selected, highlight the placeholder text so user can type over it instantly
+                textarea.setSelectionRange(start + prefix.length, start + prefix.length + placeholder.length);
+            } else {
+                // Highlight the whole newly formatted block
+                textarea.setSelectionRange(start, start + replacement.length);
             }
         }
 
