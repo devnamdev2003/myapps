@@ -780,6 +780,35 @@
         </div>
     </div>
 
+
+    <div id="rearrangeCategoryModal" class="fixed inset-0 z-[70] flex items-center justify-center hidden p-4">
+        <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="closeRearrangeCategoryModal()"></div>
+        <div
+            class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md z-10 overflow-hidden animate-fade-in flex flex-col max-h-[90vh] border border-gray-100 dark:border-gray-700">
+            <div
+                class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50 shrink-0">
+                <h3 class="text-xl font-bold text-gray-800 dark:text-white flex items-center">
+                    <i class="fa-solid fa-arrow-down-up-across-line mr-3 text-brand"></i> Rearrange Categories
+                </h3>
+                <button onclick="closeRearrangeCategoryModal()"
+                    class="text-gray-400 hover:text-gray-600 bg-white dark:bg-gray-800 shadow-sm rounded-full w-8 h-8 flex items-center justify-center">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto bg-gray-50 dark:bg-gray-900/20">
+                <div id="rearrangeCategoryList" class="space-y-3">
+                </div>
+            </div>
+            <div
+                class="p-6 border-t border-gray-100 dark:border-gray-700 flex justify-end space-x-3 bg-gray-50 dark:bg-gray-900/50 shrink-0">
+                <button onclick="closeRearrangeCategoryModal()"
+                    class="px-6 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition">Cancel</button>
+                <button onclick="saveCategoryOrder()"
+                    class="px-8 py-2.5 rounded-xl bg-brand text-white font-bold hover:brightness-110 transition shadow-lg shadow-brand/30">Save
+                    Order</button>
+            </div>
+        </div>
+    </div>
     <script>
         // ==========================================
         // SAFE HISTORY API WRAPPERS
@@ -1466,8 +1495,8 @@
                         </div>
                         <div class="nav-text flex items-center shrink-0">
                             ${isFullyComplete
-                                            ? '<i class="fa-solid fa-circle-check text-green-400 text-sm"></i>'
-                                            : `<span class="text-[10px] font-extrabold ${isActive ? 'text-white/90' : 'text-gray-500'}">${progPerc}%</span>`}
+                            ? '<i class="fa-solid fa-circle-check text-green-400 text-sm"></i>'
+                            : `<span class="text-[10px] font-extrabold ${isActive ? 'text-white/90' : 'text-gray-500'}">${progPerc}%</span>`}
                         </div>
                     `;
 
@@ -1544,7 +1573,19 @@
                         </div>`;
                 } else {
                     // Category Listing State
-                    let html = `<div class="animate-fade-in"><h3 class="text-2xl font-extrabold text-gray-800 dark:text-white mb-6 tracking-tight">Categories</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-5">`;
+                    let html = `
+                        <div class="animate-fade-in">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-2xl font-extrabold text-gray-800 dark:text-white tracking-tight">Categories</h3>
+                                ${!isSharedMode && wb.categories.length > 1 ? `
+                                <button onclick="openRearrangeCategoryModal()" class="text-gray-500 hover:text-brand bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 px-4 py-2 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 transition flex items-center space-x-2 text-sm font-bold">
+                                    <i class="fa-solid fa-arrow-down-up-across-line"></i>
+                                    <span>Rearrange</span>
+                                </button>
+                                ` : ''}
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">`
+                        ;
 
                     wb.categories.forEach(cat => {
                         const firstLabId = cat.labs.length > 0 ? cat.labs[0].id : null;
@@ -2529,6 +2570,114 @@
             renderSidebar();
             renderLabContent(activeLabId, true); // Refresh content to show updated sorting
         }
+
+        // ==========================================
+        // REARRANGE CATEGORIES LOGIC
+        // ==========================================
+        let tempCategoryOrder = [];
+
+        function openRearrangeCategoryModal() {
+            const wb = getActiveWorkbook();
+            if (!wb) return;
+
+            // Create a deep copy so we don't modify the real data until "Save" is clicked
+            tempCategoryOrder = JSON.parse(JSON.stringify(wb.categories));
+            renderRearrangeCategoryList();
+
+            document.getElementById('rearrangeCategoryModal').classList.remove('hidden');
+        }
+
+        function closeRearrangeCategoryModal() {
+            document.getElementById('rearrangeCategoryModal').classList.add('hidden');
+            tempCategoryOrder = [];
+        }
+
+        function renderRearrangeCategoryList() {
+            const listEl = document.getElementById('rearrangeCategoryList');
+            listEl.innerHTML = '';
+
+            if (tempCategoryOrder.length === 0) {
+                listEl.innerHTML = '<p class="text-gray-500 text-sm text-center">No categories to rearrange.</p>';
+                return;
+            }
+
+            // We removed the animate-fade-in from individual items so they don't flash when moved
+            tempCategoryOrder.forEach((cat) => {
+                const item = document.createElement('div');
+                item.className = "rearrange-item flex items-center justify-between bg-white dark:bg-gray-800 p-3.5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm";
+                item.dataset.category = cat.category; // Store the category name to identify it later
+
+                item.innerHTML = `
+                    <div class="flex items-center space-x-3 overflow-hidden pr-4">
+                        <div class="text-gray-300 dark:text-gray-600 cursor-move">
+                            <i class="fa-solid fa-grip-vertical"></i>
+                        </div>
+                        <span class="font-bold text-gray-800 dark:text-gray-200 truncate">${escapeHTML(cat.category)}</span>
+                    </div>
+                    <div class="flex space-x-1 shrink-0">
+                        <button type="button" onclick="moveCategoryUp(this)" class="text-gray-500 bg-gray-100 dark:bg-gray-900/50 hover:text-brand px-3 py-2 rounded-lg transition border border-gray-200 dark:border-gray-700" title="Move Up">
+                            <i class="fa-solid fa-arrow-up"></i>
+                        </button>
+                        <button type="button" onclick="moveCategoryDown(this)" class="text-gray-500 bg-gray-100 dark:bg-gray-900/50 hover:text-brand px-3 py-2 rounded-lg transition border border-gray-200 dark:border-gray-700" title="Move Down">
+                            <i class="fa-solid fa-arrow-down"></i>
+                        </button>
+                    </div>
+                `;
+                listEl.appendChild(item);
+            });
+        }
+
+        // Moves the DOM element up instantly without re-rendering the list
+        function moveCategoryUp(btn) {
+            const currentItem = btn.closest('.rearrange-item');
+            const previousItem = currentItem.previousElementSibling;
+            if (previousItem) {
+                currentItem.parentNode.insertBefore(currentItem, previousItem);
+            }
+        }
+
+        // Moves the DOM element down instantly without re-rendering the list
+        function moveCategoryDown(btn) {
+            const currentItem = btn.closest('.rearrange-item');
+            const nextItem = currentItem.nextElementSibling;
+            if (nextItem) {
+                // insertBefore on the next item's next sibling simulates an "insertAfter"
+                currentItem.parentNode.insertBefore(nextItem, currentItem);
+            }
+        }
+
+        function saveCategoryOrder() {
+            const wb = getActiveWorkbook();
+            if (!wb) return;
+
+            const listEl = document.getElementById('rearrangeCategoryList');
+            const itemEls = listEl.querySelectorAll('.rearrange-item');
+
+            const newOrder = [];
+
+            // Read the final order directly from the DOM elements
+            itemEls.forEach(el => {
+                const catName = el.dataset.category;
+                const catObj = wb.categories.find(c => c.category === catName);
+                if (catObj) {
+                    newOrder.push(catObj);
+                }
+            });
+
+            // Overwrite categories with our new array
+            if (newOrder.length === wb.categories.length) {
+                wb.categories = newOrder;
+                saveState();
+                touchActiveWorkbook();
+            }
+
+            closeRearrangeCategoryModal();
+
+            // Refresh UI
+            renderSidebar();
+            renderLabContent(null);
+        }
+
         // ==========================================
         // BOOTSTRAP
         // ==========================================
