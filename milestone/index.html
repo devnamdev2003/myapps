@@ -1329,8 +1329,11 @@
                 headerRow.classList.remove('hidden');
                 grid.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6";
                 grid.innerHTML = '';
-                const sortedWorkbooks = [...appState.workbooks].sort((a, b) => a.title.localeCompare(b.title));
-
+                const sortedWorkbooks = [...appState.workbooks].sort((a, b) => {
+                    const timeA = a.updatedAt || parseInt(a.id.split('-')[1]) || 0;
+                    const timeB = b.updatedAt || parseInt(b.id.split('-')[1]) || 0;
+                    return timeB - timeA;
+                });
                 sortedWorkbooks.forEach(wb => {
                     const modLabel = wb.moduleLabel || 'Lab';
                     const stepLabel = wb.stepLabel || 'Checkpoint';
@@ -1420,9 +1423,7 @@
 
             let totalWbSteps = 0;
             let completedWbSteps = 0;
-            const sortedCategories = [...wb.categories].sort((a, b) => a.category.localeCompare(b.category));
-
-            sortedCategories.forEach(group => {
+            wb.categories.forEach(group => {
                 const groupContainer = document.createElement('div');
 
                 const header = document.createElement('div');
@@ -1432,9 +1433,8 @@
 
                 const itemsContainer = document.createElement('div');
                 itemsContainer.className = "space-y-1.5";
-                const sortedLabs = [...group.labs].sort((a, b) => a.title.localeCompare(b.title));
 
-                sortedLabs.forEach(lab => {
+                group.labs.forEach(lab => {
                     const isActive = lab.id === activeLabId;
 
                     let labTotal = lab.steps.length;
@@ -1531,9 +1531,8 @@
                 } else {
                     // Category Listing State
                     let html = `<div class="animate-fade-in"><h3 class="text-2xl font-extrabold text-gray-800 dark:text-white mb-6 tracking-tight">Categories</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-5">`;
-                    const sortedCategoriesGrid = [...wb.categories].sort((a, b) => a.category.localeCompare(b.category));
 
-                    sortedCategoriesGrid.forEach(cat => {
+                    wb.categories.forEach(cat => {
                         const firstLabId = cat.labs.length > 0 ? cat.labs[0].id : null;
                         const totalLabs = cat.labs.length;
                         let catSteps = 0;
@@ -1728,6 +1727,7 @@
 
         function toggleStep(stepId) {
             appState.progressData[stepId] = !appState.progressData[stepId];
+            touchActiveWorkbook();
             saveState();
             renderLabContent(activeLabId, true);
             renderSidebar();
@@ -1845,10 +1845,12 @@
                 wb.color = color;
                 wb.moduleLabel = moduleLabel;
                 wb.stepLabel = stepLabel;
+                wb.updatedAt = Date.now();
             } else {
                 appState.workbooks.push({
                     id: 'wb-' + Date.now(),
                     title, description, icon, color, moduleLabel, stepLabel,
+                    updatedAt: Date.now(),
                     categories: []
                 });
             }
@@ -2129,6 +2131,7 @@
             category.labs.push({ id: targetLabId, title, icon, description: desc, steps: mappedSteps });
 
             saveState();
+            touchActiveWorkbook();
             closeManageLabModal();
             selectLab(targetLabId, true); // Push history explicitly on saving
         }
@@ -2153,6 +2156,7 @@
                     delete appState.progressData[id];
                 });
                 saveState();
+                touchActiveWorkbook();
 
                 if (activeLabId === labId) {
                     backToCategories();
@@ -2187,6 +2191,7 @@
                 wb.categories.splice(categoryIndex, 1);
 
                 saveState();
+                touchActiveWorkbook();
                 renderSidebar();
                 renderLabContent(null);
             }
@@ -2231,6 +2236,7 @@
             if (cat) {
                 cat.category = newName;
                 saveState();
+                touchActiveWorkbook();
                 closeEditCategoryModal();
                 renderSidebar();
                 renderLabContent(null); // Refreshes the category view
@@ -2244,6 +2250,7 @@
                     lab.steps.forEach(s => appState.progressData[s.id] = false);
                 }));
                 saveState();
+                touchActiveWorkbook();
                 renderSidebar();
                 renderLabContent(activeLabId);
             }
@@ -2436,6 +2443,7 @@
                 });
 
                 saveState();
+                touchActiveWorkbook();
                 alert(`Successfully imported data to this workbook!`);
                 closeImportModal();
 
@@ -2466,6 +2474,12 @@
             }
         }
 
+        function touchActiveWorkbook() {
+            if (activeWorkbookId) {
+                const wb = appState.workbooks.find(w => w.id === activeWorkbookId);
+                if (wb) wb.updatedAt = Date.now();
+            }
+        }
         // ==========================================
         // BOOTSTRAP
         // ==========================================
