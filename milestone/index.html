@@ -2881,8 +2881,15 @@
             currentMdTargetInput = container.querySelector('input[name="stepInputDesc"]');
             currentMdTargetBtn = container.querySelector('.desc-btn-text');
 
-            document.getElementById('mdEditorTextarea').value = currentMdTargetInput.value;
-            switchMarkdownTab('write');
+            const currentValue = currentMdTargetInput.value;
+            document.getElementById('mdEditorTextarea').value = currentValue;
+
+            if (currentValue.trim() === '') {
+                switchMarkdownTab('write');
+            } else {
+                switchMarkdownTab('preview');
+            }
+
             document.getElementById('markdownEditorModal').classList.remove('hidden');
         }
 
