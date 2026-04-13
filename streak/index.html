@@ -1,0 +1,1769 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Streak Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <meta name="title" content="Streak Tracker Pro: Build Daily Habits & Stay Consistent">
+    <meta name="description"
+        content="Track your daily habits, build powerful streaks, and stay consistent with Streak Tracker Pro. Simple, fast, and distraction-free habit tracking app.">
+    <meta name="keywords"
+        content="streak tracker, habit tracker, daily habits, productivity app, consistency, goal tracker">
+    <meta name="author" content="Dev Namdev">
+
+    <!-- Theme -->
+    <meta name="theme-color" content="#f25942">
+
+    <!-- Open Graph (for WhatsApp, Facebook, LinkedIn) -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://devnamdev2003.github.io/myapps/streak/">
+    <meta property="og:title" content="Streak Tracker Pro: Build Daily Habits">
+    <meta property="og:description"
+        content="Stay consistent and build powerful habits with a clean and minimal streak tracker.">
+    <meta property="og:image" content="https://devnamdev2003.github.io/myapps/streak/img/meta-image.png">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Streak Tracker Pro">
+    <meta name="twitter:description" content="Track habits, build streaks, and stay consistent.">
+    <meta name="twitter:image" content="https://devnamdev2003.github.io/myapps/streak/img/meta-image.png">
+
+    <!-- PWA-like (optional but good) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Streak Tracker">
+
+    <link rel="apple-touch-icon" sizes="180x180" href="./img/favicon_io/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./img/favicon_io/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="./img/favicon_io/favicon-16x16.png" />
+    <link rel="manifest" href="./img/favicon_io/site.webmanifest" />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        orange: {
+                            500: '#ea580c',
+                            600: '#c2410c',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: none;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        .slide-up {
+            animation: slideUp 0.3s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .streak-fire {
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .calendar-container {
+            transition: max-height 0.4s ease-in-out, opacity 0.4s ease-in-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+
+        .calendar-container.expanded {
+            max-height: 400px;
+            opacity: 1;
+            margin-top: 1rem;
+        }
+
+        .color-swatch.selected {
+            border: 3px solid #1f2937;
+            transform: scale(1.1);
+        }
+
+        .dark .color-swatch.selected {
+            border-color: #f3f4f6;
+        }
+
+        .sortable-ghost {
+            opacity: 0.4;
+            background-color: #f3f4f6;
+        }
+
+        .dark .sortable-ghost {
+            background-color: #374151;
+        }
+
+        /* Checkbox styling for Specific Days */
+        .day-cb:checked+span {
+            background-color: #ea580c !important;
+            color: white !important;
+            border-color: #ea580c !important;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 font-sans h-screen flex flex-col overflow-hidden transition-colors duration-300">
+
+    <!-- Header -->
+    <header
+        class="bg-white dark:bg-gray-800 px-6 py-4 shadow-sm z-10 flex justify-between items-center transition-colors duration-300">
+        <div class="flex items-center gap-3">
+            <img src="./img/logo.png" id="app-logo" class="h-10 w-10 object-cover rounded-xl shadow-sm"
+                onerror="this.style.display='none'; document.getElementById('default-logo-svg').style.display='flex';"
+                alt="Logo">
+
+            <div id="default-logo-svg"
+                class="hidden h-10 w-10 items-center justify-center bg-gradient-to-br from-orange-400 to-red-500 rounded-xl text-white shadow-sm flex-shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            </div>
+
+            <div>
+
+                <p id="date-display" class="text-sm text-gray-500 dark:text-gray-400 font-medium mt-0.5"></p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="openGlobalCalendar()"
+                class="p-2.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 active:bg-gray-200 dark:active:bg-gray-600 transition-colors focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+            </button>
+            <button onclick="openSettings()"
+                class="p-2.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 active:bg-gray-200 dark:active:bg-gray-600 transition-colors focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                    </path>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-y-auto p-4 pb-24 no-scrollbar relative" id="main-container">
+
+        <!-- Dashboard Progress Widget -->
+        <div id="dashboard-widget"
+            class="hidden slide-up bg-white dark:bg-gray-800 rounded-2xl p-5 mb-5 shadow-sm border border-gray-100 dark:border-gray-700">
+            <div class="flex justify-between items-end mb-2">
+                <div>
+                    <h2 class="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Today's
+                        Progress</h2>
+                    <p class="text-2xl font-black text-gray-800 dark:text-white mt-1" id="progress-text">0 / 0</p>
+                </div>
+                <div id="mobile-level" class="flex flex-col items-end text-orange-500 dark:text-orange-400">
+                    <span class="text-xs font-bold uppercase tracking-wider">Level</span>
+                    <span class="text-xl font-black leading-none" id="mobile-level-num">1</span>
+                </div>
+            </div>
+            <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-3 mt-3 overflow-hidden">
+                <div id="progress-bar"
+                    class="bg-gradient-to-r from-orange-400 to-red-500 h-3 rounded-full transition-all duration-700 ease-out"
+                    style="width: 0%"></div>
+            </div>
+        </div>
+
+        <div id="empty-state" class="hidden flex-col items-center justify-center h-full text-center px-4 fade-in">
+            <div class="bg-orange-50 dark:bg-gray-800 p-6 rounded-full mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                    stroke="#ea580c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+            </div>
+            <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">No active streaks</h2>
+            <p class="text-gray-500 dark:text-gray-400 mb-6">Build good habits by tracking your progress. Tap the +
+                button to start.</p>
+        </div>
+
+        <!-- Mode Indicator (Shows if viewing archived) -->
+        <div id="archive-banner"
+            class="hidden bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-bold text-center py-2 rounded-lg mb-4 flex items-center justify-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="21 8 21 21 3 21 3 8"></polyline>
+                <rect x="1" y="3" width="22" height="5"></rect>
+                <line x1="10" y1="12" x2="14" y2="12"></line>
+            </svg>
+            Viewing Archived Habits
+            <button onclick="toggleArchiveView()" class="ml-2 text-blue-500 underline text-xs">Exit</button>
+        </div>
+
+        <!-- Streak List Wrapper -->
+        <ul id="streak-list" class="space-y-4"></ul>
+    </main>
+
+    <!-- Floating Action Button -->
+    <button onclick="openFormModal()" id="fab-btn"
+        class="fixed bottom-6 right-6 bg-gradient-to-r from-orange-500 to-red-500 text-white p-4 rounded-full shadow-lg shadow-orange-500/40 active:scale-95 transition-transform z-20 focus:outline-none">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+    </button>
+
+    <!-- Main Global Calendar Modal -->
+    <div id="global-calendar-modal"
+        class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[50] hidden flex items-center justify-center opacity-0 transition-opacity duration-300 p-4">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-3xl p-6 transform scale-95 transition-transform duration-300 shadow-2xl flex flex-col"
+            id="global-calendar-content">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-100 dark:border-gray-700 pb-4">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800 dark:text-white">Activity Graph</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Tap a day to see details</p>
+                </div>
+                <button onclick="closeGlobalCalendar()"
+                    class="text-gray-400 active:text-gray-600 dark:active:text-gray-200 p-1 bg-gray-100 dark:bg-gray-700 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="flex justify-between items-center mb-4 px-2">
+                <button onclick="changeGlobalMonth(-1)"
+                    class="p-2 rounded bg-gray-100 dark:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <div class="text-md font-bold text-gray-700 dark:text-gray-300" id="global-cal-month">Month</div>
+                <button onclick="changeGlobalMonth(1)"
+                    class="p-2 rounded bg-gray-100 dark:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-7 gap-1.5 text-center text-xs mb-2 font-medium text-gray-400">
+                <div>S</div>
+                <div>M</div>
+                <div>T</div>
+                <div>W</div>
+                <div>T</div>
+                <div>F</div>
+                <div>S</div>
+            </div>
+            <!-- Global Calendar Grid -->
+            <div class="grid grid-cols-7 gap-1.5 text-center text-sm mb-4" id="global-cal-grid">
+                <!-- Rendered dynamically -->
+            </div>
+
+            <!-- GitHub Style Legend -->
+            <div class="flex items-center justify-end gap-1.5 text-xs text-gray-500 mt-2">
+                <span>Less</span>
+                <div class="w-3 h-3 rounded-sm bg-gray-100 dark:bg-gray-800"></div>
+                <div class="w-3 h-3 rounded-sm bg-orange-200 dark:bg-orange-900/40"></div>
+                <div class="w-3 h-3 rounded-sm bg-orange-300 dark:bg-orange-800/60"></div>
+                <div class="w-3 h-3 rounded-sm bg-orange-400 dark:bg-orange-600"></div>
+                <div class="w-3 h-3 rounded-sm bg-orange-500 dark:bg-orange-500"></div>
+                <span>More</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Day Details Modal (Opens over the Global Calendar) -->
+    <div id="day-detail-modal"
+        class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[65] hidden flex items-end sm:items-center justify-center opacity-0 transition-opacity duration-300">
+        <div
+            class="bg-white dark:bg-gray-800 w-full sm:w-96 max-h-[80vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl p-6 transform translate-y-full sm:translate-y-0 scale-95 transition-all duration-300 shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-800 dark:text-white" id="day-detail-title">Date</h3>
+                <button onclick="closeDayDetails()"
+                    class="text-gray-400 active:text-gray-600 dark:active:text-gray-200 p-1 bg-gray-100 dark:bg-gray-700 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <h4
+                        class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 border-b border-gray-100 dark:border-gray-700 pb-1">
+                        Completed</h4>
+                    <div id="day-detail-completed" class="space-y-1"></div>
+                </div>
+                <div>
+                    <h4
+                        class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 border-b border-gray-100 dark:border-gray-700 pb-1">
+                        Missed</h4>
+                    <div id="day-detail-missed" class="space-y-1"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Streak Modal -->
+    <div id="form-modal"
+        class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="bg-white dark:bg-gray-800 w-full sm:w-96 max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl p-6 transform translate-y-full sm:translate-y-0 transition-transform duration-300 shadow-2xl"
+            id="form-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-800 dark:text-white" id="modal-title">New Habit</h3>
+                <button onclick="closeFormModal()"
+                    class="text-gray-400 active:text-gray-600 dark:active:text-gray-200 p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <form id="streak-form" class="space-y-4" novalidate>
+                <input type="hidden" id="habit-id">
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name <span
+                            class="text-red-500">*</span></label>
+                    <input type="text" id="habit-name" required placeholder="e.g. Read 10 pages"
+                        class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                        autocomplete="off">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                        <select id="habit-category"
+                            class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-orange-500 focus:outline-none appearance-none">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Frequency</label>
+                        <select id="habit-freq" onchange="toggleTargetDays()"
+                            class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-orange-500 focus:outline-none appearance-none">
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="target-days-container">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Days per week</label>
+                    <input type="number" id="habit-target-days" min="1" max="7" value="7"
+                        oninput="handleTargetDaysChange()"
+                        class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-orange-500 focus:outline-none">
+                </div>
+
+                <div id="specific-days-container" class="hidden pb-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select specific days
+                        (Optional)</label>
+                    <div class="flex justify-between px-1">
+                        <label class="cursor-pointer"><input type="checkbox" value="0" class="day-cb hidden"
+                                onchange="syncSpecificDays()"><span
+                                class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 text-xs font-bold transition-colors border border-transparent">S</span></label>
+                        <label class="cursor-pointer"><input type="checkbox" value="1" class="day-cb hidden"
+                                onchange="syncSpecificDays()"><span
+                                class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 text-xs font-bold transition-colors border border-transparent">M</span></label>
+                        <label class="cursor-pointer"><input type="checkbox" value="2" class="day-cb hidden"
+                                onchange="syncSpecificDays()"><span
+                                class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 text-xs font-bold transition-colors border border-transparent">T</span></label>
+                        <label class="cursor-pointer"><input type="checkbox" value="3" class="day-cb hidden"
+                                onchange="syncSpecificDays()"><span
+                                class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 text-xs font-bold transition-colors border border-transparent">W</span></label>
+                        <label class="cursor-pointer"><input type="checkbox" value="4" class="day-cb hidden"
+                                onchange="syncSpecificDays()"><span
+                                class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 text-xs font-bold transition-colors border border-transparent">T</span></label>
+                        <label class="cursor-pointer"><input type="checkbox" value="5" class="day-cb hidden"
+                                onchange="syncSpecificDays()"><span
+                                class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 text-xs font-bold transition-colors border border-transparent">F</span></label>
+                        <label class="cursor-pointer"><input type="checkbox" value="6" class="day-cb hidden"
+                                onchange="syncSpecificDays()"><span
+                                class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 text-xs font-bold transition-colors border border-transparent">S</span></label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">End Date
+                        (Optional)</label>
+                    <input type="date" id="habit-end-date"
+                        class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-orange-500 focus:outline-none">
+                </div>
+
+                <button type="submit"
+                    class="w-full bg-orange-500 text-white font-semibold py-3.5 rounded-xl active:bg-orange-700 transition-colors shadow-md mt-6">
+                    Save Habit
+                </button>
+            </form>
+
+            <!-- Edit Mode Actions -->
+            <div id="edit-actions" class="mt-3 hidden grid grid-cols-2 gap-3">
+                <button type="button" id="edit-archive-btn"
+                    class="w-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold py-3 rounded-xl active:bg-gray-200 dark:active:bg-gray-600 transition-colors text-sm">Archive</button>
+                <button type="button" id="edit-delete-btn"
+                    class="w-full bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-semibold py-3 rounded-xl active:bg-red-100 dark:active:bg-red-900/40 transition-colors text-sm">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Insights Modal -->
+    <div id="insights-modal"
+        class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[55] hidden flex items-center justify-center opacity-0 transition-opacity duration-300 p-4">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-3xl p-6 transform scale-95 transition-transform duration-300 shadow-2xl"
+            id="insights-content">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h3 class="text-2xl font-black text-gray-800 dark:text-white leading-tight" id="insight-title">Habit
+                        Name</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Detailed Statistics</p>
+                </div>
+                <button onclick="closeInsights()"
+                    class="text-gray-400 active:text-gray-600 dark:active:text-gray-200 p-1 bg-gray-100 dark:bg-gray-700 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div
+                    class="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-2xl border border-orange-100 dark:border-orange-800/50 flex flex-col items-center justify-center text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class="text-orange-500 mb-2"
+                        viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                        <path
+                            d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z">
+                        </path>
+                    </svg>
+                    <span class="text-3xl font-black text-gray-800 dark:text-white" id="insight-best">0</span>
+                    <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mt-1">Best Streak</span>
+                </div>
+                <div
+                    class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-2xl border border-blue-100 dark:border-blue-800/50 flex flex-col items-center justify-center text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class="text-blue-500 mb-2"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <span class="text-3xl font-black text-gray-800 dark:text-white" id="insight-total">0</span>
+                    <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mt-1">Total Days</span>
+                </div>
+                <div
+                    class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-2xl border border-purple-100 dark:border-purple-800/50 flex flex-col items-center justify-center text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class="text-purple-500 mb-2"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M16.2 7.8l-2 6.3-6.4 2.1 2-6.3z"></path>
+                    </svg>
+                    <span class="text-3xl font-black text-gray-800 dark:text-white" id="insight-rate">0%</span>
+                    <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mt-1">Completion
+                        Rate</span>
+                </div>
+                <div
+                    class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-2xl border border-gray-200 dark:border-gray-600 flex flex-col items-center justify-center text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class="text-gray-500 mb-2"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <span class="text-sm font-bold text-gray-800 dark:text-white mt-1" id="insight-created">Jan 1</span>
+                    <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mt-1">Started On</span>
+                </div>
+            </div>
+            <button onclick="closeInsights()"
+                class="w-full bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-bold py-3.5 rounded-xl active:bg-gray-800 dark:active:bg-white transition-colors">Done</button>
+        </div>
+    </div>
+
+    <!-- Category Manager Modal -->
+    <div id="category-modal"
+        class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[60] hidden flex items-center justify-center opacity-0 transition-opacity duration-300 p-4">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-3xl p-6 transform scale-95 transition-transform duration-300 shadow-2xl flex flex-col max-h-[80vh]"
+            id="category-content">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800 dark:text-white">Manage Categories</h3>
+                <button onclick="closeCategoryManager()"
+                    class="text-gray-400 active:text-gray-600 dark:active:text-gray-200 p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div
+                class="flex-1 overflow-y-auto mb-4 border border-gray-100 dark:border-gray-700 rounded-xl p-2 bg-gray-50 dark:bg-gray-900/50">
+                <ul id="category-list-ui" class="space-y-2">
+                    <!-- Populated by JS -->
+                </ul>
+            </div>
+
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Create New Category</h4>
+                <div class="flex gap-2 mb-3">
+                    <input type="text" id="new-cat-name" placeholder="Category Name"
+                        class="flex-1 bg-gray-100 dark:bg-gray-700 border-none text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:outline-none">
+                </div>
+                <div class="flex justify-between items-center mb-4 overflow-x-auto no-scrollbar pb-1">
+                    <div class="flex gap-1.5 items-center flex-nowrap min-w-max" id="color-picker">
+                        <!-- Swatches injected here -->
+                        <div class="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1"></div>
+                        <div class="relative w-7 h-7 rounded-full overflow-hidden border-2 border-transparent transition-transform flex-shrink-0"
+                            id="custom-color-wrapper">
+                            <input type="color" id="custom-color-input"
+                                class="absolute inset-0 w-10 h-10 -top-1 -left-1 cursor-pointer" value="#ea580c"
+                                onchange="selectCustomColor(this.value)">
+                        </div>
+                    </div>
+                    <input type="hidden" id="new-cat-color" value="emerald">
+                </div>
+                <button onclick="addNewCategory()"
+                    class="w-full bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-bold py-2.5 rounded-xl active:bg-gray-800 dark:active:bg-white transition-colors text-sm">Add
+                    Category</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal"
+        class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="bg-white dark:bg-gray-800 w-full sm:w-96 rounded-t-3xl sm:rounded-3xl p-6 transform translate-y-full sm:translate-y-0 transition-transform duration-300 shadow-2xl"
+            id="settings-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-800 dark:text-white">Settings</h3>
+                <button onclick="closeSettings()"
+                    class="text-gray-400 active:text-gray-600 dark:active:text-gray-200 p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="space-y-3">
+                <button onclick="toggleTheme()"
+                    class="w-full flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-100 active:scale-95 transition-all">
+                    <div class="flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                        <span class="font-medium" id="theme-text">Toggle Dark Mode</span>
+                    </div>
+                </button>
+
+                <button onclick="openCategoryManager()"
+                    class="w-full flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-100 active:scale-95 transition-all">
+                    <div class="flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z">
+                            </path>
+                        </svg>
+                        <span class="font-medium">Manage Categories</span>
+                    </div>
+                </button>
+
+                <button onclick="toggleArchiveView()" id="btn-toggle-archive"
+                    class="w-full flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-100 active:scale-95 transition-all">
+                    <div class="flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="21 8 21 21 3 21 3 8"></polyline>
+                            <rect x="1" y="3" width="22" height="5"></rect>
+                            <line x1="10" y1="12" x2="14" y2="12"></line>
+                        </svg>
+                        <span class="font-medium" id="archive-btn-text">View Archived Habits</span>
+                    </div>
+                </button>
+
+                <div class="grid grid-cols-2 gap-3 mt-2">
+                    <button onclick="exportData()"
+                        class="w-full flex justify-center items-center gap-2 p-3 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-100 active:scale-95 transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        <span class="font-medium text-sm">Export</span>
+                    </button>
+
+                    <div class="relative w-full">
+                        <input type="file" id="import-file" accept=".json" onchange="importData(event)"
+                            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                        <div
+                            class="w-full flex justify-center items-center gap-2 p-3 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-100 active:scale-95 transition-all pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            <span class="font-medium text-sm">Import</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="factoryReset()"
+                    class="w-full flex items-center justify-between p-4 rounded-xl bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 active:scale-95 transition-all mt-4 border border-red-100 dark:border-red-800">
+                    <div class="flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 6h18"></path>
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                        </svg>
+                        <span class="font-medium">Factory Reset</span>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast"
+        class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-5 py-3 rounded-full shadow-lg text-sm font-medium opacity-0 pointer-events-none transition-opacity duration-300 z-[70] flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="text-green-400 dark:text-green-600">
+            <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span id="toast-msg">Action successful</span>
+    </div>
+
+    <script>
+        // --- State Management ---
+        let streaks = [];
+        let calendarStates = {};
+        let isViewingArchived = false;
+        let globalCalendarOffset = 0;
+        let sortableInstance = null;
+
+        const STORAGE_KEY = 'streak_tracker_pro_data';
+        const CAT_STORAGE_KEY = 'streak_tracker_categories';
+
+        // Predefined tailwind color styles for categories
+        const colorPalette = {
+            emerald: { bg: 'bg-emerald-500', class: 'text-emerald-600 bg-emerald-100 dark:bg-emerald-900/40 border-emerald-200 dark:border-emerald-800' },
+            blue: { bg: 'bg-blue-500', class: 'text-blue-600 bg-blue-100 dark:bg-blue-900/40 border-blue-200 dark:border-blue-800' },
+            purple: { bg: 'bg-purple-500', class: 'text-purple-600 bg-purple-100 dark:bg-purple-900/40 border-purple-200 dark:border-purple-800' },
+            indigo: { bg: 'bg-indigo-500', class: 'text-indigo-600 bg-indigo-100 dark:bg-indigo-900/40 border-indigo-200 dark:border-indigo-800' },
+            orange: { bg: 'bg-orange-500', class: 'text-orange-600 bg-orange-100 dark:bg-orange-900/40 border-orange-200 dark:border-orange-800' },
+            red: { bg: 'bg-red-500', class: 'text-red-600 bg-red-100 dark:bg-red-900/40 border-red-200 dark:border-red-800' },
+            pink: { bg: 'bg-pink-500', class: 'text-pink-600 bg-pink-100 dark:bg-pink-900/40 border-pink-200 dark:border-pink-800' },
+            teal: { bg: 'bg-teal-500', class: 'text-teal-600 bg-teal-100 dark:bg-teal-900/40 border-teal-200 dark:border-teal-800' },
+            gray: { bg: 'bg-gray-500', class: 'text-gray-600 bg-gray-100 dark:bg-gray-900/40 border-gray-200 dark:border-gray-800' }
+        };
+
+        const DEFAULT_CATEGORIES = [
+            { id: 'health', label: 'Health', color: 'emerald', isCustom: false },
+            { id: 'fitness', label: 'Fitness', color: 'blue', isCustom: false },
+            { id: 'work', label: 'Work', color: 'purple', isCustom: false },
+            { id: 'mind', label: 'Mind', color: 'indigo', isCustom: false },
+            { id: 'other', label: 'Other', color: 'orange', isCustom: false }
+        ];
+
+        let categories = [];
+
+        // --- Initialization ---
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCategories();
+            loadData();
+            document.getElementById('date-display').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+            setupColorPicker();
+        });
+
+        // --- Data Handling ---
+        function loadCategories() {
+            const stored = localStorage.getItem(CAT_STORAGE_KEY);
+            if (stored) {
+                categories = JSON.parse(stored);
+                if (categories.length === 0) categories = [...DEFAULT_CATEGORIES];
+            } else {
+                categories = [...DEFAULT_CATEGORIES];
+            }
+            populateCategoryDropdowns();
+        }
+
+        function saveCategories() {
+            localStorage.setItem(CAT_STORAGE_KEY, JSON.stringify(categories));
+            populateCategoryDropdowns();
+            render();
+        }
+
+        function loadData() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                streaks = JSON.parse(stored);
+                streaks.forEach(s => {
+                    if (!s.history) s.history = s.lastCompletedDate ? [s.lastCompletedDate] : [];
+                    if (!s.frequency) s.frequency = 'daily';
+                    if (!s.targetDays) s.targetDays = 7;
+                    if (!s.category) s.category = 'other';
+                    if (s.isArchived === undefined) s.isArchived = false;
+                    if (!s.specificDays) s.specificDays = [];
+                });
+            }
+            render();
+        }
+
+        function saveData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(streaks));
+        }
+
+        function getLocalDateString(date) {
+            const d = new Date(date);
+            d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+            return d.toISOString().split('T')[0];
+        }
+        const getToday = () => getLocalDateString(new Date());
+
+        // --- Categories Manager ---
+        function populateCategoryDropdowns() {
+            const select = document.getElementById('habit-category');
+            select.innerHTML = '';
+            categories.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.label;
+                select.appendChild(opt);
+            });
+        }
+
+        function openCategoryManager() {
+            closeSettings();
+            renderCategoryManagerList();
+            const modal = document.getElementById('category-modal');
+            const content = document.getElementById('category-content');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeCategoryManager() {
+            const modal = document.getElementById('category-modal');
+            const content = document.getElementById('category-content');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function renderCategoryManagerList() {
+            const list = document.getElementById('category-list-ui');
+            list.innerHTML = '';
+            categories.forEach(c => {
+                const li = document.createElement('li');
+                li.className = "flex justify-between items-center p-2 rounded-lg bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700";
+
+                let badgeStyle = '';
+                if (c.hexColor) {
+                    badgeStyle = `style="background-color: ${c.hexColor}"`;
+                } else {
+                    const pal = colorPalette[c.color] || colorPalette['gray'];
+                    badgeStyle = `class="w-3 h-3 rounded-full flex-shrink-0 ${pal.bg}"`;
+                }
+
+                li.innerHTML = `
+                    <div class="flex items-center gap-2 overflow-hidden">
+                        <div ${c.hexColor ? `class="w-3 h-3 rounded-full flex-shrink-0" ${badgeStyle}` : badgeStyle}></div>
+                        <span class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">${escapeHTML(c.label)}</span>
+                    </div>
+                    ${c.isCustom ? `
+                        <button onclick="deleteCategory('${c.id}')" class="text-gray-400 active:text-red-500 p-1 flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                    ` : `<span class="text-[10px] text-gray-400 px-2 flex-shrink-0">Default</span>`}
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        function setupColorPicker() {
+            const picker = document.getElementById('color-picker');
+            const input = document.getElementById('new-cat-color');
+
+            Object.keys(colorPalette).forEach(colorKey => {
+                const div = document.createElement('div');
+                div.className = `w-6 h-6 rounded-full cursor-pointer color-swatch transition-transform flex-shrink-0 ${colorPalette[colorKey].bg}`;
+                if (colorKey === 'emerald') div.classList.add('selected');
+
+                div.onclick = () => {
+                    document.querySelectorAll('.color-swatch').forEach(el => el.classList.remove('selected'));
+                    document.getElementById('custom-color-wrapper').classList.remove('border-gray-800', 'dark:border-white', 'scale-110');
+                    div.classList.add('selected');
+                    input.value = colorKey;
+                };
+                // Insert before the custom picker divider
+                picker.insertBefore(div, picker.children[0]);
+            });
+        }
+
+        function selectCustomColor(hex) {
+            document.querySelectorAll('.color-swatch').forEach(el => el.classList.remove('selected'));
+            document.getElementById('custom-color-wrapper').classList.add('border-gray-800', 'dark:border-white', 'scale-110');
+            document.getElementById('new-cat-color').value = 'custom:' + hex;
+        }
+
+        function addNewCategory() {
+            const input = document.getElementById('new-cat-name');
+            const name = input.value.trim();
+            const colorVal = document.getElementById('new-cat-color').value;
+
+            if (!name) return showToast("Enter a category name");
+
+            const id = 'cat_' + Date.now();
+            let color = colorVal;
+            let hexColor = null;
+
+            if (colorVal.startsWith('custom:')) {
+                color = 'custom';
+                hexColor = colorVal.split(':')[1];
+            }
+
+            categories.push({ id, label: name, color, hexColor, isCustom: true });
+            saveCategories();
+
+            input.value = '';
+            renderCategoryManagerList();
+            showToast("Category created!");
+        }
+
+        function deleteCategory(id) {
+            const inUse = streaks.some(s => s.category === id);
+            if (inUse) {
+                alert("Cannot delete category because it is being used by existing habits. Change their category first.");
+                return;
+            }
+            if (confirm("Delete this category?")) {
+                categories = categories.filter(c => c.id !== id);
+                saveCategories();
+                renderCategoryManagerList();
+            }
+        }
+
+        // --- Form Validation & Logic ---
+        function saveStreak(e) {
+            e.preventDefault();
+            const id = document.getElementById('habit-id').value;
+            const name = document.getElementById('habit-name').value.trim();
+            const freq = document.getElementById('habit-freq').value;
+            const category = document.getElementById('habit-category').value;
+            let targetDays = freq === 'daily' ? parseInt(document.getElementById('habit-target-days').value) : 1;
+            const endDate = document.getElementById('habit-end-date').value || null;
+
+            // Form Validations
+            if (!name) return showToast('Please enter a habit name.');
+            if (freq === 'daily' && (isNaN(targetDays) || targetDays < 1 || targetDays > 7)) {
+                return showToast('Days per week must be between 1 and 7.');
+            }
+            if (endDate && endDate < getToday() && !id) {
+                return showToast('End date cannot be in the past.');
+            }
+
+            let specificDays = [];
+            if (freq === 'daily' && targetDays < 7) {
+                const checkedBoxes = Array.from(document.querySelectorAll('.day-cb:checked')).map(cb => parseInt(cb.value));
+                if (checkedBoxes.length > 0) {
+                    targetDays = checkedBoxes.length;
+                    specificDays = checkedBoxes;
+                }
+            }
+
+            if (id) {
+                const streak = streaks.find(s => s.id === id);
+                if (streak) {
+                    streak.name = name;
+                    streak.frequency = freq;
+                    streak.category = category;
+                    streak.targetDays = targetDays;
+                    streak.specificDays = specificDays;
+                    streak.endDate = endDate;
+                    showToast('Habit updated!');
+                }
+            } else {
+                streaks.unshift({
+                    id: Date.now().toString(),
+                    name: name,
+                    frequency: freq,
+                    category: category,
+                    targetDays: targetDays,
+                    specificDays: specificDays,
+                    endDate: endDate,
+                    history: [],
+                    createdAt: getToday(),
+                    isArchived: false
+                });
+                showToast('Habit added!');
+            }
+
+            saveData();
+            render();
+            closeFormModal();
+        }
+
+        function toggleComplete(id, dateStr = getToday()) {
+            const streak = streaks.find(s => s.id === id);
+            if (!streak) return;
+
+            const index = streak.history.indexOf(dateStr);
+            let justCompleted = false;
+
+            if (index > -1) {
+                streak.history.splice(index, 1);
+                showToast('Marked as incomplete');
+            } else {
+                streak.history.push(dateStr);
+                showToast('Progress saved! 🔥');
+                justCompleted = true;
+            }
+
+            saveData();
+            render();
+
+            if (justCompleted && dateStr === getToday()) {
+                checkDailyGoalCompletion();
+            }
+        }
+
+        function deleteStreak(id) {
+            if (confirm("Permanently delete this habit and all its history?")) {
+                streaks = streaks.filter(s => s.id !== id);
+                saveData();
+                render();
+                showToast('Habit deleted');
+                closeFormModal();
+            }
+        }
+
+        function toggleArchiveStreak(id) {
+            const streak = streaks.find(s => s.id === id);
+            if (!streak) return;
+
+            streak.isArchived = !streak.isArchived;
+            saveData();
+            render();
+            showToast(streak.isArchived ? 'Habit archived' : 'Habit unarchived');
+            closeFormModal();
+        }
+
+        // --- Advanced Stats & Insights ---
+        function calculateStats(streak) {
+            const history = [...new Set(streak.history)].sort().reverse();
+            if (history.length === 0) return { current: 0, total: 0, best: 0, rate: 0 };
+
+            let currentStreak = 0;
+            let bestStreak = 0;
+            const todayStr = getToday();
+
+            const isStrictDaily = streak.frequency === 'daily' && (streak.targetDays === 7 || (streak.specificDays && streak.specificDays.length > 0));
+
+            if (isStrictDaily) {
+                const requiredDays = streak.specificDays && streak.specificDays.length > 0 ? streak.specificDays : [0, 1, 2, 3, 4, 5, 6];
+
+                let checkDate = new Date();
+                let tempStreak = 0;
+                let streakBroken = false;
+                let isCurrent = true;
+
+                const startLimit = new Date(streak.createdAt);
+                while (checkDate >= startLimit) {
+                    if (requiredDays.includes(checkDate.getDay())) {
+                        const checkStr = getLocalDateString(checkDate);
+                        const isCompleted = history.includes(checkStr);
+
+                        if (isCompleted) {
+                            tempStreak++;
+                            if (isCurrent) currentStreak++;
+                            if (tempStreak > bestStreak) bestStreak = tempStreak;
+                        } else if (checkStr !== todayStr) {
+                            // missed a required day (not today)
+                            if (isCurrent) {
+                                streakBroken = true;
+                                isCurrent = false;
+                            }
+                            tempStreak = 0;
+                        }
+                    }
+                    checkDate.setDate(checkDate.getDate() - 1);
+                }
+            } else {
+                currentStreak = history.length;
+                bestStreak = history.length;
+            }
+
+            const createdDate = new Date(streak.createdAt);
+            const todayDate = new Date(todayStr);
+            let daysSinceCreation = Math.ceil((todayDate - createdDate) / (1000 * 60 * 60 * 24)) + 1;
+            let completionRate = Math.round((history.length / daysSinceCreation) * 100);
+            if (completionRate > 100) completionRate = 100;
+
+            return { current: currentStreak, total: history.length, best: bestStreak, rate: completionRate };
+        }
+
+        function openInsights(id) {
+            const streak = streaks.find(s => s.id === id);
+            if (!streak) return;
+
+            const stats = calculateStats(streak);
+
+            document.getElementById('insight-title').textContent = streak.name;
+            const isStrictDaily = streak.frequency === 'daily' && (streak.targetDays === 7 || (streak.specificDays && streak.specificDays.length > 0));
+            document.getElementById('insight-best').textContent = isStrictDaily ? stats.best : '-';
+            document.getElementById('insight-total').textContent = stats.total;
+            document.getElementById('insight-rate').textContent = stats.rate + '%';
+
+            const createdDate = new Date(streak.createdAt);
+            document.getElementById('insight-created').textContent = createdDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+            const modal = document.getElementById('insights-modal');
+            const content = document.getElementById('insights-content');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeInsights() {
+            const modal = document.getElementById('insights-modal');
+            const content = document.getElementById('insights-content');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        // --- Global Calendar & Details ---
+        function openGlobalCalendar() {
+            globalCalendarOffset = 0;
+            renderGlobalCalendar();
+            const modal = document.getElementById('global-calendar-modal');
+            const content = document.getElementById('global-calendar-content');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeGlobalCalendar() {
+            const modal = document.getElementById('global-calendar-modal');
+            const content = document.getElementById('global-calendar-content');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function changeGlobalMonth(delta) {
+            globalCalendarOffset += delta;
+            renderGlobalCalendar();
+        }
+
+        function renderGlobalCalendar() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth() + globalCalendarOffset;
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startingDay = firstDay.getDay();
+            const totalDays = lastDay.getDate();
+
+            document.getElementById('global-cal-month').textContent = firstDay.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+            let html = '';
+            for (let i = 0; i < startingDay; i++) {
+                html += `<div></div>`;
+            }
+
+            for (let i = 1; i <= totalDays; i++) {
+                const checkDate = new Date(year, month, i);
+                const dateStr = getLocalDateString(checkDate);
+
+                let activeCount = 0;
+                let completedCount = 0;
+
+                streaks.forEach(s => {
+                    if (!s.isArchived && s.createdAt <= dateStr && (!s.endDate || s.endDate >= dateStr)) {
+                        // Only count as active/required if no specific days set, OR if this day is a specific day
+                        const isRequiredDay = s.specificDays && s.specificDays.length > 0 ? s.specificDays.includes(checkDate.getDay()) : true;
+
+                        if (isRequiredDay) {
+                            activeCount++;
+                            if (s.history.includes(dateStr)) completedCount++;
+                        }
+                    }
+                });
+
+                let level = 0;
+                if (activeCount > 0 && completedCount > 0) {
+                    const ratio = completedCount / activeCount;
+                    if (ratio <= 0.25) level = 1;
+                    else if (ratio <= 0.5) level = 2;
+                    else if (ratio <= 0.75) level = 3;
+                    else level = 4;
+                }
+
+                let classes = "w-8 h-8 mx-auto flex items-center justify-center rounded-md transition-transform active:scale-90 cursor-pointer text-xs font-medium ";
+
+                if (level === 0) classes += "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 ";
+                if (level === 1) classes += "bg-orange-200 dark:bg-orange-900/40 text-orange-800 dark:text-orange-200 ";
+                if (level === 2) classes += "bg-orange-300 dark:bg-orange-800/60 text-orange-900 dark:text-orange-100 ";
+                if (level === 3) classes += "bg-orange-400 dark:bg-orange-600 text-white ";
+                if (level === 4) classes += "bg-orange-500 shadow-sm shadow-orange-500/30 text-white ";
+
+                if (dateStr === getToday()) {
+                    classes += " ring-2 ring-offset-2 ring-offset-white dark:ring-offset-gray-800 ring-gray-400 dark:ring-gray-500";
+                }
+
+                html += `<div class="${classes}" onclick="openDayDetails('${dateStr}')" title="${dateStr}">${i}</div>`;
+            }
+            document.getElementById('global-cal-grid').innerHTML = html;
+        }
+
+        function openDayDetails(dateStr) {
+            const [y, m, d] = dateStr.split('-');
+            const checkDate = new Date(y, m - 1, d);
+            const displayDate = checkDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+
+            document.getElementById('day-detail-title').textContent = displayDate;
+
+            let compHtml = '';
+            let missHtml = '';
+            let compCount = 0;
+            let missCount = 0;
+
+            streaks.forEach(s => {
+                if (!s.isArchived && s.createdAt <= dateStr && (!s.endDate || s.endDate >= dateStr)) {
+                    // Filter out days that are not required by specificDays
+                    const isRequiredDay = s.specificDays && s.specificDays.length > 0 ? s.specificDays.includes(checkDate.getDay()) : true;
+
+                    if (isRequiredDay) {
+                        if (s.history.includes(dateStr)) {
+                            compHtml += `<div class="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200 mb-1"><span class="text-green-500 font-bold">✔</span> ${escapeHTML(s.name)}</div>`;
+                            compCount++;
+                        } else {
+                            missHtml += `<div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-1"><span class="text-gray-400 dark:text-gray-600 font-bold">✖</span> ${escapeHTML(s.name)}</div>`;
+                            missCount++;
+                        }
+                    }
+                }
+            });
+
+            if (compCount === 0 && missCount === 0) {
+                compHtml = `<p class="text-sm text-gray-500">No habits expected on this day.</p>`;
+            }
+
+            document.getElementById('day-detail-completed').innerHTML = compHtml || '<p class="text-sm text-gray-500">None</p>';
+            document.getElementById('day-detail-missed').innerHTML = missHtml || '<p class="text-sm text-gray-500">None</p>';
+
+            const modal = document.getElementById('day-detail-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.firstElementChild.classList.remove('translate-y-full', 'scale-95');
+            }, 10);
+        }
+
+        function closeDayDetails() {
+            const modal = document.getElementById('day-detail-modal');
+            modal.classList.add('opacity-0');
+            modal.firstElementChild.classList.add('translate-y-full', 'scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        // --- View & Rendering ---
+        function toggleArchiveView() {
+            isViewingArchived = !isViewingArchived;
+            closeSettings();
+            render();
+            document.getElementById('archive-btn-text').textContent = isViewingArchived ? "View Active Habits" : "View Archived Habits";
+        }
+
+        function checkDailyGoalCompletion() {
+            const today = getToday();
+            const todayDate = new Date();
+
+            // Only count active streaks expected today
+            const activeStreaks = streaks.filter(s => {
+                if (s.endDate && s.endDate < today) return false;
+                if (s.isArchived) return false;
+                if (s.specificDays && s.specificDays.length > 0 && !s.specificDays.includes(todayDate.getDay())) return false;
+                return true;
+            });
+
+            if (activeStreaks.length === 0) return;
+
+            const completedToday = activeStreaks.filter(s => s.history.includes(today)).length;
+            if (completedToday === activeStreaks.length && activeStreaks.length > 0) {
+                fireConfetti();
+            }
+        }
+
+        function fireConfetti() {
+            if (typeof confetti === 'function') {
+                confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 }, colors: ['#ea580c', '#f97316', '#fb923c', '#3b82f6', '#10b981'] });
+            }
+        }
+
+        function updateDashboard() {
+            const dash = document.getElementById('dashboard-widget');
+            const progText = document.getElementById('progress-text');
+            const progBar = document.getElementById('progress-bar');
+            const banner = document.getElementById('archive-banner');
+            const fab = document.getElementById('fab-btn');
+
+            const today = getToday();
+            const todayDate = new Date();
+
+            if (isViewingArchived) {
+                banner.classList.remove('hidden');
+                banner.classList.add('flex');
+                dash.classList.add('hidden');
+                fab.classList.add('hidden');
+                return;
+            } else {
+                banner.classList.add('hidden');
+                banner.classList.remove('flex');
+                fab.classList.remove('hidden');
+            }
+
+            const activeStreaks = streaks.filter(s => {
+                if (s.endDate && s.endDate < today) return false;
+                if (s.isArchived) return false;
+                if (s.specificDays && s.specificDays.length > 0 && !s.specificDays.includes(todayDate.getDay())) return false;
+                return true;
+            });
+
+            let totalHistoryItems = 0;
+            streaks.forEach(s => totalHistoryItems += s.history.length);
+            const userLevel = Math.floor(totalHistoryItems / 10) + 1;
+            document.getElementById('mobile-level-num').textContent = userLevel;
+
+            if (activeStreaks.length === 0) {
+                dash.classList.add('hidden');
+                return;
+            }
+
+            dash.classList.remove('hidden');
+            const completedToday = activeStreaks.filter(s => s.history.includes(today)).length;
+            const percentage = Math.round((completedToday / activeStreaks.length) * 100);
+
+            progText.textContent = `${completedToday} / ${activeStreaks.length}`;
+            progBar.style.width = `${percentage}%`;
+        }
+
+        function initSortable() {
+            if (isViewingArchived) {
+                if (sortableInstance) sortableInstance.destroy();
+                sortableInstance = null;
+                return;
+            }
+
+            const listEl = document.getElementById('streak-list');
+            if (sortableInstance) sortableInstance.destroy();
+
+            sortableInstance = new Sortable(listEl, {
+                handle: '.drag-handle',
+                animation: 200,
+                delay: 150,
+                delayOnTouchOnly: true,
+                ghostClass: 'sortable-ghost',
+                onEnd: function () {
+                    const newOrderIds = Array.from(listEl.children).map(el => el.getAttribute('data-id'));
+                    const archivedStreaks = streaks.filter(s => s.isArchived);
+                    const activeStreaks = newOrderIds.map(id => streaks.find(s => s.id === id)).filter(Boolean);
+                    streaks = [...activeStreaks, ...archivedStreaks];
+                    saveData();
+                }
+            });
+        }
+
+        function render() {
+            updateDashboard();
+            const listEl = document.getElementById('streak-list');
+            const emptyEl = document.getElementById('empty-state');
+            listEl.innerHTML = '';
+
+            const displayStreaks = streaks.filter(s => s.isArchived === isViewingArchived);
+
+            if (displayStreaks.length === 0) {
+                emptyEl.classList.remove('hidden');
+                emptyEl.classList.add('flex');
+                emptyEl.querySelector('h2').textContent = isViewingArchived ? "No archived habits" : "No active habits";
+            } else {
+                emptyEl.classList.add('hidden');
+                emptyEl.classList.remove('flex');
+                const today = getToday();
+
+                displayStreaks.forEach(streak => {
+                    const isCompletedToday = streak.history.includes(today);
+                    const stats = calculateStats(streak);
+                    const isEnded = streak.endDate && today > streak.endDate;
+
+                    const catObj = categories.find(c => c.id === streak.category) || categories.find(c => c.id === 'other') || DEFAULT_CATEGORIES[4];
+                    let badgeHtml = '';
+                    if (catObj.hexColor) {
+                        badgeHtml = `<span style="color: ${catObj.hexColor}; background-color: ${catObj.hexColor}20; border-color: ${catObj.hexColor}50;" class="border px-2 py-0.5 rounded text-[11px] font-semibold flex-shrink-0">${escapeHTML(catObj.label)}</span>`;
+                    } else {
+                        const catClass = colorPalette[catObj.color] ? colorPalette[catObj.color].class : colorPalette['gray'].class;
+                        badgeHtml = `<span class="border px-2 py-0.5 rounded text-[11px] font-semibold flex-shrink-0 ${catClass}">${escapeHTML(catObj.label)}</span>`;
+                    }
+
+                    let statLabel = "Streak";
+                    let statVal = stats.current;
+                    let statIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="${statVal > 0 && !isEnded ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>`;
+
+                    if (streak.frequency !== 'daily' || streak.targetDays < 7) {
+                        statLabel = "Total";
+                        statVal = stats.total;
+                        statIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+                    }
+
+                    const freqLabel = streak.frequency === 'daily' && streak.targetDays < 7
+                        ? (streak.specificDays && streak.specificDays.length > 0 ? `${streak.specificDays.length} days/wk` : `${streak.targetDays} days/wk`)
+                        : streak.frequency.charAt(0).toUpperCase() + streak.frequency.slice(1);
+
+                    const li = document.createElement('li');
+                    li.setAttribute('data-id', streak.id);
+                    li.className = `slide-up bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border transition-all duration-300 relative overflow-hidden ${isCompletedToday && !isEnded && !streak.isArchived ? 'border-orange-200 dark:border-orange-900/50 bg-orange-50/30 dark:bg-orange-900/10' : 'border-gray-100 dark:border-gray-700'
+                        } ${isEnded || streak.isArchived ? 'opacity-70' : ''}`;
+
+                    if (isCompletedToday && !isEnded && !streak.isArchived) {
+                        li.innerHTML += `<div class="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-orange-400 to-red-400"></div>`;
+                    }
+
+                    li.innerHTML += `
+                        <div class="flex justify-between items-center w-full">
+                            <div class="drag-handle mr-3 text-gray-300 active:text-gray-500 cursor-grab touch-none flex-shrink-0 ${isViewingArchived ? 'hidden' : ''}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                            </div>
+
+                            <div class="flex-1 pr-2 flex flex-col justify-center">
+                                <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                    <button onclick="openInsights('${streak.id}')" class="font-bold text-gray-800 dark:text-gray-100 text-lg leading-tight active:text-orange-500 transition-colors text-left flex items-center gap-1.5 ${isEnded ? 'line-through' : ''}">
+                                        ${escapeHTML(streak.name)}
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="text-gray-300 dark:text-gray-500 flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                    </button>
+                                    ${streak.isArchived ? `<span class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide mt-1 flex-shrink-0">Archived</span>` : ''}
+                                    ${isEnded && !streak.isArchived ? `<span class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide mt-1 flex-shrink-0">Ended</span>` : ''}
+                                </div>
+                                
+                                <div class="flex items-center gap-2 text-sm mt-1.5 flex-wrap">
+                                    ${badgeHtml}
+                                    <span class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded text-[11px] font-medium flex-shrink-0">${freqLabel}</span>
+                                    <div class="flex items-center gap-1 font-semibold flex-shrink-0 ${statVal > 0 && !isEnded && !streak.isArchived ? 'streak-fire' : 'text-gray-400 dark:text-gray-500'}">
+                                        ${statIcon}
+                                        <span class="text-xs">${statVal} ${statLabel}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-col items-end gap-2 flex-shrink-0">
+                                <button onclick="toggleComplete('${streak.id}')" ${isEnded || streak.isArchived ? 'disabled' : ''} class="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-300 active:scale-90 ${isCompletedToday
+                            ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800'
+                            : 'bg-gray-50 dark:bg-gray-700 text-gray-400 border border-gray-200 dark:border-gray-600 active:bg-gray-100 dark:active:bg-gray-600'
+                        } ${isEnded || streak.isArchived ? 'opacity-50 cursor-not-allowed' : ''}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                </button>
+                                
+                                <div class="flex gap-1 mt-1">
+                                    <button onclick="toggleCalendar('${streak.id}')" class="text-gray-400 active:text-orange-500 p-1.5 transition-colors" title="Calendar">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                    </button>
+                                    <button onclick="editStreak('${streak.id}')" class="text-gray-400 active:text-blue-500 p-1.5 transition-colors" title="Edit">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="cal-${streak.id}" class="calendar-container w-full pt-4 mt-2 border-t border-gray-100 dark:border-gray-700"></div>
+                    `;
+                    listEl.appendChild(li);
+                });
+            }
+            initSortable();
+        }
+
+        // --- Individual Calendar Component ---
+        function toggleCalendar(id) {
+            const calDiv = document.getElementById(`cal-${id}`);
+            if (calDiv.classList.contains('expanded')) {
+                calDiv.classList.remove('expanded');
+            } else {
+                document.querySelectorAll('.calendar-container').forEach(el => el.classList.remove('expanded'));
+                calendarStates[id] = 0;
+                renderCalendarView(id, calDiv);
+                calDiv.classList.add('expanded');
+            }
+        }
+
+        function changeMonth(id, delta) {
+            calendarStates[id] = (calendarStates[id] || 0) + delta;
+            const calDiv = document.getElementById(`cal-${id}`);
+            renderCalendarView(id, calDiv);
+        }
+
+        function renderCalendarView(id, container) {
+            const streak = streaks.find(s => s.id === id);
+            const now = new Date();
+            const monthOffset = calendarStates[id] || 0;
+
+            const year = now.getFullYear();
+            const month = now.getMonth() + monthOffset;
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startingDay = firstDay.getDay();
+            const totalDays = lastDay.getDate();
+
+            const monthName = firstDay.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+            let html = `
+                <div class="flex justify-between items-center mb-3 px-2">
+                    <button onclick="changeMonth('${id}', -1)" class="p-1 rounded bg-gray-100 dark:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </button>
+                    <div class="text-sm font-bold text-gray-700 dark:text-gray-300">${monthName}</div>
+                    <button onclick="changeMonth('${id}', 1)" class="p-1 rounded bg-gray-100 dark:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                </div>
+                <div class="grid grid-cols-7 gap-1 text-center text-xs mb-1 font-medium text-gray-400">
+                    <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
+                </div>
+                <div class="grid grid-cols-7 gap-1 text-center text-sm">
+            `;
+
+            for (let i = 0; i < startingDay; i++) {
+                html += `<div></div>`;
+            }
+
+            for (let i = 1; i <= totalDays; i++) {
+                const checkDate = new Date(year, month, i);
+                const dateStr = getLocalDateString(checkDate);
+                const isCompleted = streak.history.includes(dateStr);
+                const isToday = dateStr === getToday();
+                const isRequiredDay = streak.specificDays && streak.specificDays.length > 0 ? streak.specificDays.includes(checkDate.getDay()) : true;
+
+                let classes = "w-8 h-8 mx-auto flex items-center justify-center rounded-full transition-colors cursor-pointer ";
+
+                if (isCompleted) {
+                    classes += "bg-orange-500 text-white font-bold shadow-sm ";
+                } else if (isToday) {
+                    classes += "border-2 border-orange-300 text-orange-600 dark:text-orange-400 font-bold ";
+                } else {
+                    classes += "text-gray-600 dark:text-gray-400 active:bg-gray-100 dark:active:bg-gray-700 ";
+                }
+
+                // Make unrequired days dimmer for better UX
+                if (!isRequiredDay && !isCompleted && !isToday) {
+                    classes += "opacity-30 ";
+                }
+
+                html += `<div class="${classes}" onclick="toggleComplete('${id}', '${dateStr}')" title="${dateStr}">${i}</div>`;
+            }
+
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        // --- Modals & UI Handlers ---
+        const formModal = document.getElementById('form-modal');
+        const formContent = document.getElementById('form-content');
+        const settingsModal = document.getElementById('settings-modal');
+        const settingsContent = document.getElementById('settings-content');
+        const toastEl = document.getElementById('toast');
+        const toastMsg = document.getElementById('toast-msg');
+        let toastTimeout;
+
+        function showToast(message) {
+            toastMsg.textContent = message;
+            toastEl.classList.remove('opacity-0', 'pointer-events-none');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toastEl.classList.add('opacity-0', 'pointer-events-none');
+            }, 2500);
+        }
+
+        function handleTargetDaysChange() {
+            toggleTargetDays();
+        }
+
+        function toggleTargetDays() {
+            const freq = document.getElementById('habit-freq').value;
+            const daysContainer = document.getElementById('target-days-container');
+            const specificContainer = document.getElementById('specific-days-container');
+            const targetDaysVal = parseInt(document.getElementById('habit-target-days').value) || 7;
+
+            if (freq === 'daily') {
+                daysContainer.style.display = 'block';
+                if (targetDaysVal < 7) {
+                    specificContainer.classList.remove('hidden');
+                } else {
+                    specificContainer.classList.add('hidden');
+                    document.querySelectorAll('.day-cb').forEach(cb => cb.checked = false);
+                }
+            } else {
+                daysContainer.style.display = 'none';
+                specificContainer.classList.add('hidden');
+            }
+        }
+
+        function syncSpecificDays() {
+            const checkedBoxes = document.querySelectorAll('.day-cb:checked');
+            if (checkedBoxes.length > 0) {
+                document.getElementById('habit-target-days').value = checkedBoxes.length;
+            }
+        }
+
+        function openFormModal() {
+            document.getElementById('streak-form').reset();
+            document.getElementById('habit-id').value = '';
+            document.getElementById('modal-title').textContent = 'New Habit';
+            document.getElementById('edit-actions').classList.add('hidden');
+            document.querySelectorAll('.day-cb').forEach(cb => cb.checked = false);
+
+            toggleTargetDays();
+
+            formModal.classList.remove('hidden');
+            setTimeout(() => {
+                formModal.classList.remove('opacity-0');
+                formContent.classList.remove('translate-y-full');
+            }, 10);
+        }
+
+        function editStreak(id) {
+            const streak = streaks.find(s => s.id === id);
+            if (!streak) return;
+
+            document.getElementById('habit-id').value = streak.id;
+            document.getElementById('habit-name').value = streak.name;
+
+            const catExists = categories.some(c => c.id === streak.category);
+            document.getElementById('habit-category').value = catExists ? streak.category : 'other';
+
+            document.getElementById('habit-freq').value = streak.frequency;
+            document.getElementById('habit-target-days').value = streak.targetDays;
+
+            document.querySelectorAll('.day-cb').forEach(cb => {
+                cb.checked = streak.specificDays && streak.specificDays.includes(parseInt(cb.value));
+            });
+
+            document.getElementById('habit-end-date').value = streak.endDate || '';
+            document.getElementById('modal-title').textContent = 'Edit Habit';
+
+            toggleTargetDays();
+
+            const actionsDiv = document.getElementById('edit-actions');
+            actionsDiv.classList.remove('hidden');
+
+            const archBtn = document.getElementById('edit-archive-btn');
+            archBtn.textContent = streak.isArchived ? "Unarchive" : "Archive";
+            archBtn.onclick = () => toggleArchiveStreak(streak.id);
+
+            document.getElementById('edit-delete-btn').onclick = () => deleteStreak(streak.id);
+
+            formModal.classList.remove('hidden');
+            setTimeout(() => {
+                formModal.classList.remove('opacity-0');
+                formContent.classList.remove('translate-y-full');
+            }, 10);
+        }
+
+        function closeFormModal() {
+            formModal.classList.add('opacity-0');
+            formContent.classList.add('translate-y-full');
+            setTimeout(() => formModal.classList.add('hidden'), 300);
+        }
+
+        document.getElementById('streak-form').addEventListener('submit', saveStreak);
+
+        function openSettings() {
+            settingsModal.classList.remove('hidden');
+            setTimeout(() => {
+                settingsModal.classList.remove('opacity-0');
+                settingsContent.classList.remove('translate-y-full');
+            }, 10);
+        }
+
+        function closeSettings() {
+            settingsModal.classList.add('opacity-0');
+            settingsContent.classList.add('translate-y-full');
+            setTimeout(() => settingsModal.classList.add('hidden'), 300);
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+            closeSettings();
+        }
+
+        function factoryReset() {
+            if (confirm("WARNING: This will permanently erase ALL your habits, categories, and history from this browser. This cannot be undone. Proceed?")) {
+                localStorage.removeItem(STORAGE_KEY);
+                localStorage.removeItem(CAT_STORAGE_KEY);
+                streaks = [];
+                loadCategories();
+                render();
+                closeSettings();
+                showToast("All data erased.");
+            }
+        }
+
+        function exportData() {
+            const backup = { streaks, categories };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backup));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", `streak_backup_${getToday()}.json`);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+            closeSettings();
+            showToast("Backup downloaded!");
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    let newStreaks = Array.isArray(importedData) ? importedData : importedData.streaks;
+                    let newCategories = importedData.categories || categories;
+
+                    if (Array.isArray(newStreaks)) {
+                        if (confirm(`Found ${newStreaks.length} habits. Replace current data?`)) {
+                            streaks = newStreaks;
+                            categories = newCategories;
+                            saveData();
+                            saveCategories();
+                            closeSettings();
+                            showToast("Data imported successfully!");
+                        }
+                    } else {
+                        alert("Invalid backup file format.");
+                    }
+                } catch (err) {
+                    alert("Error reading file.");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // Close Modals on overlay click
+        [formModal, settingsModal, document.getElementById('category-modal'), document.getElementById('insights-modal'), document.getElementById('global-calendar-modal'), document.getElementById('day-detail-modal')].forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeFormModal();
+                    closeSettings();
+                    closeCategoryManager();
+                    closeInsights();
+                    closeGlobalCalendar();
+                    closeDayDetails();
+                }
+            });
+        });
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag]));
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                document.getElementById('date-display').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+                render();
+            }
+        });
+    </script>
+</body>
+
+</html>
