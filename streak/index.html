@@ -485,7 +485,7 @@
                 </button>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="grid grid-cols-2 gap-4 mb-4">
                 <div
                     class="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-2xl border border-orange-100 dark:border-orange-800/50 flex flex-col items-center justify-center text-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class="text-orange-500 mb-2"
@@ -706,6 +706,7 @@
         let isViewingArchived = false;
         let globalCalendarOffset = 0;
         let sortableInstance = null;
+        let currentInsightId = null;
 
         const STORAGE_KEY = 'streak_tracker_pro_data';
         const CAT_STORAGE_KEY = 'streak_tracker_categories';
@@ -1080,6 +1081,7 @@
             const streak = streaks.find(s => s.id === id);
             if (!streak) return;
 
+            currentInsightId = id; // Store ID for actions inside modal
             const stats = calculateStats(streak);
 
             document.getElementById('insight-title').textContent = streak.name;
@@ -1101,6 +1103,7 @@
         }
 
         function closeInsights() {
+            currentInsightId = null;
             const modal = document.getElementById('insights-modal');
             const content = document.getElementById('insights-content');
             modal.classList.add('opacity-0');
@@ -1360,12 +1363,21 @@
             const emptyEl = document.getElementById('empty-state');
             listEl.innerHTML = '';
 
-            const displayStreaks = streaks.filter(s => s.isArchived === isViewingArchived);
+            const todayDay = new Date().getDay();
+
+            const displayStreaks = streaks.filter(s => {
+                if (s.isArchived !== isViewingArchived) return false;
+
+                if (!isViewingArchived && s.frequency === 'daily' && s.specificDays && s.specificDays.length > 0) {
+                    if (!s.specificDays.includes(todayDay)) return false;
+                }
+                return true;
+            });
 
             if (displayStreaks.length === 0) {
                 emptyEl.classList.remove('hidden');
                 emptyEl.classList.add('flex');
-                emptyEl.querySelector('h2').textContent = isViewingArchived ? "No archived habits" : "No active habits";
+                emptyEl.querySelector('h2').textContent = isViewingArchived ? "No archived habits" : "No habits scheduled for today";
             } else {
                 emptyEl.classList.add('hidden');
                 emptyEl.classList.remove('flex');
@@ -1415,13 +1427,13 @@
                             </div>
 
                             <div class="flex-1 pr-2 flex flex-col justify-center">
-                                <div class="flex items-center gap-2 mb-1 flex-wrap">
-                                    <button onclick="openInsights('${streak.id}')" class="font-bold text-gray-800 dark:text-gray-100 text-lg leading-tight active:text-orange-500 transition-colors text-left flex items-center gap-1.5 ${isEnded ? 'line-through' : ''}">
+                                <div class="flex items-center gap-2 mb-1 flex-wrap cursor-pointer group" onclick="openInsights('${streak.id}')" title="Tap for Insights">
+                                    <h3 class="font-bold text-gray-800 dark:text-gray-100 text-lg leading-tight group-active:text-orange-500 transition-colors text-left ${isEnded ? 'line-through' : ''}">
                                         ${escapeHTML(streak.name)}
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="text-gray-300 dark:text-gray-500 flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                                    </button>
-                                    ${streak.isArchived ? `<span class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide mt-1 flex-shrink-0">Archived</span>` : ''}
-                                    ${isEnded && !streak.isArchived ? `<span class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide mt-1 flex-shrink-0">Ended</span>` : ''}
+                                    </h3>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="text-gray-300 dark:text-gray-500 flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                    ${streak.isArchived ? `<span class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide flex-shrink-0">Archived</span>` : ''}
+                                    ${isEnded && !streak.isArchived ? `<span class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide flex-shrink-0">Ended</span>` : ''}
                                 </div>
                                 
                                 <div class="flex items-center gap-2 text-sm mt-1.5 flex-wrap">
