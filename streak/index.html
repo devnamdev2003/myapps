@@ -18,7 +18,7 @@
 
     <!-- Open Graph (for WhatsApp, Facebook, LinkedIn) -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://devnamdev2003.github.io/myapps/streak/">
+    <meta property="og:url" content="https://streakerpro.netlify.app/">
     <meta property="og:title" content="Streak Tracker Pro: Build Daily Habits">
     <meta property="og:description"
         content="Stay consistent and build powerful habits with a clean and minimal streak tracker.">
@@ -156,16 +156,21 @@
     <header
         class="bg-white dark:bg-gray-800 px-6 py-4 shadow-sm z-10 flex justify-between items-center transition-colors duration-300">
         <div class="flex items-center gap-3">
-            <img src="./img/logo.png" id="app-logo" class="h-10 w-10 object-cover rounded-xl shadow-sm"
-                onerror="this.style.display='none'; document.getElementById('default-logo-svg').style.display='flex';"
-                alt="Logo">
 
-            <div id="default-logo-svg"
-                class="hidden h-10 w-10 items-center justify-center bg-gradient-to-br from-orange-400 to-red-500 rounded-xl text-white shadow-sm flex-shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
+            <!-- Logo with Hard Refresh Action -->
+            <div class="cursor-pointer active:scale-95 transition-transform" onclick="window.location.reload()"
+                title="Refresh Application">
+                <img src="./img/logo.png" id="app-logo" class="h-10 w-10 object-cover rounded-xl shadow-sm"
+                    onerror="this.style.display='none'; document.getElementById('default-logo-svg').style.display='flex';"
+                    alt="Logo">
+
+                <div id="default-logo-svg"
+                    class="hidden h-10 w-10 items-center justify-center bg-gradient-to-br from-orange-400 to-red-500 rounded-xl text-white shadow-sm flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                </div>
             </div>
 
             <div>
@@ -420,7 +425,7 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name <span
                             class="text-red-500">*</span></label>
-                    <input type="text" id="habit-name" required placeholder="e.g. Read 10 pages"
+                    <input type="text" id="habit-name" required placeholder="e.g. Read 10 pages" maxlength="40"
                         class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-orange-500 focus:outline-none"
                         autocomplete="off">
                 </div>
@@ -605,7 +610,7 @@
             <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
                 <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Create New Category</h4>
                 <div class="flex gap-2 mb-3">
-                    <input type="text" id="new-cat-name" placeholder="Category Name"
+                    <input type="text" id="new-cat-name" placeholder="Category Name" maxlength="30"
                         class="flex-1 bg-gray-100 dark:bg-gray-700 border-none text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:outline-none">
                 </div>
                 <div class="flex justify-between items-center mb-4 overflow-x-auto no-scrollbar pb-1">
@@ -1020,6 +1025,10 @@
 
             if (!name) return showToast("Enter a category name");
 
+            // UNIQUE CHECK FOR CATEGORY
+            const isDuplicate = categories.some(c => c.label.toLowerCase() === name.toLowerCase());
+            if (isDuplicate) return showToast("Category name already exists!");
+
             const id = 'cat_' + Date.now();
             let color = colorVal;
             let hexColor = null;
@@ -1062,6 +1071,11 @@
 
             // Form Validations
             if (!name) return showToast('Please enter a habit name.');
+
+            // UNIQUE CHECK FOR HABIT (Case insensitive, excluding currently editing habit)
+            const isDuplicate = streaks.some(s => s.name.toLowerCase() === name.toLowerCase() && s.id !== id);
+            if (isDuplicate) return showToast('A habit with this name already exists.');
+
             if (freq === 'daily' && (isNaN(targetDays) || targetDays < 1 || targetDays > 7)) {
                 return showToast('Days per week must be between 1 and 7.');
             }
