@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video & Audio Sync Mixer</title>
+    <title>SyncMixer Pro v2.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Custom styling for range sliders */
@@ -22,8 +22,8 @@
             background: #3b82f6;
             cursor: pointer;
             margin-top: -6px;
-            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
-            transition: transform 0.15s ease, background-color 0.15s ease;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+            transition: transform 0.1s ease;
         }
 
         input[type=range]::-webkit-slider-thumb:active {
@@ -37,7 +37,6 @@
             cursor: pointer;
             background: rgba(75, 85, 99, 0.6);
             border-radius: 2px;
-            transition: background 0.15s ease;
         }
 
         input[type=range]:focus {
@@ -67,33 +66,36 @@
 </head>
 
 <body
-    class="bg-gray-950 text-white min-h-screen font-sans flex flex-col items-center py-6 px-2 sm:py-10 sm:px-4 selection:bg-blue-500 selection:text-white">
+    class="bg-gray-950 text-white min-h-screen font-sans flex flex-col items-center py-4 px-2 sm:py-8 sm:px-4 selection:bg-blue-500 selection:text-white">
 
-    <div class="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="max-w-[1400px] w-full grid grid-cols-1 xl:grid-cols-4 gap-6">
 
         <!-- Main Player Column -->
         <div
-            class="lg:col-span-2 bg-gray-900 rounded-2xl shadow-2xl border border-gray-800 flex flex-col overflow-hidden relative">
+            class="xl:col-span-3 bg-gray-900 rounded-2xl shadow-2xl border border-gray-800 flex flex-col overflow-hidden relative">
 
             <!-- Header -->
-            <div class="p-4 sm:p-5 border-b border-gray-800 bg-gray-900 flex justify-between items-center z-10">
-                <div>
-                    <h1 class="text-xl sm:text-2xl font-bold flex items-center gap-3 tracking-tight">
-                        <div class="bg-blue-600/20 p-1.5 rounded-lg">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="text-blue-500">
-                                <path d="M12 2v20" />
-                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                            </svg>
-                        </div>
-                        SyncMixer <span class="text-blue-500 font-black">Pro</span>
-                    </h1>
-                    <p id="player-subtitle" class="text-gray-400 text-xs sm:text-sm mt-1 truncate pl-11">Select a video
-                        to begin</p>
+            <div class="p-4 border-b border-gray-800 bg-gray-900 flex justify-between items-center z-10">
+                <div class="flex items-center gap-4">
+                    <div class="bg-blue-600/20 p-2 rounded-xl border border-blue-500/20">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="text-blue-500">
+                            <path d="M12 2v20" />
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
+                            SyncMixer <span class="text-blue-500 font-black">Pro</span> <span
+                                class="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded uppercase tracking-widest translate-y-0.5">v2.0</span>
+                        </h1>
+                        <p id="player-subtitle" class="text-gray-400 text-xs sm:text-sm mt-0.5 truncate">Advanced Video
+                            & Audio Synchronization Tool</p>
+                    </div>
                 </div>
                 <button id="header-shortcut-btn"
-                    class="hidden sm:flex text-gray-400 active:text-white items-center gap-2 text-sm bg-transparent active:bg-gray-800 px-3 py-1.5 rounded-lg transition"
+                    class="hidden sm:flex text-gray-400 active:text-white items-center gap-2 text-sm bg-transparent active:bg-gray-800 px-3 py-1.5 rounded-lg transition border border-gray-700"
                     title="Show Shortcuts (Shift + ?)">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -104,7 +106,7 @@
                 </button>
             </div>
 
-            <!-- Player Container (Handles Fullscreen & Responsive aspect ratio) -->
+            <!-- Player Container -->
             <div id="player-container"
                 class="relative bg-black w-full aspect-video flex flex-col items-center justify-center overflow-hidden focus:outline-none"
                 tabindex="0">
@@ -117,18 +119,6 @@
                     preload="metadata">
                     Your browser does not support the video tag.
                 </video>
-
-                <!-- Loading / Buffering overlay (Hidden by default) -->
-                <div id="loading-overlay"
-                    class="absolute inset-0 bg-gray-900/80 backdrop-blur-sm flex flex-col items-center justify-center hidden z-30 transition-opacity duration-300">
-                    <div class="relative w-16 h-16 flex items-center justify-center mb-4">
-                        <div class="absolute inset-0 rounded-full border-4 border-gray-700"></div>
-                        <div
-                            class="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin">
-                        </div>
-                    </div>
-                    <p class="text-blue-400 font-medium tracking-wide">Buffering Media...</p>
-                </div>
 
                 <!-- Error Overlay (Hidden by default) -->
                 <div id="error-overlay"
@@ -149,11 +139,11 @@
 
                 <!-- Big Play Button Overlay -->
                 <button id="big-play-btn"
-                    class="absolute inset-0 flex items-center justify-center transition-all duration-300 z-10 opacity-100 group">
+                    class="absolute inset-0 flex items-center justify-center transition-all duration-300 z-10 opacity-100">
                     <div
-                        class="text-white active:text-blue-400 active:scale-95 transition-transform duration-200 drop-shadow-2xl">
-                        <svg id="big-play-icon" xmlns="http://www.w3.org/2000/svg" width="64" height="64"
-                            viewBox="0 0 24 24" fill="currentColor" stroke="none" class="sm:w-20 sm:h-20 ml-1">
+                        class="text-white/80 active:text-blue-400 active:scale-95 transition-transform duration-200 drop-shadow-[0_0_15px_rgba(0,0,0,0.8)]">
+                        <svg id="big-play-icon" xmlns="http://www.w3.org/2000/svg" width="72" height="72"
+                            viewBox="0 0 24 24" fill="currentColor" stroke="none" class="sm:w-24 sm:h-24 ml-2">
                             <polygon points="5 3 19 12 5 21 5 3" />
                         </svg>
                     </div>
@@ -161,24 +151,24 @@
 
                 <!-- Controls Overlay Bar -->
                 <div id="controls-bar"
-                    class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent pt-12 pb-3 px-3 sm:px-4 flex flex-col gap-2 transition-all duration-300 z-20 opacity-100 translate-y-0">
+                    class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent pt-16 pb-4 px-4 sm:px-6 flex flex-col gap-3 transition-all duration-300 z-20 opacity-100 translate-y-0">
 
                     <!-- Seek Bar -->
-                    <div class="flex items-center gap-3 px-1">
+                    <div class="flex items-center gap-3">
                         <span id="current-time"
                             class="text-xs font-mono text-gray-300 w-12 text-right tracking-wider">0:00</span>
-                        <input type="range" id="seek-bar" class="flex-1 h-1.5" value="0" step="0.1" min="0" max="100">
-                        <span id="total-time" class="text-xs font-mono text-gray-400 w-12 tracking-wider">0:00</span>
+                        <input type="range" id="seek-bar" class="flex-1 h-1.5" value="0" step="0.001" min="0" max="100">
+                        <span id="total-time" class="text-xs font-mono text-gray-500 w-12 tracking-wider">0:00</span>
                     </div>
 
                     <!-- Bottom Controls Row -->
                     <div class="flex flex-wrap items-center justify-between gap-y-3 mt-1">
 
-                        <!-- Left Controls: Play, Skip -->
+                        <!-- Left Controls: Play, Skip, Loop -->
                         <div class="flex items-center gap-1 sm:gap-2 shrink-0">
                             <button id="skip-backward-btn"
                                 class="text-gray-300 active:text-white p-2 transition bg-transparent active:scale-95"
-                                title="Skip backward 5s">
+                                title="Skip backward 5s (Left Arrow)">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round">
@@ -191,7 +181,7 @@
 
                             <button id="play-pause-btn"
                                 class="text-white p-2 transition transform active:scale-95 bg-transparent"
-                                title="Play/Pause">
+                                title="Play/Pause (Space)">
                                 <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" width="28" height="28"
                                     viewBox="0 0 24 24" fill="currentColor" stroke="none">
                                     <polygon points="5 3 19 12 5 21 5 3" />
@@ -205,7 +195,7 @@
 
                             <button id="skip-forward-btn"
                                 class="text-gray-300 active:text-white p-2 transition bg-transparent active:scale-95"
-                                title="Skip forward 5s">
+                                title="Skip forward 5s (Right Arrow)">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round">
@@ -215,18 +205,31 @@
                                         fill="currentColor">5</text>
                                 </svg>
                             </button>
+
+                            <div class="w-px h-6 bg-white/10 mx-1"></div>
+
+                            <button id="loop-btn"
+                                class="text-gray-400 active:text-white p-2 transition bg-transparent active:scale-95"
+                                title="Toggle Loop (L)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="m17 2 4 4-4 4" />
+                                    <path d="M3 11v-1a4 4 0 0 1 4-4h14" />
+                                    <path d="m7 22-4-4 4-4" />
+                                    <path d="M21 13v1a4 4 0 0 1-4 4H3" />
+                                </svg>
+                            </button>
                         </div>
 
-                        <!-- Center: Audio/Video Mixer -->
+                        <!-- Center: Master Mixer & Sync Offset -->
                         <div
-                            class="flex items-center gap-3 px-3 py-1.5 order-last md:order-none w-full md:w-auto justify-center mx-auto">
-                            <span
-                                class="text-[10px] text-gray-400 font-bold uppercase tracking-widest hidden sm:block drop-shadow-md">Mixer</span>
+                            class="flex items-center gap-4 px-4 py-2 order-last md:order-none w-full md:w-auto justify-center mx-auto bg-black/40 rounded-xl border border-white/5 shadow-inner">
 
                             <!-- Video Vol -->
-                            <div class="flex items-center gap-1.5" title="Video Volume">
+                            <div class="flex items-center gap-2" title="Master Video Volume">
                                 <button id="video-mute-btn"
-                                    class="text-gray-300 active:text-white transition p-1 bg-transparent drop-shadow-md active:scale-95">
+                                    class="text-gray-400 active:text-white transition p-1 bg-transparent active:scale-95">
                                     <svg id="video-vol-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                         stroke-linecap="round" stroke-linejoin="round">
@@ -258,13 +261,13 @@
                                     max="1" step="0.05" value="0.8">
                             </div>
 
-                            <div class="w-px h-5 bg-white/20 mx-1"></div>
+                            <div class="w-px h-6 bg-white/10 mx-1"></div>
 
                             <!-- Audio Vol -->
-                            <div class="flex items-center gap-1.5" title="Background Audio Volume"
+                            <div class="flex items-center gap-2" title="Dubbing Audio Volume"
                                 id="audio-mixer-container">
                                 <button id="audio-mute-btn"
-                                    class="text-gray-300 active:text-white transition p-1 bg-transparent drop-shadow-md active:scale-95">
+                                    class="text-gray-400 active:text-white transition p-1 bg-transparent active:scale-95">
                                     <svg id="audio-vol-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                         stroke-linecap="round" stroke-linejoin="round">
@@ -285,16 +288,45 @@
                                 <input type="range" id="audio-volume" class="w-16 sm:w-20 drop-shadow-md" min="0"
                                     max="1" step="0.05" value="0.5">
                             </div>
+
+                            <!-- Sync Delay Offset Control -->
+                            <div id="sync-delay-container"
+                                class="flex items-center gap-1 ml-2 border-l border-white/10 pl-3 transition-opacity">
+                                <span
+                                    class="text-[10px] text-purple-400 font-bold uppercase tracking-widest mr-1 hidden sm:block">Delay</span>
+                                <button id="offset-decrease"
+                                    class="text-gray-400 active:text-white transition p-1 bg-white/5 rounded-md active:scale-95"
+                                    title="Delay Audio (-0.1s)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    </svg>
+                                </button>
+                                <span id="offset-display"
+                                    class="text-xs font-mono text-white w-10 text-center select-none"
+                                    title="Audio Offset in seconds">0.0s</span>
+                                <button id="offset-increase"
+                                    class="text-gray-400 active:text-white transition p-1 bg-white/5 rounded-md active:scale-95"
+                                    title="Advance Audio (+0.1s)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Right Controls: Speed, PiP, Fullscreen -->
                         <div class="flex items-center gap-1 sm:gap-2 shrink-0">
                             <button id="speed-btn"
-                                class="text-xs sm:text-sm font-bold text-gray-300 active:text-white w-10 text-center py-1.5 transition bg-transparent drop-shadow-md active:scale-95"
+                                class="text-xs sm:text-sm font-bold text-gray-300 active:text-white w-10 text-center py-1.5 transition bg-transparent active:scale-95"
                                 title="Playback Speed">1x</button>
 
                             <button id="pip-btn"
-                                class="text-gray-300 active:text-white p-2 transition bg-transparent drop-shadow-md active:scale-95"
+                                class="text-gray-300 active:text-white p-2 transition bg-transparent active:scale-95"
                                 title="Picture-in-Picture">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -305,7 +337,7 @@
                             </button>
 
                             <button id="fullscreen-btn"
-                                class="text-gray-300 active:text-white p-2 transition bg-transparent drop-shadow-md active:scale-95"
+                                class="text-gray-300 active:text-white p-2 transition bg-transparent active:scale-95"
                                 title="Fullscreen (F)">
                                 <svg id="fs-enter-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
                                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -326,28 +358,55 @@
             </div>
         </div>
 
-        <!-- Playlist Column -->
+        <!-- Sidebar (Playlist & Actions) -->
         <div
-            class="bg-gray-900 rounded-2xl shadow-2xl border border-gray-800 flex flex-col h-[400px] lg:h-full lg:max-h-[700px]">
-            <div class="p-5 border-b border-gray-800 bg-gray-900 flex justify-between items-center z-10 shadow-sm">
-                <h2 class="text-lg font-bold flex items-center gap-2 tracking-tight">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                        class="text-blue-500">
-                        <path d="M8 6h13" />
-                        <path d="M8 12h13" />
-                        <path d="M8 18h13" />
-                        <path d="M3 6h.01" />
-                        <path d="M3 12h.01" />
-                        <path d="M3 18h.01" />
-                    </svg>
-                    Up Next
-                </h2>
-                <div class="flex items-center gap-3">
-                    <span class="text-xs font-mono text-gray-500 bg-gray-800 px-2 py-1 rounded-md" id="playlist-count">0
-                        items</span>
+            class="xl:col-span-1 bg-gray-900 rounded-2xl shadow-2xl border border-gray-800 flex flex-col h-[500px] xl:h-full xl:max-h-[800px]">
+            <div
+                class="p-5 border-b border-gray-800 bg-gray-900 flex justify-between items-center z-10 shadow-sm rounded-t-2xl">
+                <div>
+                    <h2 class="text-lg font-bold flex items-center gap-2 tracking-tight">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="text-blue-500">
+                            <path d="M8 6h13" />
+                            <path d="M8 12h13" />
+                            <path d="M8 18h13" />
+                            <path d="M3 6h.01" />
+                            <path d="M3 12h.01" />
+                            <path d="M3 18h.01" />
+                        </svg>
+                        Project Media
+                    </h2>
+                    <span class="text-[10px] font-mono text-gray-500 mt-1 block" id="playlist-count">0 items
+                        loaded</span>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center gap-1">
+                    <button id="export-btn"
+                        class="text-gray-400 active:text-white bg-gray-800 active:bg-gray-700 p-2 rounded-lg transition"
+                        title="Export Project Data">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                    </button>
+                    <label
+                        class="text-gray-400 active:text-white bg-gray-800 active:bg-gray-700 p-2 rounded-lg transition cursor-pointer"
+                        title="Import Project Data">
+                        <input type="file" id="import-btn" accept=".json" class="hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="17 8 12 3 7 8" />
+                            <line x1="12" y1="3" x2="12" y2="15" />
+                        </svg>
+                    </label>
+                    <div class="w-px h-6 bg-gray-700 mx-1"></div>
                     <button id="open-add-media-modal"
-                        class="text-white active:text-blue-400 bg-blue-600/20 active:bg-blue-600/30 p-1.5 rounded-md transition active:scale-95"
+                        class="text-white active:text-blue-400 bg-blue-600 active:bg-blue-700 p-2 rounded-lg transition active:scale-95 shadow-lg shadow-blue-600/20"
                         title="Add Custom Media">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -357,22 +416,14 @@
                     </button>
                 </div>
             </div>
+
             <div class="p-3 overflow-y-auto flex-1">
-                <ul id="playlist-container" class="space-y-1.5">
+                <ul id="playlist-container" class="space-y-2">
                     <!-- Playlist items injected via JS -->
                 </ul>
             </div>
         </div>
 
-    </div>
-
-    <!-- Instructions / Footer -->
-    <div class="max-w-6xl w-full mt-6 text-gray-500 text-xs sm:text-sm text-center px-4 mb-10">
-        <p class="mb-2">The video timeline acts as the master clock. Play, pause, skipping, and seeking perfectly syncs
-            the background audio.</p>
-        <p class="text-gray-400">Press <kbd
-                class="bg-gray-800 px-2 py-0.5 rounded border border-gray-700 shadow-sm">Shift + ?</kbd> to view all
-            keyboard shortcuts.</p>
     </div>
 
     <!-- Add/Edit Media Modal Overlay -->
@@ -405,34 +456,36 @@
                     <label class="block text-xs font-semibold text-gray-400 mb-1 tracking-wide uppercase">Title
                         *</label>
                     <input type="text" id="custom-title"
-                        class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition"
-                        placeholder="My Awesome Mix">
+                        class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 transition"
+                        placeholder="Project Name / Track Title">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-400 mb-1 tracking-wide uppercase">Description
                         (Optional)</label>
                     <input type="text" id="custom-desc"
-                        class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition"
-                        placeholder="Custom audio track over video">
+                        class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 transition"
+                        placeholder="Notes or tags">
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-400 mb-1 tracking-wide uppercase">Video URL
-                        *</label>
+                <div class="pt-2 border-t border-gray-800">
+                    <label class="block text-xs font-semibold text-blue-400 mb-1 tracking-wide uppercase">Master Video
+                        URL *</label>
                     <input type="url" id="custom-video-url"
-                        class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition"
+                        class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 transition"
                         placeholder="https://example.com/video.mp4">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-400 mb-1 tracking-wide uppercase">Background
+                    <label class="block text-xs font-semibold text-purple-400 mb-1 tracking-wide uppercase">Dubbing
                         Audio URL (Optional)</label>
                     <input type="url" id="custom-audio-url"
-                        class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition"
+                        class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500 transition"
                         placeholder="Leave empty to use native video sound">
+                    <p class="text-[10px] text-gray-500 mt-1">If provided, video audio will be muted and this track will
+                        sync to the video timeline.</p>
                 </div>
             </div>
             <button id="save-custom-media-btn"
-                class="w-full mt-6 bg-blue-600 active:bg-blue-500 text-white py-2.5 rounded-xl transition font-medium shadow-lg shadow-blue-500/20 active:scale-95">Add
-                to Playlist</button>
+                class="w-full mt-6 bg-blue-600 active:bg-blue-500 text-white py-3 rounded-xl transition font-bold tracking-wide shadow-lg shadow-blue-500/20 active:scale-95">Add
+                to Project</button>
         </div>
     </div>
 
@@ -440,7 +493,7 @@
     <div id="shortcut-modal"
         class="fixed inset-0 bg-gray-950/80 z-50 flex items-center justify-center hidden backdrop-blur-sm opacity-0 transition-opacity duration-300">
         <div
-            class="bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl p-6 sm:p-8 max-w-md w-full mx-4 transform scale-95 transition-transform duration-300">
+            class="bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl p-6 sm:p-8 max-w-lg w-full mx-4 transform scale-95 transition-transform duration-300">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xl font-bold text-white flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -461,50 +514,88 @@
                 </button>
             </div>
 
-            <div class="space-y-3 text-sm text-gray-300">
-                <div class="flex justify-between items-center bg-gray-800/50 px-3 py-2 rounded-lg">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-300">
+                <!-- Playback -->
+                <div
+                    class="flex justify-between items-center bg-gray-800/50 px-3 py-2.5 rounded-lg border border-gray-700/50">
                     <span>Play / Pause</span>
                     <kbd
-                        class="bg-gray-800 border border-gray-700 px-2 py-1 rounded text-xs font-mono shadow-sm text-white">Space</kbd>
+                        class="bg-gray-800 border border-gray-600 px-2 py-1 rounded text-xs font-mono text-white">Space</kbd>
                 </div>
-                <div class="flex justify-between items-center bg-gray-800/50 px-3 py-2 rounded-lg">
+                <div
+                    class="flex justify-between items-center bg-gray-800/50 px-3 py-2.5 rounded-lg border border-gray-700/50">
                     <span>Toggle Fullscreen</span>
                     <kbd
-                        class="bg-gray-800 border border-gray-700 px-2 py-1 rounded text-xs font-mono shadow-sm text-white">F</kbd>
+                        class="bg-gray-800 border border-gray-600 px-2 py-1 rounded text-xs font-mono text-white">F</kbd>
                 </div>
-                <div class="flex justify-between items-center bg-gray-800/50 px-3 py-2 rounded-lg">
-                    <span>Skip Forward / Backward 5s</span>
+                <div
+                    class="flex justify-between items-center bg-gray-800/50 px-3 py-2.5 rounded-lg border border-gray-700/50">
+                    <span>Skip Forward/Back 5s</span>
                     <div class="flex gap-1">
                         <kbd
-                            class="bg-gray-800 border border-gray-700 px-2 py-1 rounded text-xs font-mono shadow-sm text-white">&larr;</kbd>
+                            class="bg-gray-800 border border-gray-600 px-2 py-1 rounded text-xs font-mono text-white">&larr;</kbd>
                         <kbd
-                            class="bg-gray-800 border border-gray-700 px-2 py-1 rounded text-xs font-mono shadow-sm text-white">&rarr;</kbd>
+                            class="bg-gray-800 border border-gray-600 px-2 py-1 rounded text-xs font-mono text-white">&rarr;</kbd>
                     </div>
                 </div>
-                <div class="flex justify-between items-center bg-gray-800/50 px-3 py-2 rounded-lg">
+                <div
+                    class="flex justify-between items-center bg-gray-800/50 px-3 py-2.5 rounded-lg border border-gray-700/50">
                     <span>Volume Up / Down</span>
                     <div class="flex gap-1">
                         <kbd
-                            class="bg-gray-800 border border-gray-700 px-2 py-1 rounded text-xs font-mono shadow-sm text-white">&uarr;</kbd>
+                            class="bg-gray-800 border border-gray-600 px-2 py-1 rounded text-xs font-mono text-white">&uarr;</kbd>
                         <kbd
-                            class="bg-gray-800 border border-gray-700 px-2 py-1 rounded text-xs font-mono shadow-sm text-white">&darr;</kbd>
+                            class="bg-gray-800 border border-gray-600 px-2 py-1 rounded text-xs font-mono text-white">&darr;</kbd>
                     </div>
                 </div>
-                <div class="flex justify-between items-center bg-gray-800/50 px-3 py-2 rounded-lg">
-                    <span>Increase Speed</span>
-                    <kbd
-                        class="bg-gray-800 border border-gray-700 px-2 py-1 rounded text-xs font-mono shadow-sm text-white">Shift
-                        + ></kbd>
+
+                <!-- Pro Sync Controls -->
+                <div class="sm:col-span-2 mt-2 mb-1 text-xs font-bold text-gray-500 uppercase tracking-wider">Pro
+                    Controls</div>
+
+                <div
+                    class="flex justify-between items-center bg-gray-800/50 px-3 py-2.5 rounded-lg border border-gray-700/50">
+                    <span>Frame Step (Prev/Next)</span>
+                    <div class="flex gap-1">
+                        <kbd
+                            class="bg-gray-800 border border-gray-600 px-2 py-1 rounded text-xs font-mono text-white">,</kbd>
+                        <kbd
+                            class="bg-gray-800 border border-gray-600 px-2 py-1 rounded text-xs font-mono text-white">.</kbd>
+                    </div>
                 </div>
-                <div class="flex justify-between items-center bg-gray-800/50 px-3 py-2 rounded-lg">
-                    <span>Decrease Speed</span>
+                <div
+                    class="flex justify-between items-center bg-gray-800/50 px-3 py-2.5 rounded-lg border border-gray-700/50">
+                    <span>Audio Delay Offset</span>
+                    <div class="flex gap-1">
+                        <kbd
+                            class="bg-gray-800 border border-gray-600 px-2 py-1 rounded text-xs font-mono text-white">[</kbd>
+                        <kbd
+                            class="bg-gray-800 border border-gray-600 px-2 py-1 rounded text-xs font-mono text-white">]</kbd>
+                    </div>
+                </div>
+                <div
+                    class="flex justify-between items-center bg-gray-800/50 px-3 py-2.5 rounded-lg border border-gray-700/50">
+                    <span>Change Speed</span>
+                    <div class="flex gap-1 items-center">
+                        <kbd
+                            class="bg-gray-800 border border-gray-600 px-2 py-1 rounded text-xs font-mono text-white text-[10px]">Shift</kbd>
+                        +
+                        <kbd class="bg-gray-800 border border-gray-600 px-2 py-1 rounded text-xs font-mono text-white">
+                            < </kbd>
+                                <kbd
+                                    class="bg-gray-800 border border-gray-600 px-2 py-1 rounded text-xs font-mono text-white">
+                                    >
+                    </div>
+                </div>
+                <div
+                    class="flex justify-between items-center bg-gray-800/50 px-3 py-2.5 rounded-lg border border-gray-700/50">
+                    <span>Toggle Loop</span>
                     <kbd
-                        class="bg-gray-800 border border-gray-700 px-2 py-1 rounded text-xs font-mono shadow-sm text-white">Shift
-                        + << /kbd>
+                        class="bg-gray-800 border border-gray-600 px-2 py-1 rounded text-xs font-mono text-white">L</kbd>
                 </div>
             </div>
             <button id="close-shortcut-bottom-btn"
-                class="w-full mt-6 bg-blue-600 active:bg-blue-500 text-white py-2.5 rounded-xl transition font-medium shadow-lg shadow-blue-500/20 active:scale-95">Got
+                class="w-full mt-6 bg-blue-600 active:bg-blue-500 text-white py-3 rounded-xl transition font-bold shadow-lg shadow-blue-500/20 active:scale-95">Got
                 it!</button>
         </div>
     </div>
@@ -529,6 +620,10 @@
             let hasCustomAudio = false;
             let editingIndex = -1;
 
+            // --- V2.0 State Variables ---
+            let audioOffset = 0.0; // Audio delay in seconds
+            let isLooping = false;
+
             // DOM Elements
             const playerContainer = document.getElementById('player-container');
             const video = document.getElementById('main-video');
@@ -548,8 +643,7 @@
             const speedBtn = document.getElementById('speed-btn');
             const pipBtn = document.getElementById('pip-btn');
             const fullscreenBtn = document.getElementById('fullscreen-btn');
-            const fsEnterIcon = document.getElementById('fs-enter-icon');
-            const fsExitIcon = document.getElementById('fs-exit-icon');
+            const loopBtn = document.getElementById('loop-btn');
 
             const seekBar = document.getElementById('seek-bar');
             const currentTimeEl = document.getElementById('current-time');
@@ -560,6 +654,12 @@
             const videoMuteBtn = document.getElementById('video-mute-btn');
             const audioMuteBtn = document.getElementById('audio-mute-btn');
             const audioMixerContainer = document.getElementById('audio-mixer-container');
+
+            // Sync Offset UI
+            const syncDelayContainer = document.getElementById('sync-delay-container');
+            const offsetDecreaseBtn = document.getElementById('offset-decrease');
+            const offsetIncreaseBtn = document.getElementById('offset-increase');
+            const offsetDisplay = document.getElementById('offset-display');
 
             const errorOverlay = document.getElementById('error-overlay');
             const errorMessage = document.getElementById('error-message');
@@ -576,54 +676,40 @@
             const saveCustomMediaBtn = document.getElementById('save-custom-media-btn');
             const modalFormTitle = document.getElementById('modal-form-title');
 
+            // Export / Import
+            const exportBtn = document.getElementById('export-btn');
+            const importBtn = document.getElementById('import-btn');
+
             let isDraggingSeek = false;
             let idleTimeout;
             let activeModal = null;
             const playbackSpeeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
-            let currentSpeedIndex = 2; // Index of 1 (normal speed)
+            let currentSpeedIndex = 2;
 
             // Mute State Memory
             let preMuteVideoVol = 0.8;
             let preMuteAudioVol = 0.5;
 
-            // Remove focus from buttons and range inputs ONLY, so text inputs work perfectly
-            document.querySelectorAll('button, input[type="range"]').forEach(el => {
+            // Prevent focus retention on UI clicks so keyboard shortcuts work immediately
+            document.querySelectorAll('button, input[type="range"], input[type="file"], label').forEach(el => {
                 el.addEventListener('mouseup', function () { this.blur(); });
             });
 
             // --- Media Session API Setup ---
             if ('mediaSession' in navigator) {
-                navigator.mediaSession.setActionHandler('play', () => {
-                    if (hasCustomAudio) audio.play();
-                    if (!document.hidden) video.play();
-                    updatePlayPauseUI(true);
-                });
-                navigator.mediaSession.setActionHandler('pause', () => {
-                    if (hasCustomAudio) audio.pause();
-                    video.pause();
-                    updatePlayPauseUI(false);
-                });
-                navigator.mediaSession.setActionHandler('seekbackward', () => {
-                    const newTime = Math.max(video.currentTime - 5, 0);
-                    if (hasCustomAudio) audio.currentTime = newTime;
-                    video.currentTime = newTime;
-                });
-                navigator.mediaSession.setActionHandler('seekforward', () => {
-                    const newTime = Math.min(video.currentTime + 5, video.duration || 0);
-                    if (hasCustomAudio) audio.currentTime = newTime;
-                    video.currentTime = newTime;
-                });
+                navigator.mediaSession.setActionHandler('play', () => togglePlayPause(true));
+                navigator.mediaSession.setActionHandler('pause', () => togglePlayPause(false));
+                navigator.mediaSession.setActionHandler('seekbackward', () => skipTime(-5));
+                navigator.mediaSession.setActionHandler('seekforward', () => skipTime(5));
             }
 
-            // --- Helper to get unique save key ---
-            const getSaveKey = (videoPath) => {
-                return 'syncMixer_time_' + btoa(videoPath).substring(0, 30);
-            };
+            // --- Helpers ---
+            const getSaveKey = (videoPath) => 'syncMixer_time_' + btoa(videoPath).substring(0, 30);
 
-            // --- 1. Initialization & Render Logic ---
+            // --- 1. Playlist Render & IO ---
             const renderPlaylist = () => {
                 playlistContainer.innerHTML = '';
-                playlistCount.textContent = `${mediaList.length} items`;
+                playlistCount.textContent = `${mediaList.length} media tracks loaded`;
 
                 mediaList.forEach((item, index) => {
                     const li = document.createElement('li');
@@ -632,25 +718,25 @@
                     const isCustom = index >= defaultMediaList.length;
 
                     li.innerHTML = `
-                        <div class="relative w-full text-left p-3 rounded-xl transition-all duration-200 border flex flex-col gap-1 
-                            ${isActive ? 'bg-gray-800 border-blue-500/50 shadow-md border-l-4 border-l-blue-500' : 'bg-transparent border-transparent active:bg-gray-800/50'}" 
+                        <div class="relative w-full text-left p-3.5 rounded-xl transition-all duration-200 border flex flex-col gap-1.5 
+                            ${isActive ? 'bg-gray-800 border-blue-500/50 shadow-md border-l-4 border-l-blue-500' : 'bg-gray-800/30 border-transparent hover:bg-gray-800/60 hover:border-gray-700/50'}" 
                             >
-                            <button class="w-full text-left focus:outline-none" data-index="${index}">
+                            <button class="w-full text-left focus:outline-none flex flex-col gap-1" data-index="${index}">
                                 <div class="flex justify-between items-start w-full">
-                                    <span class="font-semibold ${isActive ? 'text-blue-400' : 'text-gray-200'} text-sm sm:text-base pr-[70px]">${item.title}</span>
-                                    <span id="duration-${index}" class="text-xs font-mono text-gray-500 bg-black/20 px-1.5 py-0.5 rounded">${displayDuration}</span>
+                                    <span class="font-bold ${isActive ? 'text-blue-400' : 'text-gray-200'} text-sm pr-[70px] leading-tight">${item.title}</span>
+                                    <span id="duration-${index}" class="text-[10px] font-mono text-gray-500 bg-black/40 px-1.5 py-0.5 rounded border border-gray-700/50">${displayDuration}</span>
                                 </div>
-                                <div class="flex items-center gap-2 mt-1">
-                                    ${isCustom ? '<span class="text-[10px] uppercase font-bold tracking-wider bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded">Custom</span>' : ''}
-                                    <span class="text-xs text-gray-500 line-clamp-1">${item.description || 'No description'}</span>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    ${isCustom ? '<span class="text-[9px] uppercase font-bold tracking-widest bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded">Custom</span>' : ''}
+                                    <span class="text-[11px] text-gray-500 line-clamp-1">${item.description || 'No description provided'}</span>
                                 </div>
                             </button>
                             ${isCustom ? `
-                            <div class="absolute top-3 right-3 flex gap-1">
-                                <button class="edit-custom-btn text-gray-400 active:text-blue-400 transition bg-gray-900 p-1.5 rounded-md active:scale-95" data-index="${index}" title="Edit">
+                            <div class="absolute top-3.5 right-3 flex gap-1">
+                                <button class="edit-custom-btn text-gray-500 hover:text-blue-400 transition bg-black/30 hover:bg-gray-800 p-1.5 rounded-md active:scale-95 border border-transparent hover:border-gray-700" data-index="${index}" title="Edit">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                 </button>
-                                <button class="delete-custom-btn text-gray-400 active:text-red-400 transition bg-gray-900 p-1.5 rounded-md active:scale-95" data-index="${index}" title="Remove">
+                                <button class="delete-custom-btn text-gray-500 hover:text-red-400 transition bg-black/30 hover:bg-gray-800 p-1.5 rounded-md active:scale-95 border border-transparent hover:border-gray-700" data-index="${index}" title="Remove">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                                 </button>
                             </div>
@@ -658,46 +744,76 @@
                         </div>
                     `;
 
-                    // Main button click (load media)
                     li.querySelector('button[data-index]').addEventListener('click', () => loadMedia(index));
 
-                    // Edit and Delete actions
                     if (isCustom) {
                         li.querySelector('.edit-custom-btn').addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            editCustomMedia(index);
+                            e.stopPropagation(); editCustomMedia(index);
                         });
                         li.querySelector('.delete-custom-btn').addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            deleteCustomMedia(index);
+                            e.stopPropagation(); deleteCustomMedia(index);
                         });
                     }
 
                     playlistContainer.appendChild(li);
 
-                    // Dynamically calculate and cache duration if not already available
                     if (!item.duration) {
                         const tempVideo = document.createElement('video');
                         tempVideo.preload = 'metadata';
                         tempVideo.onloadedmetadata = () => {
                             const formatted = formatTime(tempVideo.duration);
                             item.duration = formatted;
-
                             if (isCustom) {
                                 const customIdx = index - defaultMediaList.length;
                                 customMediaList[customIdx].duration = formatted;
                                 localStorage.setItem('syncMixer_customMedia', JSON.stringify(customMediaList));
                             }
-
                             const durationSpan = document.getElementById(`duration-${index}`);
-                            if (durationSpan) {
-                                durationSpan.textContent = formatted;
-                            }
+                            if (durationSpan) durationSpan.textContent = formatted;
                         };
                         tempVideo.src = item.videoPath;
                     }
                 });
             };
+
+            // Export / Import Implementation
+            exportBtn.addEventListener('click', () => {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(customMediaList, null, 2));
+                const dlAnchorElem = document.createElement('a');
+                dlAnchorElem.setAttribute("href", dataStr);
+                dlAnchorElem.setAttribute("download", "syncmixer_custom_project.json");
+                document.body.appendChild(dlAnchorElem);
+                dlAnchorElem.click();
+                document.body.removeChild(dlAnchorElem);
+            });
+
+            importBtn.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const importedData = JSON.parse(event.target.result);
+                        if (!Array.isArray(importedData)) throw new Error("Invalid format");
+
+                        // Basic validation
+                        const validData = importedData.filter(item => item.title && item.videoPath);
+                        if (validData.length === 0) throw new Error("No valid media items found.");
+
+                        customMediaList = [...customMediaList, ...validData];
+                        localStorage.setItem('syncMixer_customMedia', JSON.stringify(customMediaList));
+                        mediaList = [...defaultMediaList, ...customMediaList];
+                        renderPlaylist();
+                        alert(`Successfully imported ${validData.length} track(s).`);
+                    } catch (err) {
+                        alert("Failed to import. Please ensure it's a valid SyncMixer JSON file.");
+                    }
+                    // Reset input
+                    importBtn.value = '';
+                };
+                reader.readAsText(file);
+            });
 
             const loadMedia = (index) => {
                 if (index >= mediaList.length) index = 0;
@@ -706,40 +822,46 @@
                 const selectedMedia = mediaList[index];
                 hasCustomAudio = !!selectedMedia.audioPath;
 
+                // Reset V2 states
+                audioOffset = 0.0;
+                updateOffsetDisplay();
+                isLooping = false;
+                updateLoopUI();
+
                 localStorage.setItem('syncMixer_lastVideoIndex', index);
                 const saveKey = getSaveKey(selectedMedia.videoPath);
                 const savedTimeStr = localStorage.getItem(saveKey);
 
-                // Reset Error UI
                 errorOverlay.classList.add('hidden');
                 errorMessage.textContent = "";
 
                 renderPlaylist();
                 playerSubtitle.textContent = selectedMedia.title;
 
-                // Configure Logic based on Audio preference
+                // Setup media
                 video.src = selectedMedia.videoPath;
                 if (hasCustomAudio) {
                     audio.src = selectedMedia.audioPath;
-                    video.volume = 0; // Dubbing mode: mute original video audio
+                    video.volume = 0; // Dubbing mode
                     videoVolume.value = 0;
                     audio.volume = audioVolume.value;
-                    audioMixerContainer.classList.remove('opacity-30', 'pointer-events-none');
+                    audioMixerContainer.classList.remove('opacity-30', 'pointer-events-none', 'grayscale');
+                    syncDelayContainer.classList.remove('opacity-30', 'pointer-events-none', 'grayscale');
                 } else {
                     audio.removeAttribute('src');
-                    video.volume = videoVolume.value; // Play normal video audio
-                    audioMixerContainer.classList.add('opacity-30', 'pointer-events-none');
+                    video.volume = videoVolume.value;
+                    audioMixerContainer.classList.add('opacity-30', 'pointer-events-none', 'grayscale');
+                    syncDelayContainer.classList.add('opacity-30', 'pointer-events-none', 'grayscale');
                 }
 
                 updateVideoMuteUI();
                 updateAudioMuteUI();
-
                 applyPlaybackSpeed(playbackSpeeds[currentSpeedIndex]);
 
                 if ('mediaSession' in navigator) {
                     navigator.mediaSession.metadata = new MediaMetadata({
                         title: selectedMedia.title,
-                        artist: 'SyncMixer Pro',
+                        artist: 'SyncMixer Pro v2.0',
                         album: selectedMedia.description
                     });
                 }
@@ -756,7 +878,7 @@
                     if (timeToRestore > 0 && isFinite(timeToRestore)) {
                         if (video.duration - timeToRestore > 2) {
                             video.currentTime = timeToRestore;
-                            if (hasCustomAudio) audio.currentTime = timeToRestore;
+                            if (hasCustomAudio) audio.currentTime = timeToRestore + audioOffset;
                         } else {
                             localStorage.setItem(saveKey, 0);
                         }
@@ -767,7 +889,6 @@
                 const playPromise = video.play();
                 if (playPromise !== undefined) {
                     playPromise.catch(error => {
-                        // Ignore auto-play blocking errors silently to prevent console blunders
                         if (error.name !== 'NotAllowedError' && error.name !== 'AbortError') {
                             console.warn("Playback prevented:", error);
                         }
@@ -780,10 +901,10 @@
                 let msg = "Unable to load media.";
                 if (e.target.error) {
                     switch (e.target.error.code) {
-                        case 1: msg = `${type} loading was aborted.`; break;
-                        case 2: msg = `Network error while downloading ${type}.`; break;
-                        case 3: msg = `${type} format is unsupported or the file is corrupted.`; break;
-                        case 4: msg = `The ${type} URL is invalid, broken, or blocked by the host.`; break;
+                        case 1: msg = `${type} loading aborted.`; break;
+                        case 2: msg = `Network error downloading ${type}.`; break;
+                        case 3: msg = `${type} format unsupported or corrupted.`; break;
+                        case 4: msg = `${type} URL is invalid, broken, or blocked.`; break;
                     }
                 }
                 errorMessage.textContent = msg;
@@ -793,16 +914,16 @@
             video.addEventListener('error', (e) => handleMediaError(e, 'Video'));
             audio.addEventListener('error', (e) => handleMediaError(e, 'Audio'));
 
+            // CRUD Operations
             const deleteCustomMedia = (index) => {
+                if (!confirm("Remove this track from the project?")) return;
                 const customIndex = index - defaultMediaList.length;
                 customMediaList.splice(customIndex, 1);
                 localStorage.setItem('syncMixer_customMedia', JSON.stringify(customMediaList));
-
                 mediaList = [...defaultMediaList, ...customMediaList];
 
-                if (currentIndex === index) {
-                    loadMedia(0);
-                } else {
+                if (currentIndex === index) loadMedia(0);
+                else {
                     if (currentIndex > index) {
                         currentIndex--;
                         localStorage.setItem('syncMixer_lastVideoIndex', currentIndex);
@@ -822,16 +943,15 @@
 
                 modalFormTitle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> Edit Custom Media`;
                 if (saveCustomMediaBtn) saveCustomMediaBtn.textContent = "Update Media";
-
                 openModal(addMediaModal);
             };
 
-            // --- Modal Helpers ---
+            // Modal Logic
             const openModal = (modalElement) => {
                 if (!modalElement) return;
                 if (activeModal) closeModal(activeModal);
                 modalElement.classList.remove('hidden');
-                void modalElement.offsetWidth; // Force reflow
+                void modalElement.offsetWidth;
                 modalElement.classList.replace('opacity-0', 'opacity-100');
                 modalElement.querySelector('div').classList.replace('scale-95', 'scale-100');
                 activeModal = modalElement;
@@ -845,7 +965,6 @@
                 activeModal = null;
             };
 
-            // --- Add/Edit Custom Media Modal Logic ---
             if (openAddMediaModalBtn) {
                 openAddMediaModalBtn.addEventListener('click', () => {
                     editingIndex = -1;
@@ -857,14 +976,11 @@
                     if (modalFormTitle) {
                         modalFormTitle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Add Custom Media`;
                     }
-                    if (saveCustomMediaBtn) saveCustomMediaBtn.textContent = "Add to Playlist";
+                    if (saveCustomMediaBtn) saveCustomMediaBtn.textContent = "Add to Project";
                     openModal(addMediaModal);
                 });
             }
-
-            if (closeAddModalBtn) {
-                closeAddModalBtn.addEventListener('click', () => closeModal(addMediaModal));
-            }
+            if (closeAddModalBtn) closeAddModalBtn.addEventListener('click', () => closeModal(addMediaModal));
 
             if (saveCustomMediaBtn) {
                 saveCustomMediaBtn.addEventListener('click', () => {
@@ -873,30 +989,20 @@
                     const vUrl = document.getElementById('custom-video-url').value.trim();
                     const aUrl = document.getElementById('custom-audio-url').value.trim();
 
-                    if (!title || !vUrl) {
-                        alert("Please fill in Title and Video URL.");
-                        return;
-                    }
+                    if (!title || !vUrl) return alert("Please fill in Title and Video URL.");
 
-                    // Proper URL validation
                     try {
                         new URL(vUrl);
                         if (aUrl) new URL(aUrl);
                     } catch (_) {
-                        alert("Please enter a valid HTTP/HTTPS URL for the media links.");
-                        return;
+                        return alert("Please enter valid HTTP/HTTPS URLs.");
                     }
 
-                    const newItem = {
-                        title: title,
-                        description: desc,
-                        videoPath: vUrl
-                    };
+                    const newItem = { title, description: desc, videoPath: vUrl };
                     if (aUrl) newItem.audioPath = aUrl;
 
                     if (editingIndex >= 0) {
                         const customIdx = editingIndex - defaultMediaList.length;
-                        // Preserve duration if path hasn't changed
                         if (customMediaList[customIdx].videoPath === vUrl && customMediaList[customIdx].duration) {
                             newItem.duration = customMediaList[customIdx].duration;
                         }
@@ -918,33 +1024,25 @@
                 });
             }
 
-            // --- Shortcut Modal Logic ---
-            if (headerShortcutBtn) {
-                headerShortcutBtn.addEventListener('click', () => openModal(shortcutModal));
-            }
-            if (closeShortcutModalBtn) {
-                closeShortcutModalBtn.addEventListener('click', () => closeModal(shortcutModal));
-            }
-            if (closeShortcutBottomBtn) {
-                closeShortcutBottomBtn.addEventListener('click', () => closeModal(shortcutModal));
-            }
+            if (headerShortcutBtn) headerShortcutBtn.addEventListener('click', () => openModal(shortcutModal));
+            if (closeShortcutModalBtn) closeShortcutModalBtn.addEventListener('click', () => closeModal(shortcutModal));
+            if (closeShortcutBottomBtn) closeShortcutBottomBtn.addEventListener('click', () => closeModal(shortcutModal));
 
             window.addEventListener('click', (e) => {
-                if (activeModal && e.target.closest('.max-w-md') === null && !e.target.closest('button')) {
+                if (activeModal && e.target === activeModal) {
                     closeModal(activeModal);
                 }
             });
 
-            // --- 2. Master Sync Logic (Robust Background Support) ---
+
+            // --- 2. Advanced Sync Logic (V2.0 Offset & Loop) ---
+
             video.addEventListener('play', () => {
                 if (hasCustomAudio) {
+                    syncAudioToVideo(); // Ensure offset is accurate before playing
                     const audioPlayPromise = audio.play();
                     if (audioPlayPromise !== undefined) {
-                        audioPlayPromise.catch(error => {
-                            if (error.name !== 'NotAllowedError' && error.name !== 'AbortError') {
-                                console.warn("Audio playback prevented:", error);
-                            }
-                        });
+                        audioPlayPromise.catch(e => { if (e.name !== 'NotAllowedError' && e.name !== 'AbortError') console.warn(e); });
                     }
                 }
                 updatePlayPauseUI(true);
@@ -966,13 +1064,28 @@
                 }
             });
 
+            // Loop Logic
+            video.addEventListener('ended', () => {
+                if (isLooping) {
+                    video.currentTime = 0;
+                    if (hasCustomAudio) {
+                        audio.currentTime = audioOffset > 0 ? audioOffset : 0;
+                    }
+                    video.play();
+                } else {
+                    updatePlayPauseUI(false);
+                }
+            });
+
             video.addEventListener('seeking', syncAudioToVideo);
             video.addEventListener('seeked', syncAudioToVideo);
 
             document.addEventListener('visibilitychange', () => {
                 if (!document.hidden) {
                     if (hasCustomAudio && !audio.paused) {
-                        video.currentTime = audio.currentTime;
+                        // Resync video to audio's master clock, accounting for offset
+                        const targetVidTime = audio.currentTime - audioOffset;
+                        video.currentTime = Math.max(0, targetVidTime);
                         const p = video.play();
                         if (p !== undefined) p.catch(() => { });
                         updatePlayPauseUI(true);
@@ -995,24 +1108,40 @@
                     localStorage.setItem(saveKey, video.currentTime);
                 }
 
-                if (hasCustomAudio && !document.hidden && Math.abs(video.currentTime - audio.currentTime) > 0.2 && !video.paused) {
-                    syncAudioToVideo();
+                if (hasCustomAudio && !document.hidden && !video.paused) {
+                    // Offset drift correction
+                    const expectedAudioTime = video.currentTime + audioOffset;
+                    if (expectedAudioTime >= 0 && Math.abs(expectedAudioTime - audio.currentTime) > 0.2) {
+                        syncAudioToVideo();
+                    }
                 }
             });
 
             audio.addEventListener('timeupdate', () => {
                 if (hasCustomAudio && document.hidden && !isDraggingSeek) {
-                    seekBar.value = audio.currentTime;
-                    currentTimeEl.textContent = formatTime(audio.currentTime);
+                    // Update UI from audio clock if tab is hidden
+                    const hypotheticalVidTime = Math.max(0, audio.currentTime - audioOffset);
+                    seekBar.value = hypotheticalVidTime;
+                    currentTimeEl.textContent = formatTime(hypotheticalVidTime);
                 }
             });
 
             function syncAudioToVideo() {
                 if (!hasCustomAudio) return;
-                if (audio.duration && video.currentTime <= audio.duration) {
-                    audio.currentTime = video.currentTime;
-                } else if (!audio.duration) {
-                    audio.currentTime = video.currentTime;
+                const targetTime = video.currentTime + audioOffset;
+
+                if (targetTime < 0) {
+                    // Audio hasn't started yet relative to video
+                    audio.pause();
+                    audio.currentTime = 0;
+                } else {
+                    if (audio.paused && !video.paused) audio.play().catch(() => { });
+
+                    if (audio.duration && targetTime <= audio.duration) {
+                        audio.currentTime = targetTime;
+                    } else if (!audio.duration) {
+                        audio.currentTime = targetTime;
+                    }
                 }
             }
 
@@ -1021,10 +1150,56 @@
                 totalTimeEl.textContent = formatTime(video.duration);
             });
 
-            // --- 3. UI Control Implementations ---
+            // --- 3. Pro Controls (Offset, Loop, Step) ---
 
-            const togglePlayPause = () => {
-                if (video.paused && (!hasCustomAudio || audio.paused)) {
+            const updateOffsetDisplay = () => {
+                offsetDisplay.textContent = (audioOffset > 0 ? '+' : '') + audioOffset.toFixed(1) + 's';
+                if (hasCustomAudio) syncAudioToVideo();
+            };
+
+            offsetIncreaseBtn.addEventListener('click', () => {
+                audioOffset += 0.1;
+                updateOffsetDisplay();
+            });
+
+            offsetDecreaseBtn.addEventListener('click', () => {
+                audioOffset -= 0.1;
+                updateOffsetDisplay();
+            });
+
+            const updateLoopUI = () => {
+                if (isLooping) {
+                    loopBtn.classList.remove('text-gray-400');
+                    loopBtn.classList.add('text-blue-400');
+                } else {
+                    loopBtn.classList.add('text-gray-400');
+                    loopBtn.classList.remove('text-blue-400');
+                }
+            };
+
+            loopBtn.addEventListener('click', () => {
+                isLooping = !isLooping;
+                updateLoopUI();
+            });
+
+            const frameStep = (forward) => {
+                if (!video.paused) video.pause(); // Must pause to frame step
+                const step = 0.033; // Approx 1/30th sec
+                video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + (forward ? step : -step)));
+                syncAudioToVideo();
+            };
+
+
+            // --- 4. Base UI Control Implementations ---
+
+            const togglePlayPause = (forceState) => {
+                const shouldPlay = forceState !== undefined ? forceState : (video.paused && (!hasCustomAudio || audio.paused));
+
+                if (shouldPlay) {
+                    if (video.currentTime >= video.duration) {
+                        video.currentTime = 0;
+                        if (hasCustomAudio) audio.currentTime = audioOffset > 0 ? audioOffset : 0;
+                    }
                     const playPromise = video.play();
                     if (playPromise !== undefined) playPromise.catch(() => { });
                 } else {
@@ -1034,9 +1209,17 @@
                 }
             };
 
-            playPauseBtn.addEventListener('click', togglePlayPause);
-            bigPlayBtn.addEventListener('click', togglePlayPause);
-            video.addEventListener('click', togglePlayPause);
+            const skipTime = (amount) => {
+                const newTime = Math.max(0, Math.min(video.currentTime + amount, video.duration || Infinity));
+                video.currentTime = newTime;
+                if (hasCustomAudio) audio.currentTime = newTime + audioOffset;
+                const saveKey = getSaveKey(mediaList[currentIndex].videoPath);
+                localStorage.setItem(saveKey, video.currentTime);
+            };
+
+            playPauseBtn.addEventListener('click', () => togglePlayPause());
+            bigPlayBtn.addEventListener('click', () => togglePlayPause());
+            video.addEventListener('click', () => togglePlayPause());
 
             const updatePlayPauseUI = (isPlaying) => {
                 if (isPlaying) {
@@ -1083,33 +1266,15 @@
 
             seekBar.addEventListener('change', () => {
                 video.currentTime = seekBar.value;
-                if (hasCustomAudio) audio.currentTime = seekBar.value;
+                if (hasCustomAudio) audio.currentTime = parseFloat(seekBar.value) + audioOffset;
                 isDraggingSeek = false;
-
                 const saveKey = getSaveKey(mediaList[currentIndex].videoPath);
                 localStorage.setItem(saveKey, video.currentTime);
             });
 
-            // Skip Buttons (+5s / -5s)
-            skipForwardBtn.addEventListener('click', () => {
-                const newTime = Math.min(video.currentTime + 5, video.duration);
-                video.currentTime = newTime;
-                if (hasCustomAudio) audio.currentTime = newTime;
+            skipForwardBtn.addEventListener('click', () => skipTime(5));
+            skipBackwardBtn.addEventListener('click', () => skipTime(-5));
 
-                const saveKey = getSaveKey(mediaList[currentIndex].videoPath);
-                localStorage.setItem(saveKey, video.currentTime);
-            });
-
-            skipBackwardBtn.addEventListener('click', () => {
-                const newTime = Math.max(video.currentTime - 5, 0);
-                video.currentTime = newTime;
-                if (hasCustomAudio) audio.currentTime = newTime;
-
-                const saveKey = getSaveKey(mediaList[currentIndex].videoPath);
-                localStorage.setItem(saveKey, video.currentTime);
-            });
-
-            // Speed Control
             function applyPlaybackSpeed(speed) {
                 video.playbackRate = speed;
                 audio.playbackRate = speed;
@@ -1121,20 +1286,13 @@
                 applyPlaybackSpeed(playbackSpeeds[currentSpeedIndex]);
             });
 
-            // Picture in Picture
             pipBtn.addEventListener('click', async () => {
                 try {
-                    if (document.pictureInPictureElement) {
-                        await document.exitPictureInPicture();
-                    } else if (document.pictureInPictureEnabled) {
-                        await video.requestPictureInPicture();
-                    }
-                } catch (err) {
-                    console.log("PiP failed");
-                }
+                    if (document.pictureInPictureElement) await document.exitPictureInPicture();
+                    else if (document.pictureInPictureEnabled) await video.requestPictureInPicture();
+                } catch (err) { console.log("PiP failed"); }
             });
 
-            // Fullscreen Logic
             const toggleFullscreen = () => {
                 if (!document.fullscreenElement) {
                     if (playerContainer.requestFullscreen) playerContainer.requestFullscreen();
@@ -1215,7 +1373,7 @@
 
             // --- Keyboard Shortcuts ---
             document.addEventListener('keydown', (e) => {
-                if (document.activeElement.tagName === 'INPUT') return;
+                if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return;
 
                 if (e.key === '?' || (e.shiftKey && e.key === '/')) {
                     e.preventDefault();
@@ -1229,6 +1387,35 @@
                     return;
                 }
 
+                // Pro Shortcuts
+                if (e.key === 'l' || e.key === 'L') {
+                    e.preventDefault();
+                    isLooping = !isLooping;
+                    updateLoopUI();
+                    return;
+                }
+                if (e.key === '[' || e.key === '{') {
+                    e.preventDefault();
+                    audioOffset -= 0.1;
+                    updateOffsetDisplay();
+                    return;
+                }
+                if (e.key === ']' || e.key === '}') {
+                    e.preventDefault();
+                    audioOffset += 0.1;
+                    updateOffsetDisplay();
+                    return;
+                }
+                if (e.key === ',') {
+                    e.preventDefault();
+                    frameStep(false);
+                    return;
+                }
+                if (e.key === '.') {
+                    e.preventDefault();
+                    frameStep(true);
+                    return;
+                }
                 if (e.key === '>' || (e.shiftKey && e.key === '.')) {
                     e.preventDefault();
                     currentSpeedIndex = Math.min(playbackSpeeds.length - 1, currentSpeedIndex + 1);
@@ -1256,19 +1443,11 @@
                         break;
                     case 'ArrowRight':
                         e.preventDefault();
-                        const forwardTime = Math.min(video.currentTime + 5, video.duration);
-                        video.currentTime = forwardTime;
-                        if (hasCustomAudio) audio.currentTime = forwardTime;
-                        const fSaveKey = getSaveKey(mediaList[currentIndex].videoPath);
-                        localStorage.setItem(fSaveKey, video.currentTime);
+                        skipTime(5);
                         break;
                     case 'ArrowLeft':
                         e.preventDefault();
-                        const backwardTime = Math.max(video.currentTime - 5, 0);
-                        video.currentTime = backwardTime;
-                        if (hasCustomAudio) audio.currentTime = backwardTime;
-                        const bSaveKey = getSaveKey(mediaList[currentIndex].videoPath);
-                        localStorage.setItem(bSaveKey, video.currentTime);
+                        skipTime(-5);
                         break;
                     case 'ArrowUp':
                         e.preventDefault();
@@ -1291,20 +1470,17 @@
                 }
             });
 
-            // --- Utilities ---
             function formatTime(seconds) {
                 if (isNaN(seconds) || seconds === Infinity) return "0:00";
                 const hrs = Math.floor(seconds / 3600);
                 const mins = Math.floor((seconds % 3600) / 60);
                 const secs = Math.floor(seconds % 60);
 
-                if (hrs > 0) {
-                    return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-                }
+                if (hrs > 0) return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
                 return `${mins}:${secs.toString().padStart(2, '0')}`;
             }
 
-            // Init
+            // Boot Up
             renderPlaylist();
             if (mediaList.length > 0) {
                 const lastIndexStr = localStorage.getItem('syncMixer_lastVideoIndex');
