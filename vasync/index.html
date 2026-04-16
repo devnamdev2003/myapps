@@ -432,6 +432,31 @@
                 });
             });
 
+            // --- Media Session API Setup ---
+            // This allows OS-level media keys to control playback even when tab is hidden
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.setActionHandler('play', () => {
+                    audio.play();
+                    if (!document.hidden) video.play();
+                    updatePlayPauseUI(true);
+                });
+                navigator.mediaSession.setActionHandler('pause', () => {
+                    audio.pause();
+                    video.pause();
+                    updatePlayPauseUI(false);
+                });
+                navigator.mediaSession.setActionHandler('seekbackward', () => {
+                    const newTime = Math.max(audio.currentTime - 5, 0);
+                    audio.currentTime = newTime;
+                    video.currentTime = newTime;
+                });
+                navigator.mediaSession.setActionHandler('seekforward', () => {
+                    const newTime = Math.min(audio.currentTime + 5, audio.duration || video.duration || 0);
+                    audio.currentTime = newTime;
+                    video.currentTime = newTime;
+                });
+            }
+
             // --- 1. Initialization & Render Logic ---
             const renderPlaylist = () => {
                 playlistContainer.innerHTML = '';
@@ -471,6 +496,15 @@
                 // Keep selected speed active across videos
                 applyPlaybackSpeed(playbackSpeeds[currentSpeedIndex]);
 
+                // Update OS media session data
+                if ('mediaSession' in navigator) {
+                    navigator.mediaSession.metadata = new MediaMetadata({
+                        title: selectedMedia.title,
+                        artist: 'SyncMixer Pro',
+                        album: selectedMedia.description
+                    });
+                }
+
                 video.load();
                 audio.load();
 
@@ -487,7 +521,8 @@
 
             video.addEventListener('canplay', () => loadingOverlay.classList.add('hidden'));
 
-            // --- 2. Master Sync Logic (Video controls Audio) ---
+            // --- 2. Master Sync Logic (Robust Background Support) ---
+
             video.addEventListener('play', () => {
                 audio.play().catch(e => console.log("Audio play prevented", e));
                 updatePlayPauseUI(true);
@@ -495,23 +530,46 @@
             });
 
             video.addEventListener('pause', () => {
-                audio.pause();
-                updatePlayPauseUI(false);
-                resetIdleTimer(); // Will keep controls visible when paused
+                // If the document is ACTIVE, a pause is a deliberate user action.
+                // If the document is HIDDEN, the browser likely forced the video to pause to save battery.
+                // In that case, we DO NOT pause the background audio!
+                if (!document.hidden) {
+                    audio.pause();
+                    updatePlayPauseUI(false);
+                    resetIdleTimer();
+                }
+            });
+
+            // If audio gets explicitly paused (e.g., via background media keys)
+            audio.addEventListener('pause', () => {
+                if (document.hidden) {
+                    video.pause();
+                    updatePlayPauseUI(false);
+                }
             });
 
             video.addEventListener('seeking', syncAudioToVideo);
             video.addEventListener('seeked', syncAudioToVideo);
 
-            // Re-sync when tab regains focus
+            // MAGIC HAPPENS HERE: Re-sync when tab regains focus
             document.addEventListener('visibilitychange', () => {
-                if (!document.hidden && !video.paused) {
-                    syncAudioToVideo();
+                if (!document.hidden) {
+                    // We just returned to the tab!
+                    if (!audio.paused) {
+                        // The audio kept playing while the tab was hidden.
+                        // Snap the video up to the audio's current position and resume the video.
+                        video.currentTime = audio.currentTime;
+                        video.play().catch(e => console.log("Video resume prevented"));
+                        updatePlayPauseUI(true);
+                    } else {
+                        // Both paused, standard sync
+                        syncAudioToVideo();
+                    }
                 }
             });
 
             video.addEventListener('timeupdate', () => {
-                if (!isDraggingSeek) {
+                if (!isDraggingSeek && !document.hidden) {
                     seekBar.value = video.currentTime;
                     currentTimeEl.textContent = formatTime(video.currentTime);
                 }
@@ -520,6 +578,14 @@
                 // Only sync if the document is visible to prevent audio stuttering in background tabs!
                 if (!document.hidden && Math.abs(video.currentTime - audio.currentTime) > 0.2 && !video.paused) {
                     syncAudioToVideo();
+                }
+            });
+
+            // When the tab is hidden, let the audio drive the seek bar value in the background
+            audio.addEventListener('timeupdate', () => {
+                if (document.hidden && !isDraggingSeek) {
+                    seekBar.value = audio.currentTime;
+                    currentTimeEl.textContent = formatTime(audio.currentTime);
                 }
             });
 
@@ -539,11 +605,13 @@
             // --- 3. UI Control Implementations ---
 
             const togglePlayPause = () => {
-                if (video.paused) {
+                if (video.paused && audio.paused) {
                     const playPromise = video.play();
                     if (playPromise !== undefined) playPromise.catch(() => { });
                 } else {
                     video.pause();
+                    audio.pause(); // Explicit pause to bypass the hidden check
+                    updatePlayPauseUI(false);
                 }
             };
 
@@ -599,16 +667,21 @@
 
             seekBar.addEventListener('change', () => {
                 video.currentTime = seekBar.value;
+                audio.currentTime = seekBar.value;
                 isDraggingSeek = false;
             });
 
             // Skip Buttons (+5s / -5s)
             skipForwardBtn.addEventListener('click', () => {
-                video.currentTime = Math.min(video.currentTime + 5, video.duration);
+                const newTime = Math.min(video.currentTime + 5, video.duration);
+                video.currentTime = newTime;
+                audio.currentTime = newTime;
             });
 
             skipBackwardBtn.addEventListener('click', () => {
-                video.currentTime = Math.max(video.currentTime - 5, 0);
+                const newTime = Math.max(video.currentTime - 5, 0);
+                video.currentTime = newTime;
+                audio.currentTime = newTime;
             });
 
             // Speed Control
@@ -723,12 +796,16 @@
                     case 'ArrowRight':
                         e.preventDefault();
                         // Skip forward 5s
-                        video.currentTime = Math.min(video.currentTime + 5, video.duration);
+                        const forwardTime = Math.min(video.currentTime + 5, video.duration);
+                        video.currentTime = forwardTime;
+                        audio.currentTime = forwardTime;
                         break;
                     case 'ArrowLeft':
                         e.preventDefault();
                         // Skip backward 5s
-                        video.currentTime = Math.max(video.currentTime - 5, 0);
+                        const backwardTime = Math.max(video.currentTime - 5, 0);
+                        video.currentTime = backwardTime;
+                        audio.currentTime = backwardTime;
                         break;
                     case 'ArrowUp':
                         e.preventDefault();
