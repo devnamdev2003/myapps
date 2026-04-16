@@ -16,26 +16,32 @@
 
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            height: 18px;
-            width: 18px;
+            height: 16px;
+            width: 16px;
             border-radius: 50%;
             background: #3b82f6;
             cursor: pointer;
-            margin-top: -7px;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
-            transition: transform 0.1s;
+            margin-top: -6px;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+            transition: transform 0.15s ease, background-color 0.15s ease;
         }
 
         input[type=range]::-webkit-slider-thumb:hover {
-            transform: scale(1.2);
+            transform: scale(1.3);
+            background: #60a5fa;
         }
 
         input[type=range]::-webkit-slider-runnable-track {
             width: 100%;
             height: 4px;
             cursor: pointer;
-            background: #4b5563;
+            background: rgba(75, 85, 99, 0.6);
             border-radius: 2px;
+            transition: background 0.15s ease;
+        }
+
+        input[type=range]:hover::-webkit-slider-runnable-track {
+            background: rgba(107, 114, 128, 0.8);
         }
 
         input[type=range]:focus {
@@ -44,16 +50,21 @@
 
         /* Custom scrollbar */
         ::-webkit-scrollbar {
-            width: 8px;
+            width: 6px;
         }
 
         ::-webkit-scrollbar-track {
             background: #1f2937;
+            border-radius: 4px;
         }
 
         ::-webkit-scrollbar-thumb {
             background: #4b5563;
             border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
         }
 
         /* Hide cursor when inactive in fullscreen */
@@ -63,30 +74,34 @@
     </style>
 </head>
 
-<body class="bg-gray-900 text-white min-h-screen font-sans flex flex-col items-center py-6 px-2 sm:py-10 sm:px-4">
+<body
+    class="bg-gray-950 text-white min-h-screen font-sans flex flex-col items-center py-6 px-2 sm:py-10 sm:px-4 selection:bg-blue-500 selection:text-white">
 
     <div class="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         <!-- Main Player Column -->
-        <div class="lg:col-span-2 bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 flex flex-col">
+        <div
+            class="lg:col-span-2 bg-gray-900 rounded-2xl shadow-2xl border border-gray-800 flex flex-col overflow-hidden relative">
 
             <!-- Header -->
-            <div class="p-4 sm:p-6 border-b border-gray-700 bg-gray-800/50 flex justify-between items-center">
+            <div class="p-4 sm:p-5 border-b border-gray-800 bg-gray-900 flex justify-between items-center z-10">
                 <div>
-                    <h1 class="text-xl sm:text-2xl font-bold flex items-center gap-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            class="text-blue-500">
-                            <path d="M12 2v20" />
-                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                        </svg>
-                        SyncMixer Pro
+                    <h1 class="text-xl sm:text-2xl font-bold flex items-center gap-3 tracking-tight">
+                        <div class="bg-blue-600/20 p-1.5 rounded-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="text-blue-500">
+                                <path d="M12 2v20" />
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                            </svg>
+                        </div>
+                        SyncMixer <span class="text-blue-500 font-black">Pro</span>
                     </h1>
-                    <p id="player-subtitle" class="text-gray-400 text-xs sm:text-sm mt-1 truncate">Select a video from
-                        the playlist to begin.</p>
+                    <p id="player-subtitle" class="text-gray-400 text-xs sm:text-sm mt-1 truncate pl-11">Select a video
+                        to begin</p>
                 </div>
                 <button id="header-shortcut-btn"
-                    class="hidden sm:flex text-gray-400 hover:text-white items-center gap-2 text-sm bg-gray-700 px-3 py-1.5 rounded-lg border border-gray-600 transition"
+                    class="hidden sm:flex text-gray-400 hover:text-white items-center gap-2 text-sm bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-lg border border-gray-700 transition shadow-sm"
                     title="Show Shortcuts (Shift + ?)">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -99,7 +114,7 @@
 
             <!-- Player Container (Handles Fullscreen & Responsive aspect ratio) -->
             <div id="player-container"
-                class="relative bg-black w-full aspect-video flex flex-col items-center justify-center overflow-hidden rounded-b-2xl lg:rounded-b-none focus:outline-none"
+                class="relative bg-black w-full aspect-video flex flex-col items-center justify-center overflow-hidden focus:outline-none"
                 tabindex="0">
 
                 <!-- Hidden Audio Element -->
@@ -111,21 +126,13 @@
                     Your browser does not support the video tag.
                 </video>
 
-                <!-- Loading overlay -->
-                <div id="loading-overlay"
-                    class="absolute inset-0 bg-black/80 flex flex-col items-center justify-center hidden z-30">
-                    <div class="animate-spin rounded-full h-12 w-12 border-4 border-gray-600 border-t-blue-500 mb-3">
-                    </div>
-                    <p class="text-blue-400 font-medium">Loading Media...</p>
-                </div>
-
                 <!-- Big Play Button Overlay -->
                 <button id="big-play-btn"
-                    class="absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity duration-300 z-10 opacity-100">
+                    class="absolute inset-0 flex items-center justify-center transition-all duration-300 z-10 opacity-100 group">
                     <div
-                        class="bg-blue-600/90 text-white rounded-full p-4 sm:p-6 hover:bg-blue-500 hover:scale-110 transition-all shadow-xl backdrop-blur-sm">
-                        <svg id="big-play-icon" xmlns="http://www.w3.org/2000/svg" width="40" height="40"
-                            viewBox="0 0 24 24" fill="currentColor" stroke="none" class="sm:w-12 sm:h-12">
+                        class="text-white group-hover:text-blue-400 group-hover:scale-110 transition-transform duration-300 drop-shadow-2xl">
+                        <svg id="big-play-icon" xmlns="http://www.w3.org/2000/svg" width="64" height="64"
+                            viewBox="0 0 24 24" fill="currentColor" stroke="none" class="sm:w-20 sm:h-20 ml-1">
                             <polygon points="5 3 19 12 5 21 5 3" />
                         </svg>
                     </div>
@@ -133,26 +140,27 @@
 
                 <!-- Controls Overlay Bar -->
                 <div id="controls-bar"
-                    class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-3 sm:p-5 flex flex-col gap-2 transition-opacity duration-300 z-20 opacity-100">
+                    class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent pt-12 pb-3 px-3 sm:px-4 flex flex-col gap-2 transition-all duration-300 z-20 opacity-100 translate-y-0">
 
                     <!-- Seek Bar -->
-                    <div class="flex items-center gap-3">
-                        <span id="current-time" class="text-xs font-mono text-gray-300 w-10 text-right">0:00</span>
+                    <div class="flex items-center gap-3 px-1">
+                        <span id="current-time"
+                            class="text-xs font-mono text-gray-300 w-12 text-right tracking-wider">0:00</span>
                         <input type="range" id="seek-bar" class="flex-1 h-1.5" value="0" step="0.1" min="0" max="100">
-                        <span id="total-time" class="text-xs font-mono text-gray-300 w-10">0:00</span>
+                        <span id="total-time" class="text-xs font-mono text-gray-400 w-12 tracking-wider">0:00</span>
                     </div>
 
                     <!-- Bottom Controls Row -->
                     <div class="flex flex-wrap items-center justify-between gap-y-3 mt-1">
 
                         <!-- Left Controls: Play, Skip -->
-                        <div class="flex items-center gap-2 sm:gap-4 shrink-0">
+                        <div class="flex items-center gap-1 sm:gap-2 shrink-0">
                             <button id="skip-backward-btn"
-                                class="text-gray-300 hover:text-white p-1.5 sm:p-2 rounded-full hover:bg-white/10 transition"
-                                title="Skip backward 5s (Left Arrow)">
+                                class="text-gray-300 hover:text-white p-2 transition tooltip group"
+                                title="Skip backward 5s">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
+                                    stroke-linejoin="round" class="group-hover:-translate-x-0.5 transition-transform">
                                     <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
                                     <path d="M3 3v5h5" /><text x="12" y="16" font-size="8" font-weight="bold"
                                         text-anchor="middle" font-family="sans-serif" stroke="none"
@@ -160,8 +168,9 @@
                                 </svg>
                             </button>
 
-                            <button id="play-pause-btn" class="text-white hover:text-blue-400 transition"
-                                title="Play/Pause (Space)">
+                            <button id="play-pause-btn"
+                                class="text-white hover:text-blue-400 p-2 transition transform hover:scale-110 active:scale-95"
+                                title="Play/Pause">
                                 <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" width="28" height="28"
                                     viewBox="0 0 24 24" fill="currentColor" stroke="none">
                                     <polygon points="5 3 19 12 5 21 5 3" />
@@ -174,11 +183,11 @@
                             </button>
 
                             <button id="skip-forward-btn"
-                                class="text-gray-300 hover:text-white p-1.5 sm:p-2 rounded-full hover:bg-white/10 transition"
-                                title="Skip forward 5s (Right Arrow)">
+                                class="text-gray-300 hover:text-white p-2 transition tooltip group"
+                                title="Skip forward 5s">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
+                                    stroke-linejoin="round" class="group-hover:translate-x-0.5 transition-transform">
                                     <path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
                                     <path d="M21 3v5h-5" /><text x="12" y="16" font-size="8" font-weight="bold"
                                         text-anchor="middle" font-family="sans-serif" stroke="none"
@@ -187,63 +196,99 @@
                             </button>
                         </div>
 
-                        <!-- Center: Audio/Video Mixer (Wraps on small screens) -->
+                        <!-- Center: Audio/Video Mixer -->
                         <div
-                            class="flex items-center gap-3 bg-gray-800/60 px-3 py-1.5 rounded-lg border border-gray-600/50 order-last md:order-none w-full md:w-auto justify-center mx-auto md:mx-4">
+                            class="flex items-center gap-3 px-3 py-1.5 order-last md:order-none w-full md:w-auto justify-center mx-auto">
                             <span
-                                class="text-[10px] text-gray-400 font-bold uppercase tracking-wider hidden sm:block">Mixer</span>
+                                class="text-[10px] text-gray-400 font-bold uppercase tracking-widest hidden sm:block">Mixer</span>
 
                             <!-- Video Vol -->
                             <div class="flex items-center gap-1.5" title="Video Volume">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" class="text-gray-400">
-                                    <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18" />
-                                    <line x1="7" x2="7" y1="2" y2="22" />
-                                    <line x1="17" x2="17" y1="2" y2="22" />
-                                    <line x1="2" x2="22" y1="12" y2="12" />
-                                    <line x1="2" x2="7" y1="7" y2="7" />
-                                    <line x1="2" x2="7" y1="17" y2="17" />
-                                    <line x1="17" x2="22" y1="17" y2="17" />
-                                    <line x1="17" x2="22" y1="7" y2="7" />
-                                </svg>
+                                <button id="video-mute-btn" class="text-gray-300 hover:text-white transition p-1">
+                                    <svg id="video-vol-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18" />
+                                        <line x1="7" x2="7" y1="2" y2="22" />
+                                        <line x1="17" x2="17" y1="2" y2="22" />
+                                        <line x1="2" x2="22" y1="12" y2="12" />
+                                        <line x1="2" x2="7" y1="7" y2="7" />
+                                        <line x1="2" x2="7" y1="17" y2="17" />
+                                        <line x1="17" x2="22" y1="17" y2="17" />
+                                        <line x1="17" x2="22" y1="7" y2="7" />
+                                    </svg>
+                                    <svg id="video-mute-icon" class="hidden text-red-400"
+                                        xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18" />
+                                        <line x1="7" x2="7" y1="2" y2="22" />
+                                        <line x1="17" x2="17" y1="2" y2="22" />
+                                        <line x1="2" x2="22" y1="12" y2="12" />
+                                        <line x1="2" x2="7" y1="7" y2="7" />
+                                        <line x1="2" x2="7" y1="17" y2="17" />
+                                        <line x1="17" x2="22" y1="17" y2="17" />
+                                        <line x1="17" x2="22" y1="7" y2="7" />
+                                        <line x1="2" y1="2" x2="22" y2="22" />
+                                    </svg>
+                                </button>
                                 <input type="range" id="video-volume" class="w-16 sm:w-20" min="0" max="1" step="0.05"
                                     value="0.8">
                             </div>
 
-                            <div class="w-px h-5 bg-gray-600 mx-1"></div>
+                            <div class="w-px h-5 bg-white/20 mx-1"></div>
 
                             <!-- Audio Vol -->
                             <div class="flex items-center gap-1.5" title="Background Audio Volume">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" class="text-gray-400">
-                                    <path d="M9 18V5l12-2v13" />
-                                    <circle cx="6" cy="18" r="3" />
-                                    <circle cx="18" cy="16" r="3" />
-                                </svg>
+                                <button id="audio-mute-btn" class="text-gray-300 hover:text-white transition p-1">
+                                    <svg id="audio-vol-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M9 18V5l12-2v13" />
+                                        <circle cx="6" cy="18" r="3" />
+                                        <circle cx="18" cy="16" r="3" />
+                                    </svg>
+                                    <svg id="audio-mute-icon" class="hidden text-red-400"
+                                        xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="M9 18V5l12-2v13" />
+                                        <circle cx="6" cy="18" r="3" />
+                                        <circle cx="18" cy="16" r="3" />
+                                        <line x1="2" y1="2" x2="22" y2="22" />
+                                    </svg>
+                                </button>
                                 <input type="range" id="audio-volume" class="w-16 sm:w-20" min="0" max="1" step="0.05"
                                     value="0.5">
                             </div>
                         </div>
 
-                        <!-- Right Controls: Speed, Fullscreen -->
-                        <div class="flex items-center gap-2 sm:gap-4 shrink-0">
+                        <!-- Right Controls: Speed, PiP, Fullscreen -->
+                        <div class="flex items-center gap-1 sm:gap-2 shrink-0">
                             <button id="speed-btn"
-                                class="text-xs sm:text-sm font-bold text-gray-300 hover:text-white w-8 text-center"
-                                title="Playback Speed (Shift + > or <)">1x</button>
+                                class="text-xs sm:text-sm font-bold text-gray-300 hover:text-white w-10 text-center py-1.5 transition"
+                                title="Playback Speed">1x</button>
 
-                            <button id="fullscreen-btn"
-                                class="text-gray-300 hover:text-white p-1 sm:p-2 rounded hover:bg-white/10 transition"
+                            <button id="pip-btn" class="text-gray-300 hover:text-white p-2 transition"
+                                title="Picture-in-Picture">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                    <rect x="12" y="12" width="7" height="5" rx="1" ry="1" />
+                                </svg>
+                            </button>
+
+                            <button id="fullscreen-btn" class="text-gray-300 hover:text-white p-2 transition"
                                 title="Fullscreen (F)">
-                                <svg id="fs-enter-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                <svg id="fs-enter-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
                                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                     stroke-linecap="round" stroke-linejoin="round">
                                     <path
                                         d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
                                 </svg>
-                                <svg id="fs-exit-icon" class="hidden" xmlns="http://www.w3.org/2000/svg" width="20"
-                                    height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                <svg id="fs-exit-icon" class="hidden" xmlns="http://www.w3.org/2000/svg" width="18"
+                                    height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                     stroke-linecap="round" stroke-linejoin="round">
                                     <path
                                         d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
@@ -257,9 +302,9 @@
 
         <!-- Playlist Column -->
         <div
-            class="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 flex flex-col h-[400px] lg:h-full lg:max-h-[700px]">
-            <div class="p-4 sm:p-6 border-b border-gray-700 bg-gray-800/50">
-                <h2 class="text-lg sm:text-xl font-bold flex items-center gap-2">
+            class="bg-gray-900 rounded-2xl shadow-2xl border border-gray-800 flex flex-col h-[400px] lg:h-full lg:max-h-[700px]">
+            <div class="p-5 border-b border-gray-800 bg-gray-900 flex justify-between items-center z-10 shadow-sm">
+                <h2 class="text-lg font-bold flex items-center gap-2 tracking-tight">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         class="text-blue-500">
@@ -270,11 +315,13 @@
                         <path d="M3 12h.01" />
                         <path d="M3 18h.01" />
                     </svg>
-                    Playlist
+                    Up Next
                 </h2>
+                <span class="text-xs font-mono text-gray-500 bg-gray-800 px-2 py-1 rounded-md" id="playlist-count">0
+                    items</span>
             </div>
-            <div class="p-3 sm:p-4 overflow-y-auto flex-1">
-                <ul id="playlist-container" class="space-y-2">
+            <div class="p-3 overflow-y-auto flex-1">
+                <ul id="playlist-container" class="space-y-1.5">
                     <!-- Playlist items injected via JS -->
                 </ul>
             </div>
@@ -284,29 +331,30 @@
 
     <!-- Instructions / Footer -->
     <div class="max-w-6xl w-full mt-6 text-gray-500 text-xs sm:text-sm text-center px-4 mb-10">
-        <p class="mb-2">The video timeline acts as the master clock. Play, pause, skipping, and seeking will
-            automatically sync the background audio file perfectly.</p>
-        <p class="text-gray-400">Press <kbd class="bg-gray-800 px-2 py-0.5 rounded border border-gray-700">Shift +
-                ?</kbd> to view all keyboard shortcuts.</p>
+        <p class="mb-2">The video timeline acts as the master clock. Play, pause, skipping, and seeking perfectly syncs
+            the background audio.</p>
+        <p class="text-gray-400">Press <kbd
+                class="bg-gray-800 px-2 py-0.5 rounded border border-gray-700 shadow-sm">Shift + ?</kbd> to view all
+            keyboard shortcuts.</p>
     </div>
 
     <!-- Shortcut Modal Overlay -->
     <div id="shortcut-modal"
-        class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center hidden backdrop-blur-sm opacity-0 transition-opacity duration-300">
+        class="fixed inset-0 bg-gray-950/80 z-50 flex items-center justify-center hidden backdrop-blur-sm opacity-0 transition-opacity duration-300">
         <div
-            class="bg-gray-800 border border-gray-700 rounded-2xl shadow-2xl p-6 sm:p-8 max-w-md w-full mx-4 transform scale-95 transition-transform duration-300">
+            class="bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl p-6 sm:p-8 max-w-md w-full mx-4 transform scale-95 transition-transform duration-300">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xl font-bold text-white flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                        class="text-blue-400">
+                        class="text-blue-500">
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                         <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                     </svg>
                     Keyboard Shortcuts
                 </h3>
                 <button id="close-modal-btn"
-                    class="text-gray-400 hover:text-white transition p-1 bg-gray-700/50 rounded-lg hover:bg-gray-600">
+                    class="text-gray-400 hover:text-white transition p-1.5 bg-gray-800 rounded-lg hover:bg-gray-700">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18" />
@@ -315,56 +363,50 @@
                 </button>
             </div>
 
-            <div class="space-y-4 text-sm text-gray-300">
-                <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+            <div class="space-y-3 text-sm text-gray-300">
+                <div class="flex justify-between items-center bg-gray-800/50 px-3 py-2 rounded-lg">
                     <span>Play / Pause</span>
                     <kbd
-                        class="bg-gray-900 border border-gray-600 px-2 py-1 rounded text-xs font-mono shadow-inner text-white">Space</kbd>
+                        class="bg-gray-800 border border-gray-700 px-2 py-1 rounded text-xs font-mono shadow-sm text-white">Space</kbd>
                 </div>
-                <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <div class="flex justify-between items-center bg-gray-800/50 px-3 py-2 rounded-lg">
                     <span>Toggle Fullscreen</span>
                     <kbd
-                        class="bg-gray-900 border border-gray-600 px-2 py-1 rounded text-xs font-mono shadow-inner text-white">F</kbd>
+                        class="bg-gray-800 border border-gray-700 px-2 py-1 rounded text-xs font-mono shadow-sm text-white">F</kbd>
                 </div>
-                <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <div class="flex justify-between items-center bg-gray-800/50 px-3 py-2 rounded-lg">
                     <span>Skip Forward / Backward 5s</span>
                     <div class="flex gap-1">
                         <kbd
-                            class="bg-gray-900 border border-gray-600 px-2 py-1 rounded text-xs font-mono shadow-inner text-white">&larr;</kbd>
+                            class="bg-gray-800 border border-gray-700 px-2 py-1 rounded text-xs font-mono shadow-sm text-white">&larr;</kbd>
                         <kbd
-                            class="bg-gray-900 border border-gray-600 px-2 py-1 rounded text-xs font-mono shadow-inner text-white">&rarr;</kbd>
+                            class="bg-gray-800 border border-gray-700 px-2 py-1 rounded text-xs font-mono shadow-sm text-white">&rarr;</kbd>
                     </div>
                 </div>
-                <div class="flex justify-between items-center border-b border-gray-700 pb-2">
-                    <span>Increase / Decrease Volume</span>
+                <div class="flex justify-between items-center bg-gray-800/50 px-3 py-2 rounded-lg">
+                    <span>Volume Up / Down</span>
                     <div class="flex gap-1">
                         <kbd
-                            class="bg-gray-900 border border-gray-600 px-2 py-1 rounded text-xs font-mono shadow-inner text-white">&uarr;</kbd>
+                            class="bg-gray-800 border border-gray-700 px-2 py-1 rounded text-xs font-mono shadow-sm text-white">&uarr;</kbd>
                         <kbd
-                            class="bg-gray-900 border border-gray-600 px-2 py-1 rounded text-xs font-mono shadow-inner text-white">&darr;</kbd>
+                            class="bg-gray-800 border border-gray-700 px-2 py-1 rounded text-xs font-mono shadow-sm text-white">&darr;</kbd>
                     </div>
                 </div>
-                <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <div class="flex justify-between items-center bg-gray-800/50 px-3 py-2 rounded-lg">
                     <span>Increase Speed</span>
                     <kbd
-                        class="bg-gray-900 border border-gray-600 px-2 py-1 rounded text-xs font-mono shadow-inner text-white">Shift
+                        class="bg-gray-800 border border-gray-700 px-2 py-1 rounded text-xs font-mono shadow-sm text-white">Shift
                         + ></kbd>
                 </div>
-                <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <div class="flex justify-between items-center bg-gray-800/50 px-3 py-2 rounded-lg">
                     <span>Decrease Speed</span>
                     <kbd
-                        class="bg-gray-900 border border-gray-600 px-2 py-1 rounded text-xs font-mono shadow-inner text-white">Shift
+                        class="bg-gray-800 border border-gray-700 px-2 py-1 rounded text-xs font-mono shadow-sm text-white">Shift
                         + << /kbd>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span>Show Shortcuts Modal</span>
-                    <kbd
-                        class="bg-gray-900 border border-gray-600 px-2 py-1 rounded text-xs font-mono shadow-inner text-white">Shift
-                        + ?</kbd>
                 </div>
             </div>
             <button id="close-modal-bottom-btn"
-                class="w-full mt-6 bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-lg transition font-medium">Got
+                class="w-full mt-6 bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl transition font-medium shadow-lg shadow-blue-500/20">Got
                 it!</button>
         </div>
     </div>
@@ -376,8 +418,8 @@
                 {
                     title: "Spring boot jwt",
                     description: "",
-                    videoPath: "./video.mp4",
-                    audioPath: "./audio.mp4"
+                    videoPath: "https://mystorage813.netlify.app/video.mp4",
+                    audioPath: "https://mystorage813.netlify.app/audio.mp4"
                 }
             ];
 
@@ -390,6 +432,7 @@
             const audio = document.getElementById('main-audio');
             const playerSubtitle = document.getElementById('player-subtitle');
             const playlistContainer = document.getElementById('playlist-container');
+            const playlistCount = document.getElementById('playlist-count');
             const controlsBar = document.getElementById('controls-bar');
 
             const playPauseBtn = document.getElementById('play-pause-btn');
@@ -400,6 +443,7 @@
             const skipForwardBtn = document.getElementById('skip-forward-btn');
             const skipBackwardBtn = document.getElementById('skip-backward-btn');
             const speedBtn = document.getElementById('speed-btn');
+            const pipBtn = document.getElementById('pip-btn');
             const fullscreenBtn = document.getElementById('fullscreen-btn');
             const fsEnterIcon = document.getElementById('fs-enter-icon');
             const fsExitIcon = document.getElementById('fs-exit-icon');
@@ -410,8 +454,8 @@
 
             const videoVolume = document.getElementById('video-volume');
             const audioVolume = document.getElementById('audio-volume');
-
-            const loadingOverlay = document.getElementById('loading-overlay');
+            const videoMuteBtn = document.getElementById('video-mute-btn');
+            const audioMuteBtn = document.getElementById('audio-mute-btn');
 
             // Modal Elements
             const shortcutModal = document.getElementById('shortcut-modal');
@@ -425,16 +469,18 @@
             const playbackSpeeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
             let currentSpeedIndex = 2; // Index of 1 (normal speed)
 
+            // Mute State Memory
+            let preMuteVideoVol = 0.8;
+            let preMuteAudioVol = 0.5;
+
+            playlistCount.textContent = `${mediaList.length} items`;
+
             // Remove focus from buttons and range inputs after clicking 
-            // so keyboard shortcuts work smoothly globally
             document.querySelectorAll('button, input').forEach(el => {
-                el.addEventListener('mouseup', function () {
-                    this.blur();
-                });
+                el.addEventListener('mouseup', function () { this.blur(); });
             });
 
             // --- Media Session API Setup ---
-            // This allows OS-level media keys to control playback even when tab is hidden
             if ('mediaSession' in navigator) {
                 navigator.mediaSession.setActionHandler('play', () => {
                     audio.play();
@@ -464,19 +510,38 @@
 
                 mediaList.forEach((item, index) => {
                     const li = document.createElement('li');
+                    const isActive = index === currentIndex;
+                    const displayDuration = item.duration || '--:--';
 
                     li.innerHTML = `
-                        <button class="w-full text-left p-3 rounded-lg transition border hover:bg-gray-700 flex flex-col gap-1 ${index === currentIndex ? 'bg-gray-700 border-blue-500/50' : 'bg-gray-900 border-transparent hover:border-gray-600'}" data-index="${index}">
-                            <span class="font-medium text-gray-200 text-sm sm:text-base">${item.title}</span>
-                            <span class="text-xs text-gray-500">${item.description}</span>
+                        <button class="w-full text-left p-3 rounded-xl transition-all duration-200 border flex flex-col gap-1 group
+                            ${isActive ? 'bg-gray-800 border-blue-500/50 shadow-md border-l-4 border-l-blue-500' : 'bg-transparent border-transparent hover:bg-gray-800/50 hover:border-gray-700'}" 
+                            data-index="${index}">
+                            <div class="flex justify-between items-start w-full">
+                                <span class="font-semibold ${isActive ? 'text-blue-400' : 'text-gray-200 group-hover:text-white'} text-sm sm:text-base">${item.title}</span>
+                                <span id="duration-${index}" class="text-xs font-mono text-gray-500 bg-black/20 px-1.5 py-0.5 rounded">${displayDuration}</span>
+                            </div>
+                            <span class="text-xs text-gray-500 line-clamp-1">${item.description}</span>
                         </button>
                     `;
 
-                    li.querySelector('button').addEventListener('click', () => {
-                        loadMedia(index);
-                    });
-
+                    li.querySelector('button').addEventListener('click', () => loadMedia(index));
                     playlistContainer.appendChild(li);
+
+                    // Dynamically calculate and cache duration if not already available
+                    if (!item.duration) {
+                        const tempVideo = document.createElement('video');
+                        tempVideo.preload = 'metadata';
+                        tempVideo.onloadedmetadata = () => {
+                            const formatted = formatTime(tempVideo.duration);
+                            item.duration = formatted; // Cache the value
+                            const durationSpan = document.getElementById(`duration-${index}`);
+                            if (durationSpan) {
+                                durationSpan.textContent = formatted;
+                            }
+                        };
+                        tempVideo.src = item.videoPath;
+                    }
                 });
             };
 
@@ -484,16 +549,13 @@
                 currentIndex = index;
                 const selectedMedia = mediaList[index];
 
-                // Save last played index to local storage
                 localStorage.setItem('syncMixer_lastVideoIndex', index);
 
-                // Retrieve saved time for this specific video
                 const savedTime = localStorage.getItem(`syncMixer_savedTime_${index}`);
                 timeToRestore = savedTime ? parseFloat(savedTime) : 0;
 
-                renderPlaylist(); // Update active UI state
-                playerSubtitle.textContent = "Now Playing: " + selectedMedia.title;
-                loadingOverlay.classList.remove('hidden');
+                renderPlaylist();
+                playerSubtitle.textContent = selectedMedia.title;
 
                 video.src = selectedMedia.videoPath;
                 audio.src = selectedMedia.audioPath;
@@ -501,10 +563,8 @@
                 video.volume = videoVolume.value;
                 audio.volume = audioVolume.value;
 
-                // Keep selected speed active across videos
                 applyPlaybackSpeed(playbackSpeeds[currentSpeedIndex]);
 
-                // Update OS media session data
                 if ('mediaSession' in navigator) {
                     navigator.mediaSession.metadata = new MediaMetadata({
                         title: selectedMedia.title,
@@ -520,27 +580,20 @@
                 seekBar.value = 0;
                 currentTimeEl.textContent = "0:00";
 
-                // Play automatically when selected from list
                 const playPromise = video.play();
                 if (playPromise !== undefined) {
                     playPromise.catch(e => console.log("User gesture required to play"));
                 }
             };
 
-            video.addEventListener('canplay', () => loadingOverlay.classList.add('hidden'));
-
             // --- 2. Master Sync Logic (Robust Background Support) ---
-
             video.addEventListener('play', () => {
                 audio.play().catch(e => console.log("Audio play prevented", e));
                 updatePlayPauseUI(true);
-                resetIdleTimer(); // Hide UI after inactivity
+                resetIdleTimer();
             });
 
             video.addEventListener('pause', () => {
-                // If the document is ACTIVE, a pause is a deliberate user action.
-                // If the document is HIDDEN, the browser likely forced the video to pause to save battery.
-                // In that case, we DO NOT pause the background audio!
                 if (!document.hidden) {
                     audio.pause();
                     updatePlayPauseUI(false);
@@ -548,7 +601,6 @@
                 }
             });
 
-            // If audio gets explicitly paused (e.g., via background media keys)
             audio.addEventListener('pause', () => {
                 if (document.hidden) {
                     video.pause();
@@ -559,18 +611,13 @@
             video.addEventListener('seeking', syncAudioToVideo);
             video.addEventListener('seeked', syncAudioToVideo);
 
-            // MAGIC HAPPENS HERE: Re-sync when tab regains focus
             document.addEventListener('visibilitychange', () => {
                 if (!document.hidden) {
-                    // We just returned to the tab!
                     if (!audio.paused) {
-                        // The audio kept playing while the tab was hidden.
-                        // Snap the video up to the audio's current position and resume the video.
                         video.currentTime = audio.currentTime;
                         video.play().catch(e => console.log("Video resume prevented"));
                         updatePlayPauseUI(true);
                     } else {
-                        // Both paused, standard sync
                         syncAudioToVideo();
                     }
                 }
@@ -582,19 +629,15 @@
                     currentTimeEl.textContent = formatTime(video.currentTime);
                 }
 
-                // Save playback time to local storage continuously
                 if (!video.paused && video.currentTime > 0) {
                     localStorage.setItem(`syncMixer_savedTime_${currentIndex}`, video.currentTime);
                 }
 
-                // Drift correction
-                // Only sync if the document is visible to prevent audio stuttering in background tabs!
                 if (!document.hidden && Math.abs(video.currentTime - audio.currentTime) > 0.2 && !video.paused) {
                     syncAudioToVideo();
                 }
             });
 
-            // When the tab is hidden, let the audio drive the seek bar value in the background
             audio.addEventListener('timeupdate', () => {
                 if (document.hidden && !isDraggingSeek) {
                     seekBar.value = audio.currentTime;
@@ -614,16 +657,14 @@
                 seekBar.max = video.duration;
                 totalTimeEl.textContent = formatTime(video.duration);
 
-                // Restore saved time if it exists
                 if (timeToRestore > 0) {
-                    // If they watched until the very end (within 2 seconds), reset it to the beginning
                     if (video.duration - timeToRestore > 2) {
                         video.currentTime = timeToRestore;
                         audio.currentTime = timeToRestore;
                     } else {
                         localStorage.setItem(`syncMixer_savedTime_${currentIndex}`, 0);
                     }
-                    timeToRestore = 0; // Reset variable
+                    timeToRestore = 0;
                 }
             });
 
@@ -635,7 +676,7 @@
                     if (playPromise !== undefined) playPromise.catch(() => { });
                 } else {
                     video.pause();
-                    audio.pause(); // Explicit pause to bypass the hidden check
+                    audio.pause();
                     updatePlayPauseUI(false);
                 }
             };
@@ -648,34 +689,31 @@
                 if (isPlaying) {
                     playIcon.classList.add('hidden');
                     pauseIcon.classList.remove('hidden');
-
-                    // Hide Big Play Button gracefully without blocking clicks later
-                    bigPlayBtn.classList.replace('opacity-100', 'opacity-0');
-                    setTimeout(() => { if (!video.paused) bigPlayBtn.classList.add('pointer-events-none'); }, 300);
+                    bigPlayBtn.classList.remove('opacity-100');
+                    bigPlayBtn.classList.add('opacity-0', 'pointer-events-none');
                 } else {
                     playIcon.classList.remove('hidden');
                     pauseIcon.classList.add('hidden');
-
-                    // Show Big Play Button
-                    bigPlayBtn.classList.remove('pointer-events-none');
-                    bigPlayBtn.classList.replace('opacity-0', 'opacity-100');
+                    bigPlayBtn.classList.remove('opacity-0', 'pointer-events-none');
+                    bigPlayBtn.classList.add('opacity-100');
                 }
             };
 
-            // Interactive Idle Timer (Auto-Hide Controls overlay)
             const hideControls = () => {
                 if (!video.paused) {
                     playerContainer.classList.add('hide-cursor');
-                    controlsBar.classList.replace('opacity-100', 'opacity-0');
+                    controlsBar.classList.remove('opacity-100', 'translate-y-0');
+                    controlsBar.classList.add('opacity-0', 'translate-y-2');
                 }
             };
 
             const resetIdleTimer = () => {
                 playerContainer.classList.remove('hide-cursor');
-                controlsBar.classList.replace('opacity-0', 'opacity-100');
+                controlsBar.classList.remove('opacity-0', 'translate-y-2');
+                controlsBar.classList.add('opacity-100', 'translate-y-0');
                 clearTimeout(idleTimeout);
                 if (!video.paused) {
-                    idleTimeout = setTimeout(hideControls, 2500); // 2.5s to disappear
+                    idleTimeout = setTimeout(hideControls, 3000);
                 }
             };
 
@@ -694,8 +732,6 @@
                 video.currentTime = seekBar.value;
                 audio.currentTime = seekBar.value;
                 isDraggingSeek = false;
-
-                // Manually save local storage when user seeks
                 localStorage.setItem(`syncMixer_savedTime_${currentIndex}`, video.currentTime);
             });
 
@@ -726,6 +762,19 @@
                 applyPlaybackSpeed(playbackSpeeds[currentSpeedIndex]);
             });
 
+            // Picture in Picture
+            pipBtn.addEventListener('click', async () => {
+                try {
+                    if (document.pictureInPictureElement) {
+                        await document.exitPictureInPicture();
+                    } else if (document.pictureInPictureEnabled) {
+                        await video.requestPictureInPicture();
+                    }
+                } catch (err) {
+                    console.log("PiP failed");
+                }
+            });
+
             // Fullscreen Logic
             const toggleFullscreen = () => {
                 if (!document.fullscreenElement) {
@@ -750,9 +799,60 @@
                 }
             });
 
-            // Volume Controls (Mixer)
-            videoVolume.addEventListener('input', (e) => video.volume = e.target.value);
-            audioVolume.addEventListener('input', (e) => audio.volume = e.target.value);
+            // Volume & Mute Controls
+            const updateVideoMuteUI = () => {
+                if (video.volume === 0) {
+                    document.getElementById('video-vol-icon').classList.add('hidden');
+                    document.getElementById('video-mute-icon').classList.remove('hidden');
+                } else {
+                    document.getElementById('video-vol-icon').classList.remove('hidden');
+                    document.getElementById('video-mute-icon').classList.add('hidden');
+                }
+            };
+
+            const updateAudioMuteUI = () => {
+                if (audio.volume === 0) {
+                    document.getElementById('audio-vol-icon').classList.add('hidden');
+                    document.getElementById('audio-mute-icon').classList.remove('hidden');
+                } else {
+                    document.getElementById('audio-vol-icon').classList.remove('hidden');
+                    document.getElementById('audio-mute-icon').classList.add('hidden');
+                }
+            };
+
+            videoVolume.addEventListener('input', (e) => {
+                video.volume = e.target.value;
+                if (video.volume > 0) preMuteVideoVol = video.volume;
+                updateVideoMuteUI();
+            });
+
+            audioVolume.addEventListener('input', (e) => {
+                audio.volume = e.target.value;
+                if (audio.volume > 0) preMuteAudioVol = audio.volume;
+                updateAudioMuteUI();
+            });
+
+            videoMuteBtn.addEventListener('click', () => {
+                if (video.volume > 0) {
+                    preMuteVideoVol = video.volume;
+                    video.volume = 0;
+                } else {
+                    video.volume = preMuteVideoVol || 0.8;
+                }
+                videoVolume.value = video.volume;
+                updateVideoMuteUI();
+            });
+
+            audioMuteBtn.addEventListener('click', () => {
+                if (audio.volume > 0) {
+                    preMuteAudioVol = audio.volume;
+                    audio.volume = 0;
+                } else {
+                    audio.volume = preMuteAudioVol || 0.5;
+                }
+                audioVolume.value = audio.volume;
+                updateAudioMuteUI();
+            });
 
             // --- Modal Logic ---
             const toggleModal = () => {
@@ -762,7 +862,6 @@
                     setTimeout(() => shortcutModal.classList.add('hidden'), 300);
                 } else {
                     shortcutModal.classList.remove('hidden');
-                    // Force a reflow before adding classes so the transition plays out properly
                     void shortcutModal.offsetWidth;
                     shortcutModal.classList.replace('opacity-0', 'opacity-100');
                     shortcutModal.querySelector('div').classList.replace('scale-95', 'scale-100');
@@ -774,30 +873,25 @@
             closeModalBtn.addEventListener('click', toggleModal);
             closeModalBottomBtn.addEventListener('click', toggleModal);
 
-            // Close modal when clicking outside of it
             shortcutModal.addEventListener('click', (e) => {
                 if (e.target === shortcutModal) toggleModal();
             });
 
             // --- Keyboard Shortcuts ---
             document.addEventListener('keydown', (e) => {
-                // Ignore if the user is actively focused on an input element
                 if (document.activeElement.tagName === 'INPUT') return;
 
-                // Shift + ? to toggle modal
                 if (e.key === '?' || (e.shiftKey && e.key === '/')) {
                     e.preventDefault();
                     toggleModal();
                     return;
                 }
 
-                // If modal is open, let escape close it and stop handling video controls
                 if (isModalOpen) {
                     if (e.key === 'Escape') toggleModal();
                     return;
                 }
 
-                // Shift + > or Shift + < for Playback Speed
                 if (e.key === '>' || (e.shiftKey && e.key === '.')) {
                     e.preventDefault();
                     currentSpeedIndex = Math.min(playbackSpeeds.length - 1, currentSpeedIndex + 1);
@@ -815,7 +909,7 @@
                     case ' ':
                     case 'k':
                     case 'K':
-                        e.preventDefault(); // Prevent page scroll
+                        e.preventDefault();
                         togglePlayPause();
                         break;
                     case 'f':
@@ -825,7 +919,6 @@
                         break;
                     case 'ArrowRight':
                         e.preventDefault();
-                        // Skip forward 5s
                         const forwardTime = Math.min(video.currentTime + 5, video.duration);
                         video.currentTime = forwardTime;
                         audio.currentTime = forwardTime;
@@ -833,7 +926,6 @@
                         break;
                     case 'ArrowLeft':
                         e.preventDefault();
-                        // Skip backward 5s
                         const backwardTime = Math.max(video.currentTime - 5, 0);
                         video.currentTime = backwardTime;
                         audio.currentTime = backwardTime;
@@ -841,38 +933,43 @@
                         break;
                     case 'ArrowUp':
                         e.preventDefault();
-                        // Increase both volumes by 5%
                         video.volume = Math.min(1, video.volume + 0.05);
                         audio.volume = Math.min(1, audio.volume + 0.05);
                         videoVolume.value = video.volume;
                         audioVolume.value = audio.volume;
+                        updateVideoMuteUI();
+                        updateAudioMuteUI();
                         break;
                     case 'ArrowDown':
                         e.preventDefault();
-                        // Decrease both volumes by 5%
                         video.volume = Math.max(0, video.volume - 0.05);
                         audio.volume = Math.max(0, audio.volume - 0.05);
                         videoVolume.value = video.volume;
                         audioVolume.value = audio.volume;
+                        updateVideoMuteUI();
+                        updateAudioMuteUI();
                         break;
                 }
             });
 
-            // --- 4. Utilities ---
+            // --- Utilities ---
             function formatTime(seconds) {
                 if (isNaN(seconds) || seconds === Infinity) return "0:00";
-                const mins = Math.floor(seconds / 60);
+                const hrs = Math.floor(seconds / 3600);
+                const mins = Math.floor((seconds % 3600) / 60);
                 const secs = Math.floor(seconds % 60);
+
+                if (hrs > 0) {
+                    return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                }
                 return `${mins}:${secs.toString().padStart(2, '0')}`;
             }
 
             // Init
             renderPlaylist();
             if (mediaList.length > 0) {
-                // Determine the last played video index, default to 0 if none found
                 const lastIndexStr = localStorage.getItem('syncMixer_lastVideoIndex');
                 const startIndex = (lastIndexStr !== null && !isNaN(lastIndexStr) && lastIndexStr < mediaList.length) ? parseInt(lastIndexStr) : 0;
-
                 loadMedia(startIndex);
             }
         });
