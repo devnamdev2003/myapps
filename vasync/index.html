@@ -382,6 +382,7 @@
             ];
 
             let currentIndex = 0;
+            let timeToRestore = 0;
 
             // DOM Elements
             const playerContainer = document.getElementById('player-container');
@@ -483,6 +484,13 @@
                 currentIndex = index;
                 const selectedMedia = mediaList[index];
 
+                // Save last played index to local storage
+                localStorage.setItem('syncMixer_lastVideoIndex', index);
+
+                // Retrieve saved time for this specific video
+                const savedTime = localStorage.getItem(`syncMixer_savedTime_${index}`);
+                timeToRestore = savedTime ? parseFloat(savedTime) : 0;
+
                 renderPlaylist(); // Update active UI state
                 playerSubtitle.textContent = "Now Playing: " + selectedMedia.title;
                 loadingOverlay.classList.remove('hidden');
@@ -574,6 +582,11 @@
                     currentTimeEl.textContent = formatTime(video.currentTime);
                 }
 
+                // Save playback time to local storage continuously
+                if (!video.paused && video.currentTime > 0) {
+                    localStorage.setItem(`syncMixer_savedTime_${currentIndex}`, video.currentTime);
+                }
+
                 // Drift correction
                 // Only sync if the document is visible to prevent audio stuttering in background tabs!
                 if (!document.hidden && Math.abs(video.currentTime - audio.currentTime) > 0.2 && !video.paused) {
@@ -600,6 +613,18 @@
             video.addEventListener('loadedmetadata', () => {
                 seekBar.max = video.duration;
                 totalTimeEl.textContent = formatTime(video.duration);
+
+                // Restore saved time if it exists
+                if (timeToRestore > 0) {
+                    // If they watched until the very end (within 2 seconds), reset it to the beginning
+                    if (video.duration - timeToRestore > 2) {
+                        video.currentTime = timeToRestore;
+                        audio.currentTime = timeToRestore;
+                    } else {
+                        localStorage.setItem(`syncMixer_savedTime_${currentIndex}`, 0);
+                    }
+                    timeToRestore = 0; // Reset variable
+                }
             });
 
             // --- 3. UI Control Implementations ---
@@ -669,6 +694,9 @@
                 video.currentTime = seekBar.value;
                 audio.currentTime = seekBar.value;
                 isDraggingSeek = false;
+
+                // Manually save local storage when user seeks
+                localStorage.setItem(`syncMixer_savedTime_${currentIndex}`, video.currentTime);
             });
 
             // Skip Buttons (+5s / -5s)
@@ -676,12 +704,14 @@
                 const newTime = Math.min(video.currentTime + 5, video.duration);
                 video.currentTime = newTime;
                 audio.currentTime = newTime;
+                localStorage.setItem(`syncMixer_savedTime_${currentIndex}`, video.currentTime);
             });
 
             skipBackwardBtn.addEventListener('click', () => {
                 const newTime = Math.max(video.currentTime - 5, 0);
                 video.currentTime = newTime;
                 audio.currentTime = newTime;
+                localStorage.setItem(`syncMixer_savedTime_${currentIndex}`, video.currentTime);
             });
 
             // Speed Control
@@ -799,6 +829,7 @@
                         const forwardTime = Math.min(video.currentTime + 5, video.duration);
                         video.currentTime = forwardTime;
                         audio.currentTime = forwardTime;
+                        localStorage.setItem(`syncMixer_savedTime_${currentIndex}`, video.currentTime);
                         break;
                     case 'ArrowLeft':
                         e.preventDefault();
@@ -806,6 +837,7 @@
                         const backwardTime = Math.max(video.currentTime - 5, 0);
                         video.currentTime = backwardTime;
                         audio.currentTime = backwardTime;
+                        localStorage.setItem(`syncMixer_savedTime_${currentIndex}`, video.currentTime);
                         break;
                     case 'ArrowUp':
                         e.preventDefault();
@@ -836,7 +868,13 @@
 
             // Init
             renderPlaylist();
-            if (mediaList.length > 0) loadMedia(0);
+            if (mediaList.length > 0) {
+                // Determine the last played video index, default to 0 if none found
+                const lastIndexStr = localStorage.getItem('syncMixer_lastVideoIndex');
+                const startIndex = (lastIndexStr !== null && !isNaN(lastIndexStr) && lastIndexStr < mediaList.length) ? parseInt(lastIndexStr) : 0;
+
+                loadMedia(startIndex);
+            }
         });
     </script>
 </body>
