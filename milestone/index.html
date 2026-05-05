@@ -398,6 +398,14 @@
                             <i class="fa-solid fa-arrow-right-from-bracket"></i>
                             <span class="hidden sm:inline">Exit</span>
                         </button>
+
+                        <!-- NEW: Manual Sync Button -->
+                        <button id="syncWbBtn" onclick="syncWorkbookToCloud(activeWorkbookId)"
+                            class="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition shadow-sm"
+                            title="Sync to Cloud">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                        </button>
+
                         <button onclick="toggleDarkMode()"
                             class="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition shadow-sm"
                             title="Toggle Dark Mode">
@@ -1190,8 +1198,63 @@
         }
 
         // ==========================================
-        // SHARE LOGIC (REAL BACKEND API)
+        // SHARE & SYNC LOGIC (REAL BACKEND API)
         // ==========================================
+        async function syncWorkbookToCloud(wbId) {
+            const wb = appState.workbooks.find(w => w.id === wbId);
+            if (!wb) return;
+
+            try {
+                // Change icon to spinner temporarily
+                const btnIcon = document.querySelector('#syncWbBtn i');
+                if (btnIcon) btnIcon.className = 'fa-solid fa-spinner fa-spin';
+
+                let shareId = wb.shareId;
+                if (!shareId) {
+                    shareId = Math.random().toString(36).substring(2, 8);
+                    wb.shareId = shareId;
+                    saveState();
+                }
+
+                const payload = {
+                    field_id: shareId,
+                    json_data: wb
+                };
+
+                const response = await fetch(`${API_URL}/api/milestone/save/post/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (btnIcon) btnIcon.className = 'fa-solid fa-cloud-arrow-up';
+
+                if (response.ok && (data.flag === 1 || data.flag === 0)) {
+                    // Show a non-intrusive toast message for successful sync
+                    const toast = document.createElement('div');
+                    toast.className = 'fixed bottom-5 right-5 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg shadow-green-500/20 z-[100] animate-fade-in font-bold flex items-center space-x-3 transition-opacity duration-300';
+                    toast.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i><span>Sync successfully</span>';
+                    document.body.appendChild(toast);
+
+                    // Remove toast after 3 seconds
+                    setTimeout(() => {
+                        toast.style.opacity = '0';
+                        setTimeout(() => toast.remove(), 300);
+                    }, 3000);
+                } else {
+                    throw new Error("API failed");
+                }
+            } catch (err) {
+                console.error("Manual Sync Error:", err);
+                alert("Failed to sync to cloud. Please check your connection.");
+                const btnIcon = document.querySelector('#syncWbBtn i');
+                if (btnIcon) btnIcon.className = 'fa-solid fa-cloud-arrow-up';
+            }
+        }
+
+
         async function generateShareLink(wbId) {
             const wb = appState.workbooks.find(w => w.id === wbId);
             if (!wb) return;
@@ -1410,6 +1473,7 @@
                 // Hide standard buttons
                 document.getElementById('btnSidebarAddModule').classList.add('hidden');
                 document.getElementById('btnSidebarImport').classList.add('hidden');
+                document.getElementById('syncWbBtn').classList.add('hidden'); // NEW: Hide Sync button
 
                 // Create or show a "Save to My Dashboard" button
                 let saveBtn = document.getElementById('btnSaveSharedToLocal');
@@ -1425,6 +1489,7 @@
             } else {
                 document.getElementById('btnSidebarAddModule').classList.remove('hidden');
                 document.getElementById('btnSidebarImport').classList.remove('hidden');
+                document.getElementById('syncWbBtn').classList.remove('hidden');
                 document.getElementById('sidebarFooterGrid').classList.remove('grid-cols-1');
                 document.getElementById('sidebarFooterGrid').classList.add('grid-cols-2');
                 document.getElementById('btnSidebarAddModule').innerHTML = `<i class="fa-solid fa-plus-circle mr-2"></i> <span>Add New ${escapeHTML(wb.moduleLabel)}</span>`;
@@ -2954,14 +3019,14 @@
 
             // Reset to small screen by default for the next time it opens
             isMdFullScreen = false;
-            const modalWrapper = document.getElementById('markdownEditorModal'); 
+            const modalWrapper = document.getElementById('markdownEditorModal');
             const modalContent = document.getElementById('mdModalContent');
             const icon = document.querySelector('#mdFullScreenBtn i');
 
             if (modalContent && modalWrapper && icon) {
                 modalContent.classList.add('max-w-2xl', 'h-[80vh]', 'rounded-3xl');
                 modalContent.classList.remove('w-full', 'h-full', 'rounded-none');
-                modalWrapper.classList.add('p-4'); 
+                modalWrapper.classList.add('p-4');
                 icon.classList.replace('fa-compress', 'fa-expand');
             }
         }
