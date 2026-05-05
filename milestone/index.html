@@ -877,93 +877,80 @@
         </div>
     </div>
 
-    <div id="markdownEditorModal" class="fixed inset-0 z-[80] flex items-center justify-center hidden p-4">
+    <div id="markdownEditorModal"
+        class="fixed inset-0 z-[80] flex items-center justify-center hidden p-4 transition-all duration-300">
         <div class="fixed inset-0 bg-black/60 backdrop-blur-sm"></div>
-        <div
-            class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-2xl z-10 overflow-hidden animate-fade-in flex flex-col h-[80vh] border border-gray-100 dark:border-gray-700">
+        <div id="mdModalContent"
+            class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-2xl z-10 overflow-hidden animate-fade-in flex flex-col h-[80vh] border border-gray-100 dark:border-gray-700 transition-all duration-300">
 
             <div
-                class="p-4 sm:p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50 shrink-0">
-                <h3 class="text-lg sm:text-xl font-bold text-gray-800 dark:text-white flex items-center">
-                    <i class="fa-brands fa-markdown mr-3 text-brand"></i> Edit Description
+                class="p-3 sm:px-4 sm:py-3 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50 shrink-0">
+                <h3 class="text-base sm:text-lg font-bold text-gray-800 dark:text-white flex items-center">
+                    <i class="fa-brands fa-markdown mr-2 text-brand"></i> Edit Description
                 </h3>
                 <button type="button" onclick="closeMarkdownEditor()"
-                    class="text-gray-400 hover:text-gray-600 bg-white dark:bg-gray-800 shadow-sm rounded-full w-8 h-8 flex items-center justify-center">
-                    <i class="fa-solid fa-times"></i>
+                    class="text-gray-400 hover:text-gray-600 bg-white dark:bg-gray-800 shadow-sm rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center">
+                    <i class="fa-solid fa-times text-sm"></i>
                 </button>
             </div>
 
             <div
-                class="flex flex-wrap items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shrink-0 px-4 sm:px-6 pt-2">
-
-                <div class="flex">
-                    <button type="button" id="tabWrite" onclick="switchMarkdownTab('write')"
-                        class="px-4 py-2.5 border-b-2 border-brand text-brand font-bold text-sm outline-none transition-colors">Write</button>
-                    <button type="button" id="tabPreview" onclick="switchMarkdownTab('preview')"
-                        class="px-4 py-2.5 border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 font-bold text-sm outline-none transition-colors">Preview</button>
+                class="flex flex-wrap items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shrink-0 px-3 sm:px-4 pt-1 sm:pt-1.5">
+                <div class="flex items-center">
+                    <div class="flex pr-2 sm:pr-4 border-r border-gray-200 dark:border-gray-700 mr-2 sm:mr-4">
+                        <button type="button" id="tabWrite" onclick="switchMarkdownTab('write')"
+                            class="px-3 py-1.5 sm:py-2 border-b-2 border-brand text-brand font-bold text-sm outline-none transition-colors">Write</button>
+                        <button type="button" id="tabPreview" onclick="switchMarkdownTab('preview')"
+                            class="px-3 py-1.5 sm:py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 font-bold text-sm outline-none transition-colors">Preview</button>
+                        <button type="button" id="tabSplit" onclick="switchMarkdownTab('split')"
+                            class="px-3 py-1.5 sm:py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 font-bold text-sm outline-none transition-colors flex items-center gap-1">
+                            <span class="hidden sm:inline">Split</span><i class="fa-solid fa-columns sm:hidden"></i>
+                        </button>
+                    </div>
+                    <button type="button" onclick="toggleMdFullScreen()" id="mdFullScreenBtn"
+                        class="text-gray-400 hover:text-brand px-2 py-1 rounded-lg transition"
+                        title="Toggle Full Screen">
+                        <i class="fa-solid fa-expand"></i>
+                    </button>
                 </div>
 
                 <div id="mdToolbar" class="flex items-center flex-wrap gap-0.5 sm:gap-1 pb-1">
                     <button type="button" onclick="insertMarkdown('bold')"
-                        class="p-1.5 sm:p-2 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
-                        title="Bold">
-                        <i class="fa-solid fa-bold w-4 text-center"></i>
-                    </button>
+                        class="p-1 sm:p-1.5 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                        title="Bold"><i class="fa-solid fa-bold w-4 text-center text-sm"></i></button>
                     <button type="button" onclick="insertMarkdown('italic')"
-                        class="p-1.5 sm:p-2 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
-                        title="Italic">
-                        <i class="fa-solid fa-italic w-4 text-center"></i>
-                    </button>
+                        class="p-1 sm:p-1.5 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                        title="Italic"><i class="fa-solid fa-italic w-4 text-center text-sm"></i></button>
                     <button type="button" onclick="insertMarkdown('strikethrough')"
-                        class="p-1.5 sm:p-2 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
-                        title="Strikethrough">
-                        <i class="fa-solid fa-strikethrough w-4 text-center"></i>
-                    </button>
-
+                        class="p-1 sm:p-1.5 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                        title="Strikethrough"><i class="fa-solid fa-strikethrough w-4 text-center text-sm"></i></button>
                     <div class="w-px h-4 sm:h-5 bg-gray-300 dark:bg-gray-600 mx-0.5 sm:mx-1"></div>
-
                     <button type="button" onclick="insertMarkdown('link')"
-                        class="p-1.5 sm:p-2 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
-                        title="Insert Link">
-                        <i class="fa-solid fa-link w-4 text-center"></i>
-                    </button>
+                        class="p-1 sm:p-1.5 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                        title="Insert Link"><i class="fa-solid fa-link w-4 text-center text-sm"></i></button>
                     <button type="button" onclick="insertMarkdown('image')"
-                        class="p-1.5 sm:p-2 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
-                        title="Insert Image">
-                        <i class="fa-solid fa-image w-4 text-center"></i>
-                    </button>
-
+                        class="p-1 sm:p-1.5 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                        title="Insert Image"><i class="fa-solid fa-image w-4 text-center text-sm"></i></button>
                     <div class="w-px h-4 sm:h-5 bg-gray-300 dark:bg-gray-600 mx-0.5 sm:mx-1"></div>
-
                     <button type="button" onclick="insertMarkdown('code')"
-                        class="p-1.5 sm:p-2 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
-                        title="Inline Code">
-                        <i class="fa-solid fa-code w-4 text-center"></i>
-                    </button>
+                        class="p-1 sm:p-1.5 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                        title="Inline Code"><i class="fa-solid fa-code w-4 text-center text-sm"></i></button>
                     <button type="button" onclick="insertMarkdown('codeblock')"
-                        class="p-1.5 sm:p-2 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
-                        title="Code Block">
-                        <i class="fa-solid fa-file-code w-4 text-center"></i>
-                    </button>
-
+                        class="p-1 sm:p-1.5 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                        title="Code Block"><i class="fa-solid fa-file-code w-4 text-center text-sm"></i></button>
                     <div class="w-px h-4 sm:h-5 bg-gray-300 dark:bg-gray-600 mx-0.5 sm:mx-1"></div>
-
                     <button type="button" onclick="insertMarkdown('ul')"
-                        class="p-1.5 sm:p-2 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
-                        title="Bullet List">
-                        <i class="fa-solid fa-list-ul w-4 text-center"></i>
-                    </button>
+                        class="p-1 sm:p-1.5 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                        title="Bullet List"><i class="fa-solid fa-list-ul w-4 text-center text-sm"></i></button>
                     <button type="button" onclick="insertMarkdown('ol')"
-                        class="p-1.5 sm:p-2 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
-                        title="Numbered List">
-                        <i class="fa-solid fa-list-ol w-4 text-center"></i>
-                    </button>
+                        class="p-1 sm:p-1.5 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                        title="Numbered List"><i class="fa-solid fa-list-ol w-4 text-center text-sm"></i></button>
                 </div>
             </div>
 
-            <div class="flex-1 overflow-hidden flex flex-col bg-gray-50 dark:bg-gray-900/50">
-                <textarea id="mdEditorTextarea"
-                    class="flex-1 w-full h-full p-4 sm:p-6 resize-none outline-none bg-transparent text-gray-800 dark:text-gray-200 font-mono text-sm leading-relaxed"
+            <div id="mdEditorLayout" class="flex-1 overflow-hidden flex flex-col bg-gray-50 dark:bg-gray-900/50">
+                <textarea id="mdEditorTextarea" oninput="updateLivePreview()"
+                    class="flex-1 w-full h-full p-4 sm:p-6 resize-none outline-none bg-transparent text-gray-800 dark:text-gray-200 font-mono text-sm leading-relaxed border-b sm:border-b-0 sm:border-r border-transparent dark:border-transparent transition-colors"
                     placeholder="Write your markdown description here..."></textarea>
 
                 <div id="mdEditorPreview"
@@ -972,11 +959,11 @@
             </div>
 
             <div
-                class="p-4 sm:p-6 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-3 bg-gray-50 dark:bg-gray-900/50 shrink-0">
+                class="p-3 sm:px-4 sm:py-3 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-3 bg-gray-50 dark:bg-gray-900/50 shrink-0">
                 <button type="button" onclick="closeMarkdownEditor()"
-                    class="px-6 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition">Cancel</button>
+                    class="px-5 py-2 sm:py-2.5 rounded-xl text-gray-600 dark:text-gray-400 font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition text-sm">Cancel</button>
                 <button type="button" onclick="saveMarkdownEditor()"
-                    class="px-8 py-2.5 rounded-xl bg-brand text-white font-bold hover:brightness-110 transition shadow-lg shadow-brand/30">Save
+                    class="px-6 py-2 sm:py-2.5 rounded-xl bg-brand text-white font-bold hover:brightness-110 transition shadow-lg shadow-brand/30 text-sm">Save
                     Content</button>
             </div>
         </div>
@@ -2964,6 +2951,19 @@
             document.getElementById('markdownEditorModal').classList.add('hidden');
             currentMdTargetInput = null;
             currentMdTargetBtn = null;
+
+            // Reset to small screen by default for the next time it opens
+            isMdFullScreen = false;
+            const modalWrapper = document.getElementById('markdownEditorModal'); 
+            const modalContent = document.getElementById('mdModalContent');
+            const icon = document.querySelector('#mdFullScreenBtn i');
+
+            if (modalContent && modalWrapper && icon) {
+                modalContent.classList.add('max-w-2xl', 'h-[80vh]', 'rounded-3xl');
+                modalContent.classList.remove('w-full', 'h-full', 'rounded-none');
+                modalWrapper.classList.add('p-4'); 
+                icon.classList.replace('fa-compress', 'fa-expand');
+            }
         }
 
         function saveMarkdownEditor() {
@@ -2987,31 +2987,83 @@
             closeMarkdownEditor();
         }
 
+        let isMdFullScreen = false;
+
+        function toggleMdFullScreen() {
+            const modalWrapper = document.getElementById('markdownEditorModal');
+            const modalContent = document.getElementById('mdModalContent');
+            const icon = document.querySelector('#mdFullScreenBtn i');
+
+            isMdFullScreen = !isMdFullScreen;
+
+            if (isMdFullScreen) {
+                modalContent.classList.remove('max-w-2xl', 'h-[80vh]', 'rounded-3xl');
+                modalContent.classList.add('w-full', 'h-full', 'rounded-none');
+                modalWrapper.classList.remove('p-4'); // Fixes the gap on the edges
+                icon.classList.replace('fa-expand', 'fa-compress');
+            } else {
+                modalContent.classList.add('max-w-2xl', 'h-[80vh]', 'rounded-3xl');
+                modalContent.classList.remove('w-full', 'h-full', 'rounded-none');
+                modalWrapper.classList.add('p-4'); // Brings spacing back for modal view
+                icon.classList.replace('fa-compress', 'fa-expand');
+            }
+        }
+
+        function updateLivePreview() {
+            if (!document.getElementById('mdEditorPreview').classList.contains('hidden') &&
+                !document.getElementById('mdEditorTextarea').classList.contains('hidden')) {
+                const rawMd = document.getElementById('mdEditorTextarea').value;
+                document.getElementById('mdEditorPreview').innerHTML = (typeof marked !== 'undefined') ? marked.parse(rawMd) : escapeHTML(rawMd);
+            }
+        }
+
         function switchMarkdownTab(tab) {
             const btnWrite = document.getElementById('tabWrite');
             const btnPreview = document.getElementById('tabPreview');
+            const btnSplit = document.getElementById('tabSplit');
+
             const areaWrite = document.getElementById('mdEditorTextarea');
             const areaPreview = document.getElementById('mdEditorPreview');
             const toolbar = document.getElementById('mdToolbar');
+            const layout = document.getElementById('mdEditorLayout');
 
-            const activeTabClass = 'px-4 py-2.5 border-b-2 border-brand text-brand font-bold text-sm outline-none transition-colors';
-            const inactiveTabClass = 'px-4 py-2.5 border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 font-bold text-sm outline-none transition-colors';
+            const activeTabClass = 'px-3 py-1.5 sm:py-2 border-b-2 border-brand text-brand font-bold text-sm outline-none transition-colors';
+            const inactiveTabClass = 'px-3 py-1.5 sm:py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 font-bold text-sm outline-none transition-colors flex items-center gap-1';
+
+            // Reset classes
+            if (btnWrite) btnWrite.className = inactiveTabClass;
+            if (btnPreview) btnPreview.className = inactiveTabClass;
+            if (btnSplit) btnSplit.className = inactiveTabClass;
 
             if (tab === 'write') {
-                btnWrite.className = activeTabClass;
-                btnPreview.className = inactiveTabClass;
+                if (btnWrite) btnWrite.className = activeTabClass;
+                layout.className = "flex-1 overflow-hidden flex flex-col bg-gray-50 dark:bg-gray-900/50";
                 areaWrite.classList.remove('hidden');
-                toolbar.classList.remove('hidden'); // Show toolbar
+                toolbar.classList.remove('hidden');
                 areaPreview.classList.add('hidden');
-            } else {
-                btnPreview.className = activeTabClass;
-                btnWrite.className = inactiveTabClass;
+                areaWrite.classList.remove('border-gray-200', 'dark:border-gray-700');
+            } else if (tab === 'preview') {
+                if (btnPreview) btnPreview.className = activeTabClass;
+                layout.className = "flex-1 overflow-hidden flex flex-col bg-gray-50 dark:bg-gray-900/50";
                 areaWrite.classList.add('hidden');
-                toolbar.classList.add('hidden'); // Hide toolbar in preview
+                toolbar.classList.add('hidden');
                 areaPreview.classList.remove('hidden');
 
                 const rawMd = areaWrite.value;
                 areaPreview.innerHTML = (typeof marked !== 'undefined') ? marked.parse(rawMd) : escapeHTML(rawMd);
+            } else if (tab === 'split') {
+                if (btnSplit) btnSplit.className = activeTabClass;
+
+                // Stack vertically on mobile, side-by-side horizontally on desktop
+                layout.className = "flex-1 overflow-hidden flex flex-col sm:flex-row bg-gray-50 dark:bg-gray-900/50";
+                areaWrite.classList.remove('hidden');
+                toolbar.classList.remove('hidden');
+                areaPreview.classList.remove('hidden');
+
+                // Add a separating border between editor and preview
+                areaWrite.classList.add('border-gray-200', 'dark:border-gray-700');
+
+                updateLivePreview();
             }
         }
 
