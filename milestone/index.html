@@ -923,6 +923,13 @@
                             <span class="hidden sm:inline">Split</span><i class="fa-solid fa-columns sm:hidden"></i>
                         </button>
                     </div>
+
+                    <button type="button" onclick="toggleScrollSync()" id="mdScrollSyncBtn"
+                        class="text-brand hover:text-blue-500 dark:hover:text-blue-400 px-2 py-1 rounded-lg transition hidden mr-1"
+                        title="Synchronized Scrolling: ON">
+                        <i class="fa-solid fa-link"></i>
+                    </button>
+
                     <button type="button" onclick="toggleMdFullScreen()" id="mdFullScreenBtn"
                         class="text-gray-400 hover:text-brand px-2 py-1 rounded-lg transition"
                         title="Toggle Full Screen">
@@ -3146,6 +3153,7 @@
             const btnWrite = document.getElementById('tabWrite');
             const btnPreview = document.getElementById('tabPreview');
             const btnSplit = document.getElementById('tabSplit');
+            const syncBtn = document.getElementById('mdScrollSyncBtn'); // Added this
 
             const areaWrite = document.getElementById('mdEditorTextarea');
             const areaPreview = document.getElementById('mdEditorPreview');
@@ -3162,6 +3170,7 @@
 
             if (tab === 'write') {
                 if (btnWrite) btnWrite.className = activeTabClass;
+                if (syncBtn) syncBtn.classList.add('hidden'); // Hide sync btn
                 layout.className = "flex-1 overflow-hidden flex flex-col bg-gray-50 dark:bg-gray-900/50";
                 areaWrite.classList.remove('hidden');
                 toolbar.classList.remove('hidden');
@@ -3169,6 +3178,7 @@
                 areaWrite.classList.remove('border-gray-200', 'dark:border-gray-700');
             } else if (tab === 'preview') {
                 if (btnPreview) btnPreview.className = activeTabClass;
+                if (syncBtn) syncBtn.classList.add('hidden'); // Hide sync btn
                 layout.className = "flex-1 overflow-hidden flex flex-col bg-gray-50 dark:bg-gray-900/50";
                 areaWrite.classList.add('hidden');
                 toolbar.classList.add('hidden');
@@ -3178,6 +3188,7 @@
                 areaPreview.innerHTML = (typeof marked !== 'undefined') ? marked.parse(rawMd) : escapeHTML(rawMd);
             } else if (tab === 'split') {
                 if (btnSplit) btnSplit.className = activeTabClass;
+                if (syncBtn) syncBtn.classList.remove('hidden'); // Show sync btn
 
                 // Stack vertically on mobile, side-by-side horizontally on desktop
                 layout.className = "flex-1 overflow-hidden flex flex-col sm:flex-row bg-gray-50 dark:bg-gray-900/50";
@@ -3191,6 +3202,68 @@
                 updateLivePreview();
             }
         }
+        // ==========================================
+        // SYNCHRONIZED SCROLLING LOGIC
+        // ==========================================
+        let isScrollSynced = true;
+        let isSyncingLeft = false;
+        let isSyncingRight = false;
+
+        function toggleScrollSync() {
+            isScrollSynced = !isScrollSynced;
+            const btn = document.getElementById('mdScrollSyncBtn');
+            const icon = btn.querySelector('i');
+
+            if (isScrollSynced) {
+                // Linked State
+                btn.className = 'text-brand hover:text-blue-500 dark:hover:text-blue-400 px-2 py-1 rounded-lg transition mr-1';
+                icon.className = 'fa-solid fa-link';
+                btn.title = "Synchronized Scrolling: ON";
+
+                // Immediately snap the preview to match the current text editor position
+                const left = document.getElementById('mdEditorTextarea');
+                const right = document.getElementById('mdEditorPreview');
+                const maxScrollLeft = left.scrollHeight - left.clientHeight;
+                const percentage = maxScrollLeft > 0 ? left.scrollTop / maxScrollLeft : 0;
+                right.scrollTop = percentage * (right.scrollHeight - right.clientHeight);
+            } else {
+                // Unlinked State
+                btn.className = 'text-gray-400 hover:text-brand px-2 py-1 rounded-lg transition mr-1';
+                icon.className = 'fa-solid fa-link-slash';
+                btn.title = "Synchronized Scrolling: OFF";
+            }
+        }
+
+        // Attach event listeners for proportional scroll syncing when DOM loads
+        document.addEventListener('DOMContentLoaded', () => {
+            const left = document.getElementById('mdEditorTextarea');
+            const right = document.getElementById('mdEditorPreview');
+
+            left.addEventListener('scroll', function () {
+                if (!isScrollSynced || left.classList.contains('hidden') || right.classList.contains('hidden')) return;
+                if (!isSyncingLeft) {
+                    isSyncingRight = true;
+                    const maxScrollLeft = this.scrollHeight - this.clientHeight;
+                    const percentage = maxScrollLeft > 0 ? this.scrollTop / maxScrollLeft : 0;
+                    const maxScrollRight = right.scrollHeight - right.clientHeight;
+                    right.scrollTop = percentage * maxScrollRight;
+                }
+                isSyncingLeft = false;
+            });
+
+            right.addEventListener('scroll', function () {
+                if (!isScrollSynced || left.classList.contains('hidden') || right.classList.contains('hidden')) return;
+                if (!isSyncingRight) {
+                    isSyncingLeft = true;
+                    const maxScrollRight = this.scrollHeight - this.clientHeight;
+                    const percentage = maxScrollRight > 0 ? this.scrollTop / maxScrollRight : 0;
+                    const maxScrollLeft = left.scrollHeight - left.clientHeight;
+                    left.scrollTop = percentage * maxScrollLeft;
+                }
+                isSyncingRight = false;
+            });
+        });
+
 
         // --- NEW LOGIC FOR FORMATTING TOOLBAR ---
         function insertMarkdown(type) {
