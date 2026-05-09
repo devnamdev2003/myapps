@@ -1560,8 +1560,11 @@
         }
 
         function closeAllDropdowns() {
-            const dropdowns = document.querySelectorAll('[id^="dropdown-wb-"]');
+            const dropdowns = document.querySelectorAll('[id^="dropdown-"], [id^="step-dropdown-"]');
             dropdowns.forEach(d => d.classList.add('hidden'));
+
+            // Reset z-index of all task rows back to normal
+            document.querySelectorAll('.step-container-row').forEach(row => row.style.zIndex = '1');
         }
 
         // Close dropdowns when clicking anywhere outside
@@ -1881,7 +1884,7 @@
                         <span class="text-xs bg-brand/20 text-brand font-bold px-3 py-1.5 rounded-lg">${foundLab.steps.length} ${escapeHTML(wb.stepLabel)}s</span>
                     </div>
 
-                    <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden divide-y divide-gray-100 dark:divide-gray-700/50">
+                    <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-visible divide-y divide-gray-100 dark:divide-gray-700/50">
             `;
 
             let labComp = 0;
@@ -1892,8 +1895,11 @@
                 // Safe markdown rendering fallback in case library fails to load
                 const renderDesc = (typeof marked !== 'undefined') ? marked.parse(step.description) : escapeHTML(step.description);
 
+                // Check highlight status and append '1A' for a nice 10% opacity background of the theme color
+                const bgStyle = step.isHighlighted ? `background-color: ${escapeHTML(wb.color)}1A;` : '';
+
                 html += `
-                    <div class="group relative">
+                    <div id="step-row-${escapeHTML(step.id)}" class="step-container-row group relative transition-colors duration-300 first:rounded-t-3xl last:rounded-b-3xl" style="z-index: 1; ${bgStyle}">
                         ${checked ? `<div class="absolute left-0 top-0 bottom-0 w-1 bg-brand transition-all duration-300 z-10"></div>` : ''}
                         <div class="flex items-start p-5 sm:p-6 ${step.description ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors' : ''}"
                             ${step.description ? `onclick="toggleStepDesc(event, 'desc-${escapeHTML(step.id)}')"` : ''}>
@@ -1909,10 +1915,24 @@
                                     <span class="text-lg leading-snug font-medium ${checked ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-200'} transition-all pr-4">${escapeHTML(step.text)}</span>
                                 </div>
                                 ${!isSharedMode ? `
-                                <div class="flex shrink-0 ml-2" onclick="event.stopPropagation();">
-                                    <button type="button" onclick="openEditStepModal('${escapeHTML(foundLab.id)}', '${escapeHTML(step.id)}', event)" class="text-gray-400 hover:text-brand bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition px-2.5 py-1.5 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700" title="Edit Item">
-                                        <i class="fa-solid fa-pen text-xs"></i>
+                                <div class="flex shrink-0 ml-2 relative" onclick="event.stopPropagation();">
+                                    <button type="button" onclick="toggleStepDropdown('${escapeHTML(step.id)}'); event.stopPropagation();" class="text-gray-400 hover:text-brand bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 transition px-2 py-1 rounded-lg" title="Options">
+                                        <i class="fa-solid fa-ellipsis-vertical text-lg"></i>
                                     </button>
+                                    <div id="step-dropdown-${escapeHTML(step.id)}" class="hidden absolute right-0 top-full mt-1 w-44 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden z-30">
+                                        <div class="py-1">
+                                            <button onclick="openEditStepModal('${escapeHTML(foundLab.id)}', '${escapeHTML(step.id)}', event); closeAllDropdowns();" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center">
+                                                <i class="fa-solid fa-pen w-4 mr-2"></i> Edit
+                                            </button>
+                                            <button onclick="toggleHighlightStep('${escapeHTML(foundLab.id)}', '${escapeHTML(step.id)}', event); closeAllDropdowns();" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center">
+                                                <i class="fa-solid fa-highlighter w-4 mr-2"></i> ${step.isHighlighted ? 'Remove Highlight' : 'Highlight Task'}
+                                            </button>
+                                            <div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                                            <button onclick="deleteStep('${escapeHTML(foundLab.id)}', '${escapeHTML(step.id)}', event); closeAllDropdowns();" class="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center">
+                                                <i class="fa-solid fa-trash w-4 mr-2"></i> Delete
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                                 ` : ''}
                             </div>
@@ -3529,6 +3549,66 @@
             if (document.getElementById('overallProgressBarMobile')) document.getElementById('overallProgressBarMobile').style.width = totalPerc + '%';
             if (document.getElementById('overallProgressTextMobile')) document.getElementById('overallProgressTextMobile').innerText = totalPerc + '%';
         }
+        // ==========================================
+        // STEP DROPDOWN & HIGHLIGHT LOGIC
+        // ==========================================
+        function toggleStepDropdown(stepId) {
+            const dropdown = document.getElementById(`step-dropdown-${stepId}`);
+            const isHidden = dropdown.classList.contains('hidden');
+
+            // Close other open dropdowns first
+            closeAllDropdowns();
+
+            if (isHidden) {
+                dropdown.classList.remove('hidden');
+                // Boost z-index of the active row so the dropdown floats over the tasks below it
+                const activeRow = document.getElementById(`step-row-${stepId}`);
+                if (activeRow) activeRow.style.zIndex = '50';
+            }
+        }
+
+        function toggleHighlightStep(labId, stepId, event) {
+            if (event) event.stopPropagation();
+            const wb = getActiveWorkbook();
+            if (!wb) return;
+
+            wb.categories.forEach(c => {
+                const l = c.labs.find(x => x.id === labId);
+                if (l) {
+                    const s = l.steps.find(x => x.id === stepId);
+                    if (s) s.isHighlighted = !s.isHighlighted; // Toggle the highlight state
+                }
+            });
+
+            saveState();
+            touchActiveWorkbook();
+            renderLabContent(labId, true); // True preserves scroll position
+        }
+
+        function deleteStep(labId, stepId, event) {
+            if (event) event.stopPropagation();
+            const wb = getActiveWorkbook();
+            if (!wb) return;
+
+            if (confirm("Are you sure you want to delete this task?")) {
+                wb.categories.forEach(c => {
+                    const l = c.labs.find(x => x.id === labId);
+                    if (l) {
+                        const stepIndex = l.steps.findIndex(s => s.id === stepId);
+                        if (stepIndex > -1) {
+                            l.steps.splice(stepIndex, 1);
+                            delete appState.progressData[stepId]; // Clean up progress percentage
+                        }
+                    }
+                });
+
+                saveState();
+                touchActiveWorkbook();
+                renderLabContent(labId, true);
+                renderSidebar(); // Update completion counts in the side menu
+            }
+        }
+
         // ==========================================
         // BOOTSTRAP
         // ==========================================
