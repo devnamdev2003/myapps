@@ -1906,9 +1906,10 @@
                 const bgStyle = step.isHighlighted ? `background-color: ${escapeHTML(wb.color)}1A;` : '';
 
                 html += `
-                    <div id="step-row-${escapeHTML(step.id)}" class="step-container-row group relative transition-colors duration-300 first:rounded-t-3xl last:rounded-b-3xl" style="z-index: 1; ${bgStyle}">
+                    <div id="step-row-${escapeHTML(step.id)}" class="step-container-row group relative transition-colors duration-300 first:rounded-t-3xl last:rounded-b-3xl" style="z-index: 1;">
                         ${checked ? `<div class="absolute left-0 top-0 bottom-0 w-1 bg-brand transition-all duration-300 z-10"></div>` : ''}
                         <div class="flex items-start p-5 sm:p-6 ${step.description ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors' : ''}"
+                            style="${bgStyle}"
                             ${step.description ? `onclick="toggleStepDesc(event, 'desc-${escapeHTML(step.id)}')"` : ''}>
                             <div class="relative flex items-center pt-0.5 shrink-0" onclick="event.stopPropagation();">
                                 <input type="checkbox" ${checked ? 'checked' : ''} 
