@@ -1880,8 +1880,15 @@
                     </div>
                     
                     <div class="flex items-center justify-between mb-4 px-2">
-                        <h4 class="font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-xs">${escapeHTML(wb.stepLabel)}s</h4>
-                        <span class="text-xs bg-brand/20 text-brand font-bold px-3 py-1.5 rounded-lg">${foundLab.steps.length} ${escapeHTML(wb.stepLabel)}s</span>
+                        <div class="flex items-center space-x-3">
+                            <span class="text-xs bg-brand/20 text-brand font-bold px-3 py-1.5 rounded-lg uppercase tracking-widest">${foundLab.steps.length} ${escapeHTML(wb.stepLabel)}s</span>
+                        </div>
+                        
+                        ${!isSharedMode ? `
+                        <button onclick="openEditStepModal('${escapeHTML(foundLab.id)}', '', event)" class="text-gray-400 hover:text-brand bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition w-8 h-8 flex items-center justify-center rounded-lg shadow-sm border border-gray-200 dark:border-gray-700" title="Add New ${escapeHTML(wb.stepLabel)}">
+                            <i class="fa-solid fa-plus text-sm"></i>
+                        </button>
+                        ` : ''}
                     </div>
 
                     <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-visible divide-y divide-gray-100 dark:divide-gray-700/50">
@@ -2604,41 +2611,58 @@
             const wb = getActiveWorkbook();
             if (!wb) return;
 
-            let foundStep;
-            wb.categories.forEach(c => {
-                const l = c.labs.find(x => x.id === labId);
-                if (l) {
-                    const s = l.steps.find(x => x.id === stepId);
-                    if (s) foundStep = s;
-                }
-            });
-
-            if (!foundStep) return;
-
             document.getElementById('editStepLabId').value = labId;
-            document.getElementById('editStepId').value = stepId;
 
+            const modalTitle = document.querySelector('#editStepModal h3');
             const textInput = document.getElementById('editStepText');
-            textInput.value = foundStep.text;
-            textInput.classList.remove('border-red-500', 'ring-2', 'ring-red-500');
-
-            document.getElementById('editStepDesc').value = foundStep.description || '';
-
+            const descInput = document.getElementById('editStepDesc');
             const btnParent = document.getElementById('editStepDescBtn');
             const icon = btnParent.querySelector('i');
             const btnText = btnParent.querySelector('.desc-btn-text');
 
-            if (foundStep.description && foundStep.description.trim() !== '') {
-                btnText.innerText = 'Edit Description';
-                icon.className = 'fa-solid fa-pen-to-square';
-                btnParent.className = 'flex items-center space-x-2 text-sm font-bold px-4 py-2 rounded-lg transition bg-brand/10 text-brand border-brand/30 hover:bg-brand/20 w-full justify-center';
+            if (stepId) {
+                // EDIT MODE
+                document.getElementById('editStepId').value = stepId;
+                let foundStep;
+                wb.categories.forEach(c => {
+                    const l = c.labs.find(x => x.id === labId);
+                    if (l) {
+                        const s = l.steps.find(x => x.id === stepId);
+                        if (s) foundStep = s;
+                    }
+                });
+
+                if (!foundStep) return;
+
+                modalTitle.innerHTML = `<i class="fa-solid fa-pen-to-square mr-3 text-brand"></i> Edit ${escapeHTML(wb.stepLabel)}`;
+                textInput.value = foundStep.text;
+                descInput.value = foundStep.description || '';
+
+                if (foundStep.description && foundStep.description.trim() !== '') {
+                    btnText.innerText = 'Edit Description';
+                    icon.className = 'fa-solid fa-pen-to-square';
+                    btnParent.className = 'flex items-center space-x-2 text-sm font-bold px-4 py-2 rounded-lg transition bg-brand/10 text-brand border-brand/30 hover:bg-brand/20 w-full justify-center';
+                } else {
+                    btnText.innerText = 'Add Description';
+                    icon.className = 'fa-solid fa-plus';
+                    btnParent.className = 'flex items-center space-x-2 text-sm font-bold px-4 py-2 rounded-lg transition bg-gray-50 dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-700 hover:text-brand w-full justify-center';
+                }
             } else {
+                // CREATE MODE
+                document.getElementById('editStepId').value = '';
+                modalTitle.innerHTML = `<i class="fa-solid fa-plus mr-3 text-brand"></i> Add New ${escapeHTML(wb.stepLabel)}`;
+                textInput.value = '';
+                descInput.value = '';
                 btnText.innerText = 'Add Description';
                 icon.className = 'fa-solid fa-plus';
                 btnParent.className = 'flex items-center space-x-2 text-sm font-bold px-4 py-2 rounded-lg transition bg-gray-50 dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-700 hover:text-brand w-full justify-center';
             }
 
+            textInput.classList.remove('border-red-500', 'ring-2', 'ring-red-500');
             document.getElementById('editStepModal').classList.remove('hidden');
+
+            // Auto focus input
+            setTimeout(() => textInput.focus(), 50);
         }
 
         function closeEditStepModal() {
@@ -2651,44 +2675,48 @@
             const newText = document.getElementById('editStepText').value.trim();
             const newDesc = document.getElementById('editStepDesc').value.trim();
 
+            const textInput = document.getElementById('editStepText');
+
             if (!newText) {
-                document.getElementById('editStepText').classList.add('border-red-500', 'ring-2', 'ring-red-500');
+                textInput.classList.add('border-red-500', 'ring-2', 'ring-red-500');
                 return;
             }
 
             const wb = getActiveWorkbook();
             if (!wb) return;
 
-            let foundStep;
+            let foundLab;
             wb.categories.forEach(c => {
                 const l = c.labs.find(x => x.id === labId);
-                if (l) {
-                    const s = l.steps.find(x => x.id === stepId);
-                    if (s) foundStep = s;
-                }
+                if (l) foundLab = l;
             });
 
-            if (foundStep) {
-                foundStep.text = newText;
-                foundStep.description = newDesc;
-                saveState();
-                touchActiveWorkbook();
-                closeEditStepModal();
-                renderLabContent(labId, true); // Preserves scroll position!
-            }
-        }
+            if (!foundLab) return;
 
-        function resetCurrentWorkbookProgress() {
-            if (confirm("Reset progress for all items in this workbook?")) {
-                const wb = getActiveWorkbook();
-                wb.categories.forEach(cat => cat.labs.forEach(lab => {
-                    lab.steps.forEach(s => appState.progressData[s.id] = false);
-                }));
-                saveState();
-                touchActiveWorkbook();
-                renderSidebar();
-                renderLabContent(activeLabId);
+            if (stepId) {
+                // UPDATE EXISTING
+                const foundStep = foundLab.steps.find(x => x.id === stepId);
+                if (foundStep) {
+                    foundStep.text = newText;
+                    foundStep.description = newDesc;
+                }
+            } else {
+                // CREATE NEW
+                const newStepId = `step-${labId}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+                foundLab.steps.push({
+                    id: newStepId,
+                    text: newText,
+                    description: newDesc,
+                    isHighlighted: false
+                });
+                appState.progressData[newStepId] = false;
             }
+
+            saveState();
+            touchActiveWorkbook();
+            closeEditStepModal();
+            renderLabContent(labId, true); // Preserves scroll position
+            renderSidebar(); // Update sidebar counts
         }
 
         // ==========================================
