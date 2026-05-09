@@ -2939,6 +2939,20 @@
         }
 
         function loadHistoryUI() {
+            // 1. Remember currently open and closed collections before wiping the DOM
+            const openCollections = new Set();
+            const closedCollections = new Set();
+            document.querySelectorAll('.collection-group').forEach(group => {
+                const nameSpan = group.querySelector('.collection-header span:nth-child(2)');
+                if (nameSpan) {
+                    if (group.classList.contains('open')) {
+                        openCollections.add(nameSpan.textContent.trim());
+                    } else {
+                        closedCollections.add(nameSpan.textContent.trim());
+                    }
+                }
+            });
+
             const historyList = document.getElementById('historyList');
             historyList.innerHTML = '';
             const history = getHistory();
@@ -2964,8 +2978,15 @@
             sortedColNames.forEach(colName => {
                 const items = collections[colName];
                 const groupDiv = document.createElement('div');
-                // Respect the current toggle state when re-rendering
-                groupDiv.className = isAllCollapsed ? 'collection-group' : 'collection-group open';
+
+                // 2. Restore previous state if it existed, otherwise use default
+                if (openCollections.has(colName)) {
+                    groupDiv.className = 'collection-group open';
+                } else if (closedCollections.has(colName)) {
+                    groupDiv.className = 'collection-group';
+                } else {
+                    groupDiv.className = isAllCollapsed ? 'collection-group' : 'collection-group open';
+                }
 
                 const header = document.createElement('div');
                 header.className = 'collection-header';
@@ -3098,14 +3119,14 @@
             }
         }
         // --- URL Helper, Copy, and Open in Tab Logic ---
-        
+
         function getFinalComputedUrl() {
             const currentCollection = document.getElementById('reqCollection').value.trim();
             const rawUrl = document.getElementById('reqUrl').value.trim();
             let baseUrl = interpolateString(rawUrl, currentCollection);
 
             if (!baseUrl) return null;
-            
+
             if (!/^https?:\/\//i.test(baseUrl)) {
                 baseUrl = 'https://' + baseUrl;
             }
@@ -3130,7 +3151,7 @@
                 showToast("Please enter a valid URL first", "warning");
                 return;
             }
-            
+
             navigator.clipboard.writeText(url).then(() => {
                 showToast("Full URL copied to clipboard", "success");
             }).catch(() => {
@@ -3144,13 +3165,13 @@
                 showToast("Only GET requests can be directly opened in a browser tab", "warning");
                 return;
             }
-            
+
             const url = getFinalComputedUrl();
             if (!url) {
                 showToast("Please enter a valid URL first", "warning");
                 return;
             }
-            
+
             window.open(url, '_blank');
         }
     </script>
