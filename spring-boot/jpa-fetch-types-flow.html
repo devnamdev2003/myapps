@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JPA Fetch Types Flow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Code Highlighting -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/sql.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        darkbg: '#0f172a', panelbg: '#1e293b', compbg: '#334155', bordercolor: '#475569', textcolor: '#f8fafc', muted: '#94a3b8',
+                        accent: '#f43f5e', // Rose for eager
+                        accent_light: '#fb7185',
+                        db: '#0ea5e9', // Sky blue for DB
+                        lazy: '#8b5cf6', // Violet for lazy
+                        eager: '#f43f5e', // Rose for eager
+                        proxy_color: '#a78bfa' // Light violet for proxy
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        .component-box {
+            background-color: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .component-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px -2px rgba(0, 0, 0, 0.5);
+        }
+
+        .component-box.active-eager {
+            border-color: #f43f5e;
+            box-shadow: 0 0 20px rgba(244, 63, 94, 0.3);
+            transform: scale(1.05);
+            z-index: 30;
+            background-color: #4c1d95;
+        }
+
+        .component-box.active-lazy {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+            transform: scale(1.05);
+            z-index: 30;
+            background-color: #4c1d95;
+        }
+
+        .zone-container {
+            position: relative;
+            background-color: rgba(30, 41, 59, 0.3);
+            border: 1px dashed #475569;
+            border-radius: 0.75rem;
+            padding: 2.5rem 1.5rem 1.5rem 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .zone-title {
+            position: absolute;
+            top: -0.75rem;
+            left: 1rem;
+            background-color: #0f172a;
+            padding: 0 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #cbd5e1;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border: 1px solid #475569;
+            border-radius: 0.25rem;
+        }
+
+        svg.connector-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .connector-path {
+            fill: none;
+            stroke: #475569;
+            stroke-width: 2;
+            stroke-dasharray: 4, 4;
+            transition: stroke 0.3s ease, stroke-width 0.3s ease;
+        }
+
+        .connector-path.eager {
+            stroke: #f43f5e;
+            stroke-dasharray: none;
+            stroke-width: 3;
+            animation: flowDash 1s linear infinite;
+        }
+
+        .connector-path.lazy {
+            stroke: #8b5cf6;
+            stroke-dasharray: none;
+            stroke-width: 3;
+            animation: flowDash 1s linear infinite;
+        }
+
+        @keyframes flowDash {
+            from {
+                stroke-dashoffset: 20;
+            }
+
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        .packet {
+            position: absolute;
+            background-color: #cbd5e1;
+            border-radius: 8px;
+            z-index: 50;
+            transform: translate(-50%, -50%);
+            display: none;
+            box-shadow: 0 0 15px rgba(203, 213, 225, 0.5), inset 0 0 5px rgba(255, 255, 255, 0.8);
+            border: 2px solid #0f172a;
+            padding: 4px 8px;
+            white-space: nowrap;
+            font-size: 10px;
+            font-weight: bold;
+            color: #0f172a;
+        }
+
+        .packet.eager {
+            background-color: #f43f5e;
+            box-shadow: 0 0 15px #f43f5e, inset 0 0 5px rgba(255, 255, 255, 0.8);
+            color: white;
+        }
+
+        .packet.lazy {
+            background-color: #8b5cf6;
+            box-shadow: 0 0 15px #8b5cf6, inset 0 0 5px rgba(255, 255, 255, 0.8);
+            color: white;
+        }
+
+        .packet.proxy {
+            background-color: transparent;
+            border: 2px dashed #a78bfa;
+            box-shadow: 0 0 10px #a78bfa;
+            color: #a78bfa;
+        }
+
+        .markdown-body pre {
+            background-color: #0d1117;
+            border-radius: 6px;
+            padding: 16px;
+            overflow: auto;
+            border: 1px solid #30363d;
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .markdown-body code {
+            font-family: ui-monospace, SFMono-Regular, monospace;
+            font-size: 85%;
+        }
+
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            border-bottom: 2px solid transparent;
+            color: #94a3b8;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            border-bottom-color: #f8fafc;
+            color: #f8fafc;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        .float-anim {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .entity-card {
+            background: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 8px;
+            font-size: 12px;
+            text-align: left;
+            transition: all 0.3s ease;
+        }
+
+        .entity-card.loaded {
+            border-color: #10b981;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+        }
+
+        .entity-card.proxy {
+            border-color: #a78bfa;
+            border-style: dashed;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+
+<body class="antialiased h-screen flex flex-col overflow-hidden text-textcolor bg-darkbg">
+
+    <header class="bg-panelbg border-b border-bordercolor z-40 shadow-lg">
+        <div class="max-w-screen-2xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i
+                    class="fa-solid fa-truck-ramp-box text-slate-300 text-2xl drop-shadow-[0_0_8px_rgba(203,213,225,0.5)]"></i>
+                <h1 class="text-xl font-bold tracking-wide">JPA Lazy vs Eager Loading</h1>
+            </div>
+            <div class="flex gap-4">
+                <div class="flex bg-darkbg rounded-lg p-1 border border-bordercolor">
+                    <button id="tab-visual" class="tab-btn active text-sm">Visual Flow</button>
+                    <button id="tab-principles" class="tab-btn text-sm">Principles & Code</button>
+                </div>
+            </div>
+            <div class="flex gap-2" id="sim-controls">
+                <button id="btn-sim-eager"
+                    class="px-3 py-1.5 bg-rose-700 hover:bg-rose-600 text-white rounded font-medium transition shadow-sm text-sm flex items-center border border-rose-500">
+                    <i class="fa-solid fa-truck-fast mr-2"></i> Sim EAGER
+                </button>
+                <button id="btn-sim-lazy"
+                    class="px-3 py-1.5 bg-violet-700 hover:bg-violet-600 text-white border border-violet-500 rounded font-medium transition shadow-sm text-sm flex items-center">
+                    <i class="fa-solid fa-couch mr-2"></i> Sim LAZY
+                </button>
+                <button id="btn-toggle-pause"
+                    class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-bordercolor rounded font-medium transition shadow-sm text-sm flex items-center opacity-50 cursor-not-allowed">
+                    <i class="fa-solid fa-pause text-amber-400 mr-2"></i> Pause
+                </button>
+                <button id="btn-reset"
+                    class="px-3 py-1.5 bg-compbg hover:bg-slate-600 text-slate-200 border border-bordercolor rounded font-medium transition shadow-sm text-sm flex items-center">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 flex overflow-hidden relative w-full h-full">
+        <!-- VISUAL FLOW VIEW -->
+        <div id="view-visual" class="flex w-full h-full">
+
+            <!-- Sidebar Inspector -->
+            <div
+                class="w-[400px] bg-panelbg border-r border-bordercolor flex flex-col z-30 shadow-[4px_0_15px_rgba(0,0,0,0.5)] relative">
+
+                <div class="p-4 border-b border-bordercolor bg-darkbg/80">
+                    <h2 class="text-xs font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                        <i class="fa-solid fa-microchip"></i> Component Inspector
+                    </h2>
+                </div>
+
+                <div class="p-6 flex-1 overflow-y-auto markdown-body" id="info-panel">
+                    <div class="h-full flex flex-col items-center justify-center text-muted opacity-80">
+                        <i class="fa-solid fa-hand-pointer text-5xl mb-4 text-slate-600"></i>
+                        <p class="text-center px-4">Click on components to learn about fetch strategies, or run a
+                            simulation to see how data is loaded.</p>
+
+                        <div class="mt-12 border border-bordercolor rounded-lg p-4 bg-darkbg w-full">
+                            <p class="text-xs font-semibold mb-3 text-slate-300 border-b border-bordercolor pb-2">
+                                Simulation Legend</p>
+                            <div class="flex items-center gap-3 mb-2 text-xs">
+                                <div class="w-3 h-3 rounded bg-rose-500 shadow-[0_0_8px_#f43f5e]"></div> EAGER Fetch
+                                (Loads immediately)
+                            </div>
+                            <div class="flex items-center gap-3 mb-2 text-xs">
+                                <div class="w-3 h-3 rounded bg-violet-500 shadow-[0_0_8px_#8b5cf6]"></div> LAZY Fetch
+                                (Loads on demand)
+                            </div>
+                            <div class="flex items-center gap-3 text-xs">
+                                <div class="w-3 h-3 rounded border border-dashed border-violet-400"></div> Proxy Object
+                                (Placeholder)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Entity State View (Overlaid on sidebar bottom) -->
+                <div class="border-t border-bordercolor bg-darkbg p-4 flex flex-col h-1/3 min-h-[250px]">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Memory State (L1 Cache)
+                    </h3>
+                    <div id="memory-state" class="flex-1 overflow-y-auto">
+                        <div class="text-center text-slate-500 text-sm mt-8 italic">Memory is empty. Run a simulation.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Architecture Canvas -->
+            <div class="flex-1 overflow-auto p-8 relative bg-darkbg" id="diagram-scroll-container">
+                <div class="relative max-w-5xl mx-auto pb-20 mt-4" id="diagram-container">
+
+                    <svg class="connector-svg" id="svg-canvas"></svg>
+
+                    <!-- Travelling Packet -->
+                    <div id="request-packet" class="packet">Request</div>
+
+                    <!-- Application Layer -->
+                    <div class="zone-container border-slate-500/30 bg-slate-900/5 mb-16" id="zone-app">
+                        <div class="zone-title text-slate-400 border-slate-500/30"><i
+                                class="fa-solid fa-server mr-1"></i> Application Layer</div>
+
+                        <div class="flex justify-center gap-16 pt-4">
+                            <!-- Service Layer -->
+                            <div class="component-box w-64 border-slate-500/50 bg-slate-800/50" id="comp-service"
+                                data-info="service">
+                                <i class="fa-solid fa-code text-2xl text-slate-300 mb-2"></i>
+                                <div class="text-sm font-bold text-slate-100">UserService</div>
+                                <div
+                                    class="text-[10px] text-slate-400 mt-1 font-mono text-left bg-darkbg p-2 rounded border border-bordercolor mt-2">
+                                    User u = repo.findById(1);<br>
+                                    <span id="service-code-lazy"
+                                        class="opacity-30 transition-opacity duration-300">u.getProfile(); <span
+                                            class="text-violet-400">// Triggers load</span></span>
+                                </div>
+                            </div>
+
+                            <!-- Hibernate/JPA ORM -->
+                            <div class="component-box w-56 border-slate-500/50 bg-slate-800/50" id="comp-orm"
+                                data-info="orm">
+                                <i class="fa-solid fa-cubes text-3xl text-slate-300 mb-2"></i>
+                                <div class="text-sm font-bold text-slate-100">Hibernate ORM</div>
+                                <div class="text-[10px] text-slate-400 mt-1">Manages Entity State & Proxies</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Network Gap -->
+                    <div class="h-16 flex justify-center items-center w-full relative z-0 flex-col">
+                        <div class="text-xs text-muted/50 uppercase tracking-widest font-bold bg-darkbg px-4 z-10"><i
+                                class="fa-solid fa-wifi mr-2"></i>Network Boundary</div>
+                    </div>
+
+                    <!-- Database Layer -->
+                    <div class="flex justify-center relative z-10 mt-8">
+                        <div class="component-box w-80 border-db border-2 bg-slate-800 float-anim shadow-[0_10px_30px_rgba(14,165,233,0.15)]"
+                            id="comp-db" data-info="database">
+                            <i class="fa-solid fa-database text-5xl text-db mb-4 mt-2"></i>
+                            <div class="font-bold text-sky-100 text-lg">PostgreSQL</div>
+                            <div
+                                class="flex gap-4 justify-center mt-3 text-xs text-slate-400 border-t border-bordercolor pt-3">
+                                <div><i class="fa-solid fa-table"></i> Users</div>
+                                <div><i class="fa-solid fa-table"></i> Profiles</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- PRINCIPLES & CODE VIEW -->
+        <div id="view-principles" class="hidden w-full h-full overflow-y-auto bg-darkbg p-8">
+            <div class="max-w-4xl mx-auto text-slate-300 markdown-body pb-16">
+                <h1 class="text-3xl font-bold text-white mb-6 border-b border-bordercolor pb-4">JPA Fetch Types: Eager
+                    vs. Lazy Loading</h1>
+
+                <p class="text-lg leading-relaxed mb-8">When dealing with relational data in ORMs like Hibernate, you
+                    rarely load just one entity. Entities are connected (e.g., a `User` has a `Profile`, an `Order` has
+                    `Items`). <strong>Fetch Strategies</strong> dictate <em>when</em> these associated entities are
+                    loaded from the database into application memory.</p>
+
+                <h2 class="text-2xl font-bold text-white mt-10 mb-4 border-b border-bordercolor pb-2">FetchType.EAGER
+                </h2>
+                <div class="bg-rose-900/20 border border-rose-500/30 p-5 rounded-lg mb-6">
+                    <h3 class="text-rose-400 font-bold mb-2 flex items-center"><i
+                            class="fa-solid fa-truck-fast w-6"></i> "Give it to me NOW"</h3>
+                    <p class="text-sm">When you load the parent entity, Hibernate immediately issues SQL queries (often
+                        using a <code>JOIN</code>) to fetch all EAGERly mapped child associations. The parent and
+                        children arrive in memory together.</p>
+                </div>
+
+                <p class="mb-4"><strong>Default for:</strong> <code>@ManyToOne</code>, <code>@OneToOne</code></p>
+                <pre><code class="language-java">@Entity
+public class User {
+    @Id private Long id;
+    
+    // Loaded immediately when User is loaded
+    @OneToOne(fetch = FetchType.EAGER) 
+    private UserProfile profile; 
+}</code></pre>
+                <p class="text-sm mt-2 text-slate-400"><i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
+                    <strong>Danger:</strong> Overusing EAGER fetching leads to the "Cartesian Product" problem, loading
+                    massive amounts of unnecessary data and slowing down your application.
+                </p>
+
+                <h2 class="text-2xl font-bold text-white mt-12 mb-4 border-b border-bordercolor pb-2">FetchType.LAZY
+                </h2>
+                <div class="bg-violet-900/20 border border-violet-500/30 p-5 rounded-lg mb-6">
+                    <h3 class="text-violet-400 font-bold mb-2 flex items-center"><i class="fa-solid fa-couch w-6"></i>
+                        "I'll get it when I need it"</h3>
+                    <p class="text-sm">When you load the parent entity, Hibernate fetches <em>only</em> the parent data.
+                        For the child associations, it injects a <strong>Proxy Object</strong>. A proxy is an empty
+                        shell that looks like the real object but contains no data. The real data is only fetched via a
+                        new SQL query when you actually call a method on the proxy (like <code>profile.getBio()</code>).
+                    </p>
+                </div>
+
+                <p class="mb-4"><strong>Default for:</strong> <code>@OneToMany</code>, <code>@ManyToMany</code></p>
+                <pre><code class="language-java">@Entity
+public class User {
+    @Id private Long id;
+    
+    // A Proxy is injected. Data loaded only when accessed.
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
+    private List&lt;Order&gt; orders; 
+}</code></pre>
+                <p class="text-sm mt-2 text-slate-400"><i class="fa-solid fa-check-circle text-emerald-500"></i>
+                    <strong>Best Practice:</strong> Always prefer LAZY loading to conserve memory and network bandwidth.
+                    If you need eager behavior for a specific query, use a <code>JOIN FETCH</code> in JPQL.
+                </p>
+
+                <h3 class="text-xl text-amber-400 font-semibold mt-8 mb-2">The LazyInitializationException</h3>
+                <p class="mb-4">The most famous JPA error. If you attempt to access a LAZY loaded association
+                    (triggering the proxy to fetch data) <em>after</em> the database transaction has closed, Hibernate
+                    cannot execute the query, resulting in this exception.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Hidden Content Library -->
+    <div id="content-library" class="hidden">
+
+        <div id="info-service">
+            <h3 class="text-lg font-bold text-slate-300 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-code mr-2"></i>Service Layer</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>The code requests an entity by ID: <code>repo.findById(1)</code>.</p>
+                <p>Depending on the fetch type of its associations, the service either gets a fully populated object
+                    graph (EAGER) or an object containing proxies (LAZY).</p>
+                <p>If LAZY, calling a method on the association (e.g., <code>user.getProfile()</code>) within an active
+                    transaction will force Hibernate to go back to the database.</p>
+            </div>
+        </div>
+
+        <div id="info-orm">
+            <h3 class="text-lg font-bold text-slate-300 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-cubes mr-2"></i>Hibernate ORM</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>Hibernate intercepts the request and generates the appropriate SQL.</p>
+                <p><strong>For EAGER:</strong> It generates a <code>LEFT OUTER JOIN</code> or multiple immediate
+                    <code>SELECT</code> statements to grab all related data at once.
+                </p>
+                <p><strong>For LAZY:</strong> It uses CGLIB or ByteBuddy to generate a <strong>Proxy Object</strong>.
+                    This fake object is placed in the association field. It intercepts method calls and triggers
+                    database queries on-demand.</p>
+            </div>
+        </div>
+
+        <div id="info-database">
+            <h3 class="text-lg font-bold text-db mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-database mr-2"></i>Database</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>Executes the queries sent by Hibernate.</p>
+                <p>EAGER loading minimizes the <em>number</em> of queries but might increase the <em>volume</em> of data
+                    returned per query. LAZY loading executes more, smaller queries, but only for data that is strictly
+                    necessary.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            hljs.highlightAll();
+
+            // Tabs
+            const tabVisual = document.getElementById('tab-visual');
+            const tabPrinciples = document.getElementById('tab-principles');
+            const viewVisual = document.getElementById('view-visual');
+            const viewPrinciples = document.getElementById('view-principles');
+            const simControls = document.getElementById('sim-controls');
+
+            tabVisual.addEventListener('click', () => {
+                tabVisual.classList.add('active'); tabPrinciples.classList.remove('active');
+                viewVisual.classList.remove('hidden'); viewPrinciples.classList.add('hidden');
+                simControls.style.display = 'flex';
+                setTimeout(drawConnections, 50);
+            });
+
+            tabPrinciples.addEventListener('click', () => {
+                tabPrinciples.classList.add('active'); tabVisual.classList.remove('active');
+                viewPrinciples.classList.remove('hidden'); viewVisual.classList.add('hidden');
+                simControls.style.display = 'none';
+            });
+
+            // Architecture Logic
+            const infoPanel = document.getElementById('info-panel');
+            const components = document.querySelectorAll('.component-box');
+            const svgCanvas = document.getElementById('svg-canvas');
+            const packet = document.getElementById('request-packet');
+            const diagramContainer = document.getElementById('diagram-container');
+            const memoryState = document.getElementById('memory-state');
+            const serviceCodeLazy = document.getElementById('service-code-lazy');
+
+            let isSimulating = false;
+            let abortController = null;
+            let isPaused = false;
+            let pauseLock = null;
+            let pauseResolve = null;
+            let activeAnimations = [];
+            let activeSleepTimer = null;
+            let sleepResolveFn = null;
+            let sleepRemaining = 0;
+            let sleepStartTime = 0;
+
+            function getCenterCoords(elementId) {
+                const el = document.getElementById(elementId);
+                if (!el) return { x: 0, y: 0 };
+                const elRect = el.getBoundingClientRect();
+                const containerRect = diagramContainer.getBoundingClientRect();
+                return {
+                    x: (elRect.left - containerRect.left) + (elRect.width / 2),
+                    y: (elRect.top - containerRect.top) + (elRect.height / 2)
+                };
+            }
+
+            function drawConnection(id1, id2, pathId, style = 'normal') {
+                const p1 = getCenterCoords(id1);
+                const p2 = getCenterCoords(id2);
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("id", pathId);
+                path.classList.add("connector-path");
+                path.setAttribute("d", `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y}`);
+
+                if (style === 'normal') { path.setAttribute("marker-end", "url(#arrowhead)"); }
+                else if (style === 'eager') { path.classList.add('eager'); path.setAttribute("marker-end", "url(#arrowhead-eager)"); }
+                else if (style === 'lazy') { path.classList.add('lazy'); path.setAttribute("marker-end", "url(#arrowhead-lazy)"); }
+
+                svgCanvas.appendChild(path);
+                return path;
+            }
+
+            function drawConnections() {
+                svgCanvas.innerHTML = `
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#475569" /></marker>
+                        <marker id="arrowhead-eager" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#f43f5e" /></marker>
+                        <marker id="arrowhead-lazy" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#8b5cf6" /></marker>
+                    </defs>
+                `;
+                drawConnection('comp-service', 'comp-orm', 'line-1');
+                drawConnection('comp-orm', 'comp-db', 'line-2');
+            }
+
+            function updateInfoPanel(dataKey) {
+                const sourceContent = document.getElementById(`info-${dataKey}`);
+                if (sourceContent) {
+                    infoPanel.innerHTML = sourceContent.outerHTML;
+                    infoPanel.firstElementChild.removeAttribute('id');
+                    infoPanel.firstElementChild.style.animation = "fadeIn 0.2s ease-out";
+                }
+                components.forEach(c => c.classList.remove('active-eager', 'active-lazy'));
+                const activeComp = document.querySelector(`.component-box[data-info="${dataKey}"]`);
+                // Use a default color for manual clicks
+                if (activeComp) activeComp.classList.add('active-lazy');
+            }
+
+            components.forEach(comp => {
+                comp.addEventListener('click', () => { if (!isSimulating) updateInfoPanel(comp.getAttribute('data-info')); });
+            });
+
+            // Pause/Resume Logic
+            function togglePause() {
+                if (!isSimulating) return;
+                isPaused = !isPaused;
+                const btn = document.getElementById('btn-toggle-pause');
+
+                if (isPaused) {
+                    btn.innerHTML = '<i class="fa-solid fa-play text-green-400 mr-2"></i> Resume';
+                    activeAnimations.forEach(anim => anim.pause());
+                    document.querySelectorAll('.connector-path.eager, .connector-path.lazy').forEach(p => p.style.animationPlayState = 'paused');
+                    pauseLock = new Promise(r => pauseResolve = r);
+                    if (activeSleepTimer) { clearTimeout(activeSleepTimer); activeSleepTimer = null; sleepRemaining -= (Date.now() - sleepStartTime); }
+                } else {
+                    btn.innerHTML = '<i class="fa-solid fa-pause text-amber-400 mr-2"></i> Pause';
+                    activeAnimations.forEach(anim => anim.play());
+                    document.querySelectorAll('.connector-path.eager, .connector-path.lazy').forEach(p => p.style.animationPlayState = 'running');
+                    if (pauseResolve) { pauseResolve(); pauseResolve = null; pauseLock = null; }
+                    if (sleepRemaining > 0 && sleepResolveFn) {
+                        sleepStartTime = Date.now();
+                        activeSleepTimer = setTimeout(() => { let res = sleepResolveFn; sleepResolveFn = null; sleepRemaining = 0; if (res) res(); }, sleepRemaining);
+                    }
+                }
+            }
+
+            function waitIfPaused() { return pauseLock ? pauseLock : Promise.resolve(); }
+
+            function pausableSleep(ms) {
+                return new Promise((resolve, reject) => {
+                    if (abortController?.signal.aborted) return reject(new Error("Aborted"));
+                    sleepRemaining = ms; sleepResolveFn = resolve;
+                    if (!isPaused) {
+                        sleepStartTime = Date.now();
+                        activeSleepTimer = setTimeout(() => { sleepResolveFn = null; sleepRemaining = 0; resolve(); }, sleepRemaining);
+                    }
+                    abortController.signal.addEventListener('abort', () => { clearTimeout(activeSleepTimer); reject(new Error("Aborted")); }, { once: true });
+                });
+            }
+
+            function resetSimulation() {
+                if (abortController) abortController.abort();
+                isSimulating = false; isPaused = false; pauseLock = null; pauseResolve = null;
+                if (activeSleepTimer) clearTimeout(activeSleepTimer);
+                activeAnimations.forEach(anim => anim.cancel());
+                activeAnimations = [];
+
+                const btnPause = document.getElementById('btn-toggle-pause');
+                btnPause.innerHTML = '<i class="fa-solid fa-pause text-amber-400 mr-2"></i> Pause';
+                btnPause.classList.add('opacity-50', 'cursor-not-allowed');
+
+                packet.style.display = 'none'; packet.className = 'packet';
+                components.forEach(c => c.classList.remove('active-eager', 'active-lazy'));
+                serviceCodeLazy.classList.add('opacity-30');
+
+                memoryState.innerHTML = '<div class="text-center text-slate-500 text-sm mt-8 italic">Memory is empty. Run a simulation.</div>';
+
+                drawConnections();
+
+                infoPanel.innerHTML = `
+                    <div class="h-full flex flex-col items-center justify-center text-muted opacity-80" style="animation: fadeIn 0.3s ease;">
+                        <i class="fa-solid fa-rotate-right text-4xl mb-4 text-slate-600"></i>
+                        <p class="text-center font-medium text-slate-300">Simulation Ready</p>
+                    </div>
+                `;
+            }
+
+            async function moveTo(targetPacket, compId, duration = 600) {
+                await waitIfPaused();
+                if (abortController?.signal.aborted) throw new Error("Aborted");
+
+                const coords = getCenterCoords(compId);
+                const currentLeft = targetPacket.style.left || `${coords.x}px`;
+                const currentTop = targetPacket.style.top || `${coords.y}px`;
+
+                const animation = targetPacket.animate([
+                    { left: currentLeft, top: currentTop },
+                    { left: `${coords.x}px`, top: `${coords.y}px` }
+                ], { duration: duration, easing: 'ease-in-out', fill: 'forwards' });
+
+                activeAnimations.push(animation);
+                if (isPaused) animation.pause();
+
+                return new Promise((resolve, reject) => {
+                    animation.onfinish = () => {
+                        targetPacket.style.left = `${coords.x}px`; targetPacket.style.top = `${coords.y}px`;
+                        activeAnimations = activeAnimations.filter(a => a !== animation);
+                        resolve();
+                    };
+                    abortController.signal.addEventListener('abort', () => { animation.cancel(); reject(new Error("Aborted")); }, { once: true });
+                });
+            }
+
+            function addMemoryItem(id, title, isProxy) {
+                const el = document.createElement('div');
+                el.id = `mem-${id}`;
+                el.className = `entity-card ${isProxy ? 'proxy' : 'loaded'}`;
+                el.innerHTML = isProxy
+                    ? `<div><i class="fa-solid fa-ghost text-violet-400 mr-2"></i><strong>${title}</strong> (Proxy)</div><div class="text-[10px] text-slate-400 mt-1">Data not loaded yet.</div>`
+                    : `<div><i class="fa-solid fa-database text-emerald-400 mr-2"></i><strong>${title}</strong></div><div class="text-[10px] text-emerald-400 mt-1">Fully loaded in memory.</div>`;
+
+                // Remove empty state message if exists
+                if (memoryState.querySelector('.italic')) memoryState.innerHTML = '';
+                memoryState.appendChild(el);
+            }
+
+            function updateMemoryItem(id) {
+                const el = document.getElementById(`mem-${id}`);
+                if (el) {
+                    el.className = 'entity-card loaded';
+                    el.innerHTML = `<div><i class="fa-solid fa-database text-emerald-400 mr-2"></i><strong>Profile Entity</strong></div><div class="text-[10px] text-emerald-400 mt-1">Data fetched and populated!</div>`;
+                }
+            }
+
+            // SIMULATION: EAGER
+            async function runEagerSimulation() {
+                resetSimulation();
+                abortController = new AbortController();
+                isSimulating = true;
+                document.getElementById('btn-toggle-pause').classList.remove('opacity-50', 'cursor-not-allowed');
+
+                try {
+                    // Start at Service
+                    const startCoords = getCenterCoords('comp-service');
+                    packet.style.left = `${startCoords.x - 50}px`; packet.style.top = `${startCoords.y - 30}px`;
+                    packet.style.display = 'block';
+                    packet.className = 'packet eager';
+                    packet.textContent = "repo.findById(1)";
+
+                    await pausableSleep(500);
+
+                    document.getElementById('comp-service').classList.add('active-eager');
+                    drawConnection('comp-service', 'comp-orm', 'active-path-1', 'eager');
+                    await moveTo(packet, 'comp-orm', 500);
+
+                    document.getElementById('comp-service').classList.remove('active-eager');
+                    document.getElementById('comp-orm').classList.add('active-eager');
+                    packet.textContent = "Determine Fetch Strategy";
+                    await pausableSleep(600);
+
+                    // To DB
+                    packet.textContent = "SELECT u.*, p.* FROM User JOIN Profile";
+                    drawConnection('comp-orm', 'comp-db', 'active-path-2', 'eager');
+                    await moveTo(packet, 'comp-db', 800);
+
+                    document.getElementById('comp-orm').classList.remove('active-eager');
+                    document.getElementById('comp-db').classList.add('active-eager');
+                    await pausableSleep(800);
+
+                    // Return
+                    packet.textContent = "User + Profile Data";
+                    await moveTo(packet, 'comp-orm', 600);
+                    document.getElementById('comp-db').classList.remove('active-eager');
+                    document.getElementById('comp-orm').classList.add('active-eager');
+
+                    await pausableSleep(400);
+
+                    await moveTo(packet, 'comp-service', 500);
+                    document.getElementById('comp-orm').classList.remove('active-eager');
+                    document.getElementById('comp-service').classList.add('active-eager');
+
+                    // Update Memory State
+                    addMemoryItem('user', 'User Entity', false);
+                    await pausableSleep(300);
+                    addMemoryItem('profile', 'Profile Entity', false);
+
+                    packet.style.display = 'none';
+
+                    infoPanel.innerHTML = `
+                        <div class="h-full flex flex-col items-center justify-center animate-[fadeIn_0.5s_ease-out]">
+                            <i class="fa-solid fa-truck-fast text-6xl text-rose-500 mb-6"></i>
+                            <h3 class="text-2xl font-bold text-white mb-2">EAGER Fetch Complete</h3>
+                            <div class="text-sm text-slate-300 text-center px-4 mt-4 bg-darkbg p-4 rounded border border-rose-500/30">
+                                <p>Hibernate used a JOIN query to fetch both the User and their Profile simultaneously. Both entities are now fully loaded in memory.</p>
+                            </div>
+                        </div>
+                    `;
+
+                } catch (e) { if (e.message !== "Aborted") console.error(e); }
+                finally { if (!abortController?.signal.aborted) { isSimulating = false; document.getElementById('btn-toggle-pause').classList.add('opacity-50', 'cursor-not-allowed'); } }
+            }
+
+            // SIMULATION: LAZY
+            async function runLazySimulation() {
+                resetSimulation();
+                abortController = new AbortController();
+                isSimulating = true;
+                document.getElementById('btn-toggle-pause').classList.remove('opacity-50', 'cursor-not-allowed');
+
+                try {
+                    // Start at Service
+                    const startCoords = getCenterCoords('comp-service');
+                    packet.style.left = `${startCoords.x - 50}px`; packet.style.top = `${startCoords.y - 30}px`;
+                    packet.style.display = 'block';
+                    packet.className = 'packet lazy';
+                    packet.textContent = "repo.findById(1)";
+
+                    await pausableSleep(500);
+
+                    document.getElementById('comp-service').classList.add('active-lazy');
+                    drawConnection('comp-service', 'comp-orm', 'active-path-1', 'lazy');
+                    await moveTo(packet, 'comp-orm', 500);
+
+                    document.getElementById('comp-service').classList.remove('active-lazy');
+                    document.getElementById('comp-orm').classList.add('active-lazy');
+                    packet.textContent = "Determine Fetch Strategy";
+                    await pausableSleep(600);
+
+                    // To DB (Only parent)
+                    packet.textContent = "SELECT * FROM User";
+                    drawConnection('comp-orm', 'comp-db', 'active-path-2', 'lazy');
+                    await moveTo(packet, 'comp-db', 600);
+
+                    document.getElementById('comp-orm').classList.remove('active-lazy');
+                    document.getElementById('comp-db').classList.add('active-lazy');
+                    await pausableSleep(600);
+
+                    // Return parent data
+                    packet.textContent = "User Data Only";
+                    await moveTo(packet, 'comp-orm', 500);
+                    document.getElementById('comp-db').classList.remove('active-lazy');
+                    document.getElementById('comp-orm').classList.add('active-lazy');
+
+                    packet.textContent = "Inject Profile Proxy";
+                    packet.classList.add('proxy');
+                    await pausableSleep(600);
+
+                    await moveTo(packet, 'comp-service', 500);
+                    document.getElementById('comp-orm').classList.remove('active-lazy');
+                    document.getElementById('comp-service').classList.add('active-lazy');
+
+                    // Update Memory State
+                    addMemoryItem('user', 'User Entity', false);
+                    await pausableSleep(300);
+                    addMemoryItem('profile', 'Profile Entity', true); // Proxy
+
+                    packet.style.display = 'none';
+
+                    // PART 2: Triggering the Lazy Load
+                    await pausableSleep(1000);
+                    if (abortController?.signal.aborted) return;
+
+                    serviceCodeLazy.classList.remove('opacity-30');
+                    document.getElementById('comp-service').classList.add('active-lazy');
+
+                    packet.style.display = 'block';
+                    packet.className = 'packet lazy';
+                    packet.textContent = "u.getProfile().getBio()";
+                    await pausableSleep(600);
+
+                    // Service -> ORM
+                    await moveTo(packet, 'comp-orm', 500);
+                    document.getElementById('comp-service').classList.remove('active-lazy');
+                    document.getElementById('comp-orm').classList.add('active-lazy');
+
+                    packet.textContent = "Proxy intercepts call";
+                    await pausableSleep(600);
+
+                    // ORM -> DB (Fetch lazy data)
+                    packet.textContent = "SELECT * FROM Profile WHERE user_id = 1";
+                    await moveTo(packet, 'comp-db', 600);
+                    document.getElementById('comp-orm').classList.remove('active-lazy');
+                    document.getElementById('comp-db').classList.add('active-lazy');
+
+                    await pausableSleep(600);
+
+                    // DB -> ORM
+                    packet.textContent = "Profile Data";
+                    await moveTo(packet, 'comp-orm', 500);
+                    document.getElementById('comp-db').classList.remove('active-lazy');
+                    document.getElementById('comp-orm').classList.add('active-lazy');
+
+                    // ORM -> Service
+                    await moveTo(packet, 'comp-service', 500);
+                    document.getElementById('comp-orm').classList.remove('active-lazy');
+                    document.getElementById('comp-service').classList.add('active-lazy');
+
+                    // Update Memory
+                    updateMemoryItem('profile');
+                    packet.style.display = 'none';
+
+                    infoPanel.innerHTML = `
+                        <div class="h-full flex flex-col items-center justify-center animate-[fadeIn_0.5s_ease-out]">
+                            <i class="fa-solid fa-couch text-6xl text-violet-500 mb-6"></i>
+                            <h3 class="text-2xl font-bold text-white mb-2">LAZY Fetch Complete</h3>
+                            <div class="text-sm text-slate-300 text-center px-4 mt-4 bg-darkbg p-4 rounded border border-violet-500/30">
+                                <p>Hibernate initially fetched only the User and created a Proxy for the Profile. When code accessed the profile, the Proxy intercepted the call and executed a second query to fetch the missing data.</p>
+                            </div>
+                        </div>
+                    `;
+
+                } catch (e) { if (e.message !== "Aborted") console.error(e); }
+                finally { if (!abortController?.signal.aborted) { isSimulating = false; document.getElementById('btn-toggle-pause').classList.add('opacity-50', 'cursor-not-allowed'); } }
+            }
+
+            // Bind buttons
+            document.getElementById('btn-sim-eager').addEventListener('click', runEagerSimulation);
+            document.getElementById('btn-sim-lazy').addEventListener('click', runLazySimulation);
+            document.getElementById('btn-toggle-pause').addEventListener('click', togglePause);
+            document.getElementById('btn-reset').addEventListener('click', resetSimulation);
+
+            window.addEventListener('resize', () => { if (!isSimulating && viewVisual.classList.contains('hidden') === false) drawConnections(); });
+            setTimeout(drawConnections, 100);
+        });
+
+        const style = document.createElement('style');
+        style.innerHTML = `@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }`;
+        document.head.appendChild(style);
+    </script>
+</body>
+
+</html>

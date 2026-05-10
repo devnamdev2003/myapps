@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring Bean Lifecycle Flow</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/java.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        spring: {
+                            light: '#a3e635',
+                            DEFAULT: '#6db33f',
+                            dark: '#4d7c2a'
+                        },
+                        darkbg: '#0f172a',
+                        panelbg: '#1e293b',
+                        compbg: '#334155',
+                        bordercolor: '#475569',
+                        textcolor: '#f8fafc',
+                        muted: '#94a3b8',
+                        accent: '#f59e0b', // Amber/Yellow for IoC/Beans theme
+                        accent_light: '#fbbf24',
+                        proxy: '#c084fc', // Purple for AOP/Proxies
+                        error: '#ef4444'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        .component-box {
+            background-color: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .component-box:hover {
+            border-color: #f59e0b;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px -2px rgba(245, 158, 11, 0.15);
+        }
+
+        .component-box.active {
+            border-color: #fbbf24;
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
+            transform: scale(1.05);
+            z-index: 30;
+            background-color: #45291a;
+        }
+
+        .component-box.proxy-active {
+            border-color: #c084fc;
+            box-shadow: 0 0 20px rgba(192, 132, 252, 0.3);
+            background-color: #3b1a45;
+        }
+
+        .zone-container {
+            position: relative;
+            background-color: rgba(30, 41, 59, 0.3);
+            border: 1px dashed #475569;
+            border-radius: 0.75rem;
+            padding: 2.5rem 1.5rem 1.5rem 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .zone-title {
+            position: absolute;
+            top: -0.75rem;
+            left: 1rem;
+            background-color: #0f172a;
+            padding: 0 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #f59e0b;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border: 1px solid #475569;
+            border-radius: 0.25rem;
+        }
+
+        svg.connector-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .connector-path {
+            fill: none;
+            stroke: #475569;
+            stroke-width: 2;
+            stroke-dasharray: 4, 4;
+            transition: stroke 0.3s ease, stroke-width 0.3s ease;
+        }
+
+        .connector-path.active {
+            stroke: #f59e0b;
+            stroke-dasharray: none;
+            stroke-width: 3;
+            animation: flowDash 1s linear infinite;
+        }
+
+        .connector-path.proxy {
+            stroke: #c084fc;
+            stroke-dasharray: none;
+            stroke-width: 3;
+            animation: flowDash 1s linear infinite;
+        }
+
+        @keyframes flowDash {
+            from {
+                stroke-dashoffset: 20;
+            }
+
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        .packet {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background-color: #fcd34d;
+            border-radius: 4px;
+            /* Square for a 'box/bean' */
+            z-index: 50;
+            transform: translate(-50%, -50%);
+            display: none;
+            box-shadow: 0 0 15px #f59e0b, inset 0 0 5px rgba(255, 255, 255, 0.8);
+            border: 2px solid #0f172a;
+            transition: all 0.3s ease;
+        }
+
+        .packet.proxied {
+            background-color: #c084fc;
+            border-radius: 50%;
+            /* Circle for proxy wrapper */
+            box-shadow: 0 0 15px #c084fc, inset 0 0 8px rgba(255, 255, 255, 0.9);
+            border: 3px dashed #e879f9;
+        }
+
+        .packet-label-container {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(15, 23, 42, 0.95);
+            border: 1px solid #475569;
+            padding: 2px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .markdown-body pre {
+            background-color: #0d1117;
+            border-radius: 6px;
+            padding: 16px;
+            overflow: auto;
+            border: 1px solid #30363d;
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .markdown-body code {
+            font-family: ui-monospace, SFMono-Regular, monospace;
+            font-size: 85%;
+        }
+
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            border-bottom: 2px solid transparent;
+            color: #94a3b8;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            border-bottom-color: #f59e0b;
+            color: #f8fafc;
+        }
+    </style>
+</head>
+
+<body class="antialiased h-screen flex flex-col overflow-hidden text-textcolor bg-darkbg">
+
+    <header class="bg-panelbg border-b border-bordercolor z-40 shadow-lg">
+        <div class="max-w-screen-2xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i
+                    class="fa-brands fa-envira text-accent_light text-2xl drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]"></i>
+                <h1 class="text-xl font-bold tracking-wide">Spring Bean Lifecycle</h1>
+            </div>
+            <div class="flex gap-4">
+                <div class="flex bg-darkbg rounded-lg p-1 border border-bordercolor">
+                    <button id="tab-visual" class="tab-btn active text-sm">Visual Flow</button>
+                    <button id="tab-principles" class="tab-btn text-sm">Principles & Code</button>
+                </div>
+            </div>
+            <div class="flex gap-2" id="sim-controls">
+                <button id="btn-sim-standard"
+                    class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded font-medium transition shadow-sm text-sm flex items-center border border-amber-400">
+                    <i class="fa-solid fa-box-open mr-2"></i> Standard Bean
+                </button>
+                <button id="btn-sim-proxy"
+                    class="px-3 py-1.5 bg-purple-700 hover:bg-purple-600 text-white border border-purple-400 rounded font-medium transition shadow-sm text-sm flex items-center">
+                    <i class="fa-solid fa-masks-theater mr-2"></i> Proxied Bean (AOP)
+                </button>
+                <button id="btn-toggle-pause"
+                    class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-bordercolor rounded font-medium transition shadow-sm text-sm flex items-center opacity-50 cursor-not-allowed">
+                    <i class="fa-solid fa-pause text-amber-400 mr-2"></i> Pause
+                </button>
+                <button id="btn-reset"
+                    class="px-3 py-1.5 bg-compbg hover:bg-slate-600 text-slate-200 border border-bordercolor rounded font-medium transition shadow-sm text-sm flex items-center">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 flex overflow-hidden relative w-full h-full">
+        <div id="view-visual" class="flex w-full h-full">
+
+            <!-- Sidebar Inspector -->
+            <div
+                class="w-[400px] bg-panelbg border-r border-bordercolor flex flex-col z-30 shadow-[4px_0_15px_rgba(0,0,0,0.5)]">
+                <div class="p-4 border-b border-bordercolor bg-darkbg/80">
+                    <h2 class="text-xs font-bold text-accent uppercase tracking-widest flex items-center gap-2">
+                        <i class="fa-solid fa-microchip"></i> Component Inspector
+                    </h2>
+                </div>
+                <div class="p-6 flex-1 overflow-y-auto markdown-body" id="info-panel">
+                    <div class="h-full flex flex-col items-center justify-center text-muted opacity-80">
+                        <i class="fa-solid fa-hand-pointer text-5xl mb-4 text-slate-600"></i>
+                        <p class="text-center px-4">Click on any phase of the lifecycle diagram to understand how Spring
+                            manages your objects.</p>
+
+                        <div class="mt-12 border border-bordercolor rounded-lg p-4 bg-darkbg w-full">
+                            <p class="text-xs font-semibold mb-3 text-slate-300 border-b border-bordercolor pb-2">
+                                Simulation Legend</p>
+                            <div class="flex items-center gap-3 mb-2 text-xs">
+                                <div class="w-3 h-3 rounded bg-accent shadow-[0_0_8px_#f59e0b]"></div> Standard Bean
+                                Object
+                            </div>
+                            <div class="flex items-center gap-3 mb-2 text-xs">
+                                <div
+                                    class="w-3 h-3 rounded-full bg-proxy shadow-[0_0_8px_#c084fc] border border-fuchsia-400 border-dashed">
+                                </div> AOP Proxy Wrapper
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Architecture Diagram / Canvas -->
+            <div class="flex-1 overflow-auto p-8 relative bg-darkbg" id="diagram-scroll-container">
+                <div class="relative max-w-5xl mx-auto pb-20 mt-4" id="diagram-container">
+
+                    <svg class="connector-svg" id="svg-canvas"></svg>
+
+                    <!-- The travelling Bean -->
+                    <div id="request-packet" class="packet">
+                        <div class="packet-label-container" id="packet-label-container">
+                            <span class="text-[10px] font-bold text-white tracking-wide"
+                                id="packet-label">BeanDef</span>
+                        </div>
+                    </div>
+
+                    <!-- ApplicationContext Boundary -->
+                    <div class="zone-container border-accent/40 bg-amber-900/5" id="zone-ioc">
+                        <div class="zone-title text-accent border-accent/40"><i
+                                class="fa-solid fa-box-archive mr-1"></i> IoC Container (ApplicationContext)</div>
+
+                        <!-- Row 1: Creation & Injection -->
+                        <div class="flex justify-between items-center gap-6 relative z-10 pt-6">
+                            <div class="component-box flex-1 border-sky-500/30 bg-sky-900/10" id="comp-metadata"
+                                data-info="metadata">
+                                <i class="fa-solid fa-file-code text-2xl text-sky-400 mb-2"></i>
+                                <div class="text-sm font-bold text-sky-100">Configuration</div>
+                                <div class="text-[10px] text-sky-300/60 mt-1">@Component / XML</div>
+                            </div>
+
+                            <div class="component-box flex-1 border-emerald-500/30 bg-emerald-900/10"
+                                id="comp-instantiate" data-info="instantiate">
+                                <i class="fa-solid fa-hammer text-2xl text-emerald-400 mb-2"></i>
+                                <div class="text-sm font-bold text-emerald-100">Instantiation</div>
+                                <div class="text-[10px] text-emerald-300/60 mt-1">Constructor Call</div>
+                            </div>
+
+                            <div class="component-box flex-1 border-indigo-500/30 bg-indigo-900/10" id="comp-di"
+                                data-info="di">
+                                <i class="fa-solid fa-syringe text-2xl text-indigo-400 mb-2"></i>
+                                <div class="text-sm font-bold text-indigo-100">Dependency Injection</div>
+                                <div class="text-[10px] text-indigo-300/60 mt-1">Populate Properties</div>
+                            </div>
+                        </div>
+
+                        <!-- Row 2: Post Processors & Init (S-Curve path) -->
+                        <div class="flex justify-end items-center gap-6 relative z-10 mt-16 pr-8">
+                            <div class="component-box w-48 border-pink-500/30 bg-pink-900/10" id="comp-init"
+                                data-info="init">
+                                <i class="fa-solid fa-gears text-2xl text-pink-400 mb-2"></i>
+                                <div class="text-sm font-bold text-pink-100">Initialization</div>
+                                <div class="text-[10px] text-pink-300/60 mt-1">@PostConstruct / afterPropertiesSet</div>
+                            </div>
+
+                            <div class="component-box w-48 border-amber-500/30 bg-amber-900/20" id="comp-bpp-before"
+                                data-info="bpp-before">
+                                <i class="fa-solid fa-filter text-2xl text-amber-400 mb-2"></i>
+                                <div class="text-sm font-bold text-amber-100">BeanPostProcessor</div>
+                                <div class="text-[10px] text-amber-300/60 mt-1">postProcessBeforeInitialization</div>
+                            </div>
+                        </div>
+
+                        <!-- Row 3: Proxies & Ready State -->
+                        <div class="flex justify-between items-center gap-6 relative z-10 mt-16">
+                            <div class="component-box flex-1 border-purple-500/40 bg-purple-900/20" id="comp-bpp-after"
+                                data-info="bpp-after">
+                                <i class="fa-solid fa-wand-magic-sparkles text-2xl text-purple-400 mb-2"></i>
+                                <div class="text-sm font-bold text-purple-100">BeanPostProcessor</div>
+                                <div class="text-[10px] text-purple-300/60 mt-1">postProcessAfterInitialization (AOP)
+                                </div>
+                            </div>
+
+                            <div class="component-box flex-1 border-spring border bg-spring-dark/20 h-32 flex flex-col justify-center items-center shadow-[0_0_15px_rgba(109,179,63,0.1)]"
+                                id="comp-ready" data-info="ready">
+                                <i class="fa-solid fa-cubes text-3xl text-spring-light mb-2"></i>
+                                <div class="text-sm font-bold text-spring-light">Ready for Use</div>
+                                <div class="text-[10px] text-spring-light/70 mt-1">Cached in Context</div>
+                            </div>
+
+                            <div class="component-box flex-1 border-red-500/30 bg-red-900/10" id="comp-destroy"
+                                data-info="destroy">
+                                <i class="fa-solid fa-trash-can text-2xl text-red-400 mb-2"></i>
+                                <div class="text-sm font-bold text-red-100">Destruction</div>
+                                <div class="text-[10px] text-red-300/60 mt-1">@PreDestroy / Context Close</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PRINCIPLES & CODE VIEW -->
+        <div id="view-principles" class="hidden w-full h-full overflow-y-auto bg-darkbg p-8">
+            <div class="max-w-4xl mx-auto text-slate-300 markdown-body pb-16">
+                <h1 class="text-3xl font-bold text-white mb-6 border-b border-bordercolor pb-4">The Spring Bean
+                    Lifecycle</h1>
+
+                <p class="text-lg leading-relaxed mb-8">At the heart of the Spring Framework is the **IoC (Inversion of
+                    Control) Container**, represented by the `ApplicationContext`. Instead of your code constructing
+                    objects using the `new` keyword, Spring acts as a factory. It instantiates, configures, and manages
+                    the entire lifespan of these objects, which are called **Beans**.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+                    <div class="bg-panelbg border border-bordercolor p-5 rounded-lg border-l-4 border-l-emerald-500">
+                        <h3 class="text-emerald-400 font-bold mb-2 flex items-center"><i
+                                class="fa-solid fa-recycle w-6"></i> Inversion of Control</h3>
+                        <p class="text-sm">You surrender control of object creation to the framework. You simply declare
+                            *what* you need (via interfaces/annotations), and Spring provides the fully configured
+                            implementation at runtime.</p>
+                    </div>
+                    <div class="bg-panelbg border border-bordercolor p-5 rounded-lg border-l-4 border-l-indigo-500">
+                        <h3 class="text-indigo-400 font-bold mb-2 flex items-center"><i
+                                class="fa-solid fa-syringe w-6"></i> Dependency Injection</h3>
+                        <p class="text-sm">A specific form of IoC. When Spring creates Bean A, and Bean A needs Bean B
+                            to function, Spring automatically "injects" Bean B into Bean A (via constructors or setters)
+                            before Bean A is ready.</p>
+                    </div>
+                </div>
+
+                <h2 class="text-2xl font-bold text-white mt-10 mb-4 border-b border-bordercolor pb-2">Lifecycle Phases
+                    in Detail</h2>
+
+                <h3 class="text-xl text-sky-400 font-semibold mt-6 mb-2">1. Instantiation & Dependency Injection</h3>
+                <p class="mb-4">Spring reads your `@Component` classes or `@Bean` methods, uses reflection to call the
+                    constructor, and immediately injects required dependencies.</p>
+                <pre><code class="language-java">@Service
+public class OrderService {
+    private final PaymentProcessor processor;
+
+    // Constructor Injection (Recommended)
+    @Autowired 
+    public OrderService(PaymentProcessor processor) {
+        this.processor = processor; // Injected by Spring
+    }
+}</code></pre>
+
+                <h3 class="text-xl text-pink-400 font-semibold mt-8 mb-2">2. Initialization Callbacks (@PostConstruct)
+                </h3>
+                <p class="mb-4">Once dependencies are injected, the bean isn't fully ready yet. You might need to open a
+                    file, validate properties, or warm up a cache. Spring calls initialization methods you define.</p>
+                <pre><code class="language-java">@Component
+public class CacheManager {
+    
+    @PostConstruct
+    public void initCache() {
+        // Runs AFTER dependencies are injected
+        System.out.println("Loading initial data into cache...");
+    }
+}</code></pre>
+
+                <h3 class="text-xl text-purple-400 font-semibold mt-8 mb-2">3. BeanPostProcessors & AOP Proxies</h3>
+                <p class="mb-4">This is where Spring's magic happens. `BeanPostProcessor`s are special hooks that can
+                    modify your bean *before* or *after* the initialization callbacks.</p>
+                <p class="mb-4">Crucially, if a bean requires AOP (Aspect-Oriented Programming) like `@Transactional`,
+                    `@Async`, or Method Security, Spring's `postProcessAfterInitialization` doesn't return your original
+                    object. It returns a dynamically generated **Proxy** object that wraps yours.</p>
+                <pre><code class="language-java">@Service
+public class UserService {
+    
+    @Transactional // Triggers proxy creation during lifecycle
+    public void createUser() {
+        // DB logic...
+    }
+}</code></pre>
+
+                <h3 class="text-xl text-red-400 font-semibold mt-8 mb-2">4. Destruction Callbacks (@PreDestroy)</h3>
+                <p class="mb-4">When the application shuts down, singleton beans are given a chance to gracefully
+                    release resources, close connections, or save state.</p>
+                <pre><code class="language-java">@Component
+public class DatabaseConnectionPool {
+    
+    @PreDestroy
+    public void cleanup() {
+        // Runs before the bean is garbage collected by Spring
+        System.out.println("Closing all database connections...");
+    }
+}</code></pre>
+            </div>
+        </div>
+    </main>
+
+    <!-- Hidden Content Library for Info Panel -->
+    <div id="content-library" class="hidden">
+
+        <div id="info-metadata">
+            <h3 class="text-lg font-bold text-sky-400 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-file-code mr-2"></i>Configuration</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>Before any object is created, Spring reads configuration metadata to understand what to build. This
+                    comes from <code>@Component</code>, <code>@Service</code>, <code>@Configuration</code> classes, or
+                    older XML files.</p>
+                <p>Spring converts this metadata into an internal <code>BeanDefinition</code> recipe, describing the
+                    class name, scope, and dependencies.</p>
+            </div>
+        </div>
+
+        <div id="info-instantiate">
+            <h3 class="text-lg font-bold text-emerald-400 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-hammer mr-2"></i>Instantiation</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>Spring uses reflection to instantiate the object, typically by calling its default constructor or a
+                    constructor annotated with <code>@Autowired</code>.</p>
+                <p>At this exact moment, the object exists in memory, but it is "raw". Its properties are null, and its
+                    dependencies are not yet wired.</p>
+            </div>
+        </div>
+
+        <div id="info-di">
+            <h3 class="text-lg font-bold text-indigo-400 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-syringe mr-2"></i>Dependency Injection</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>Also known as "Populate Properties". Spring looks at the <code>BeanDefinition</code> and finds all
+                    other beans required by this object.</p>
+                <p>It injects them via Setter methods, fields (not recommended), or Constructor arguments. If a
+                    dependency doesn't exist yet, Spring pauses this bean's creation and goes to create the dependency
+                    first.</p>
+            </div>
+        </div>
+
+        <div id="info-bpp-before">
+            <h3 class="text-lg font-bold text-amber-400 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-filter mr-2"></i>BeanPostProcessor (Before)</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p><code>BeanPostProcessor</code> is an extension point. Spring calls the
+                    <code>postProcessBeforeInitialization</code> method of all registered processors.
+                </p>
+                <p>Framework internals use this to process annotations like <code>@Value</code> or custom setup logic
+                    before the bean's own init method is called.</p>
+            </div>
+        </div>
+
+        <div id="info-init">
+            <h3 class="text-lg font-bold text-pink-400 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-gears mr-2"></i>Initialization</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>The bean executes custom initialization logic. It can now safely use its injected dependencies to
+                    fetch data, open sockets, or validate state.</p>
+                <p>Invoked methods include:
+                <ul class="list-disc pl-5 mt-1 space-y-1 text-xs">
+                    <li>Methods annotated with <code>@PostConstruct</code></li>
+                    <li><code>afterPropertiesSet()</code> if implementing <code>InitializingBean</code></li>
+                    <li>Custom <code>init-method</code> declared in config.</li>
+                </ul>
+                </p>
+            </div>
+        </div>
+
+        <div id="info-bpp-after">
+            <h3 class="text-lg font-bold text-purple-400 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-wand-magic-sparkles mr-2"></i>BeanPostProcessor (After)</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>The most crucial step for Spring's advanced features. <code>postProcessAfterInitialization</code> is
+                    called.</p>
+                <p>If your bean uses AOP (e.g., <code>@Transactional</code>, <code>@Async</code>,
+                    <code>@PreAuthorize</code>), Spring detects it here. Instead of returning your raw object, it
+                    generates a dynamic **Proxy Object** that wraps yours, adding the transaction/security logic around
+                    your methods.
+                </p>
+            </div>
+        </div>
+
+        <div id="info-ready">
+            <h3 class="text-lg font-bold text-spring-light mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-cubes mr-2"></i>Ready for Use</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>The bean (or its proxy wrapper) is fully configured and operational.</p>
+                <p>If it is a Singleton (the default scope), Spring caches it in the <code>ApplicationContext</code>.
+                    Subsequent requests for this bean type will return this exact, cached instance.</p>
+            </div>
+        </div>
+
+        <div id="info-destroy">
+            <h3 class="text-lg font-bold text-red-400 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-trash-can mr-2"></i>Destruction</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>When the <code>ApplicationContext</code> is closed (e.g., app shutdown), Spring destroys all cached
+                    Singleton beans.</p>
+                <p>It calls methods annotated with <code>@PreDestroy</code> or <code>destroy()</code> from
+                    <code>DisposableBean</code>, allowing you to gracefully release resources.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            hljs.highlightAll();
+
+            // Tabs Logic
+            const tabVisual = document.getElementById('tab-visual');
+            const tabPrinciples = document.getElementById('tab-principles');
+            const viewVisual = document.getElementById('view-visual');
+            const viewPrinciples = document.getElementById('view-principles');
+            const simControls = document.getElementById('sim-controls');
+
+            tabVisual.addEventListener('click', () => {
+                tabVisual.classList.add('active'); tabPrinciples.classList.remove('active');
+                viewVisual.classList.remove('hidden'); viewPrinciples.classList.add('hidden');
+                simControls.style.display = 'flex';
+                setTimeout(drawConnections, 50);
+            });
+
+            tabPrinciples.addEventListener('click', () => {
+                tabPrinciples.classList.add('active'); tabVisual.classList.remove('active');
+                viewPrinciples.classList.remove('hidden'); viewVisual.classList.add('hidden');
+                simControls.style.display = 'none';
+            });
+
+            // Architecture Logic
+            const infoPanel = document.getElementById('info-panel');
+            const components = document.querySelectorAll('.component-box');
+            const svgCanvas = document.getElementById('svg-canvas');
+            const packet = document.getElementById('request-packet');
+            const packetLabel = document.getElementById('packet-label');
+            const diagramContainer = document.getElementById('diagram-container');
+
+            let isSimulating = false;
+            let abortController = null;
+            let isPaused = false;
+            let pauseLock = null;
+            let pauseResolve = null;
+            let currentPacketAnimation = null;
+            let activeSleepTimer = null;
+            let sleepResolveFn = null;
+            let sleepRemaining = 0;
+            let sleepStartTime = 0;
+
+            function getCenterCoords(elementId) {
+                const el = document.getElementById(elementId);
+                if (!el) return { x: 0, y: 0 };
+                const elRect = el.getBoundingClientRect();
+                const containerRect = diagramContainer.getBoundingClientRect();
+                return {
+                    x: (elRect.left - containerRect.left) + (elRect.width / 2),
+                    y: (elRect.top - containerRect.top) + (elRect.height / 2)
+                };
+            }
+
+            function drawConnection(id1, id2, pathId, style = 'normal', lineType = 'straight') {
+                const p1 = getCenterCoords(id1);
+                const p2 = getCenterCoords(id2);
+
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("id", pathId);
+                path.classList.add("connector-path");
+
+                let d = '';
+                if (lineType === 'curve-down-left') {
+                    // Custom curve for row 1 right end to row 2 right end
+                    d = `M ${p1.x} ${p1.y} C ${p1.x + 50} ${p1.y}, ${p2.x + 50} ${p2.y}, ${p2.x} ${p2.y}`;
+                } else if (lineType === 'curve-down-right') {
+                    // Custom curve for row 2 left end to row 3 left end
+                    d = `M ${p1.x} ${p1.y} C ${p1.x - 50} ${p1.y}, ${p2.x - 50} ${p2.y}, ${p2.x} ${p2.y}`;
+                } else if (lineType === 'curve-up') {
+                    d = `M ${p1.x} ${p1.y} C ${p1.x} ${p1.y - 40}, ${p2.x} ${p2.y + 40}, ${p2.x} ${p2.y}`;
+                } else {
+                    d = `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y}`;
+                }
+
+                path.setAttribute("d", d);
+
+                if (style === 'normal') { path.setAttribute("marker-end", "url(#arrowhead)"); }
+                else if (style === 'active') { path.classList.add('active'); path.setAttribute("marker-end", "url(#arrowhead-active)"); }
+                else if (style === 'proxy') { path.classList.add('proxy'); path.setAttribute("marker-end", "url(#arrowhead-proxy)"); }
+
+                svgCanvas.appendChild(path);
+                return path;
+            }
+
+            function drawConnections() {
+                svgCanvas.innerHTML = `
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#475569" /></marker>
+                        <marker id="arrowhead-active" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#f59e0b" /></marker>
+                        <marker id="arrowhead-proxy" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#c084fc" /></marker>
+                    </defs>
+                `;
+
+                // Row 1
+                drawConnection('comp-metadata', 'comp-instantiate', 'line-1');
+                drawConnection('comp-instantiate', 'comp-di', 'line-2');
+
+                // Jump R1 to R2
+                drawConnection('comp-di', 'comp-bpp-before', 'line-3', 'normal', 'curve-down-left');
+
+                // Row 2 (Right to Left)
+                drawConnection('comp-bpp-before', 'comp-init', 'line-4');
+
+                // Jump R2 to R3
+                drawConnection('comp-init', 'comp-bpp-after', 'line-5', 'normal', 'curve-down-right');
+
+                // Row 3
+                drawConnection('comp-bpp-after', 'comp-ready', 'line-6');
+                drawConnection('comp-ready', 'comp-destroy', 'line-7');
+            }
+
+            function updateInfoPanel(dataKey) {
+                const sourceContent = document.getElementById(`info-${dataKey}`);
+                if (sourceContent) {
+                    infoPanel.innerHTML = sourceContent.outerHTML;
+                    infoPanel.firstElementChild.removeAttribute('id');
+                    infoPanel.firstElementChild.style.animation = "fadeIn 0.2s ease-out";
+                }
+                components.forEach(c => c.classList.remove('active', 'proxy-active'));
+                const activeComp = document.querySelector(`.component-box[data-info="${dataKey}"]`);
+                if (activeComp) activeComp.classList.add('active');
+            }
+
+            components.forEach(comp => {
+                comp.addEventListener('click', () => { if (!isSimulating) updateInfoPanel(comp.getAttribute('data-info')); });
+            });
+
+            // Pause/Resume Logic
+            function togglePause() {
+                if (!isSimulating) return;
+                isPaused = !isPaused;
+                const btn = document.getElementById('btn-toggle-pause');
+
+                if (isPaused) {
+                    btn.innerHTML = '<i class="fa-solid fa-play text-green-400 mr-2"></i> Resume';
+                    if (!packetLabel.textContent.includes("(Paused)")) packetLabel.textContent += " (Paused)";
+                    if (currentPacketAnimation) currentPacketAnimation.pause();
+                    document.querySelectorAll('.connector-path.active, .connector-path.proxy').forEach(p => p.style.animationPlayState = 'paused');
+                    pauseLock = new Promise(r => pauseResolve = r);
+                    if (activeSleepTimer) {
+                        clearTimeout(activeSleepTimer);
+                        activeSleepTimer = null;
+                        sleepRemaining -= (Date.now() - sleepStartTime);
+                    }
+                } else {
+                    btn.innerHTML = '<i class="fa-solid fa-pause text-amber-400 mr-2"></i> Pause';
+                    packetLabel.textContent = packetLabel.textContent.replace(" (Paused)", "");
+                    if (currentPacketAnimation) currentPacketAnimation.play();
+                    document.querySelectorAll('.connector-path.active, .connector-path.proxy').forEach(p => p.style.animationPlayState = 'running');
+                    if (pauseResolve) { pauseResolve(); pauseResolve = null; pauseLock = null; }
+                    if (sleepRemaining > 0 && sleepResolveFn) {
+                        sleepStartTime = Date.now();
+                        activeSleepTimer = setTimeout(() => {
+                            let res = sleepResolveFn; sleepResolveFn = null; sleepRemaining = 0; if (res) res();
+                        }, sleepRemaining);
+                    }
+                }
+            }
+
+            function waitIfPaused() { return pauseLock ? pauseLock : Promise.resolve(); }
+
+            function pausableSleep(ms) {
+                return new Promise((resolve, reject) => {
+                    if (abortController?.signal.aborted) return reject(new Error("Aborted"));
+                    sleepRemaining = ms; sleepResolveFn = resolve;
+                    if (!isPaused) {
+                        sleepStartTime = Date.now();
+                        activeSleepTimer = setTimeout(() => { sleepResolveFn = null; sleepRemaining = 0; resolve(); }, sleepRemaining);
+                    }
+                    abortController.signal.addEventListener('abort', () => {
+                        clearTimeout(activeSleepTimer); reject(new Error("Aborted"));
+                    }, { once: true });
+                });
+            }
+
+            function resetSimulation() {
+                if (abortController) abortController.abort();
+                isSimulating = false; isPaused = false; pauseLock = null; pauseResolve = null;
+                if (activeSleepTimer) clearTimeout(activeSleepTimer);
+                if (currentPacketAnimation) { currentPacketAnimation.cancel(); currentPacketAnimation = null; }
+
+                const btnPause = document.getElementById('btn-toggle-pause');
+                btnPause.innerHTML = '<i class="fa-solid fa-pause text-amber-400 mr-2"></i> Pause';
+                btnPause.classList.add('opacity-50', 'cursor-not-allowed');
+
+                packet.style.display = 'none';
+                packet.className = 'packet';
+
+                components.forEach(c => c.classList.remove('active', 'proxy-active'));
+                drawConnections();
+
+                infoPanel.innerHTML = `
+                    <div class="h-full flex flex-col items-center justify-center text-muted opacity-80" style="animation: fadeIn 0.3s ease;">
+                        <i class="fa-solid fa-rotate-right text-4xl mb-4 text-slate-600"></i>
+                        <p class="text-center font-medium text-slate-300">Simulation Ready</p>
+                        <p class="text-center mt-2 text-xs">Run standard or proxied lifecycle.</p>
+                    </div>
+                `;
+            }
+
+            async function moveTo(compId, duration = 600) {
+                await waitIfPaused();
+                if (abortController?.signal.aborted) throw new Error("Aborted");
+
+                const coords = getCenterCoords(compId);
+                const currentLeft = packet.style.left || `${coords.x}px`;
+                const currentTop = packet.style.top || `${coords.y}px`;
+
+                currentPacketAnimation = packet.animate([
+                    { left: currentLeft, top: currentTop },
+                    { left: `${coords.x}px`, top: `${coords.y}px` }
+                ], { duration: duration, easing: 'ease-in-out', fill: 'forwards' });
+
+                if (isPaused) currentPacketAnimation.pause();
+
+                return new Promise((resolve, reject) => {
+                    currentPacketAnimation.onfinish = () => {
+                        packet.style.left = `${coords.x}px`; packet.style.top = `${coords.y}px`;
+                        currentPacketAnimation = null; resolve();
+                    };
+                    abortController.signal.addEventListener('abort', () => {
+                        if (currentPacketAnimation) currentPacketAnimation.cancel(); reject(new Error("Aborted"));
+                    }, { once: true });
+                });
+            }
+
+            async function activateComponent(compId, infoKey, type = 'active') {
+                await waitIfPaused();
+                if (abortController?.signal.aborted) throw new Error("Aborted");
+
+                const comp = document.getElementById(compId);
+                comp.classList.add(type);
+                updateInfoPanel(infoKey);
+
+                packet.animate([{ transform: 'translate(-50%, -50%) scale(1)' }, { transform: 'translate(-50%, -50%) scale(1.3)' }, { transform: 'translate(-50%, -50%) scale(1)' }], { duration: 300 });
+                await pausableSleep(600); // Read time
+            }
+
+            // SIMULATION RUNNER
+            async function runLifecycleSimulation(isProxy) {
+                resetSimulation();
+                abortController = new AbortController();
+                isSimulating = true;
+                document.getElementById('btn-toggle-pause').classList.remove('opacity-50', 'cursor-not-allowed');
+
+                try {
+                    // Start
+                    const startCoords = getCenterCoords('comp-metadata');
+                    packet.style.left = `${startCoords.x - 60}px`; packet.style.top = `${startCoords.y}px`;
+                    packet.style.display = 'block';
+                    packet.className = 'packet';
+
+                    packetLabel.textContent = "Bean Definition";
+                    await pausableSleep(400);
+
+                    // 1. Config -> Instantiate
+                    await moveTo('comp-metadata', 400);
+                    await activateComponent('comp-metadata', 'metadata');
+                    drawConnection('comp-metadata', 'comp-instantiate', 'active-path-1', 'active');
+
+                    packetLabel.textContent = "Raw Object";
+                    await moveTo('comp-instantiate');
+                    await activateComponent('comp-instantiate', 'instantiate');
+
+                    // 2. Instantiate -> DI
+                    drawConnection('comp-instantiate', 'comp-di', 'active-path-2', 'active');
+                    packetLabel.textContent = "Dependencies";
+                    await moveTo('comp-di');
+                    await activateComponent('comp-di', 'di');
+
+                    // 3. DI -> BPP Before
+                    drawConnection('comp-di', 'comp-bpp-before', 'active-path-3', 'active', 'curve-down-left');
+                    packetLabel.textContent = "Populated Bean";
+                    await moveTo('comp-bpp-before', 800);
+                    await activateComponent('comp-bpp-before', 'bpp-before');
+
+                    // 4. BPP Before -> Init
+                    drawConnection('comp-bpp-before', 'comp-init', 'active-path-4', 'active');
+                    await moveTo('comp-init');
+                    await activateComponent('comp-init', 'init');
+
+                    // 5. Init -> BPP After
+                    drawConnection('comp-init', 'comp-bpp-after', 'active-path-5', 'active', 'curve-down-right');
+                    packetLabel.textContent = "Initialized Bean";
+                    await moveTo('comp-bpp-after', 800);
+
+                    if (isProxy) {
+                        packetLabel.textContent = "Detect @Transactional";
+                        await activateComponent('comp-bpp-after', 'bpp-after', 'proxy-active');
+                        await pausableSleep(500);
+
+                        // Transform to Proxy
+                        packet.classList.add('proxied');
+                        packetLabel.textContent = "Proxied Bean";
+                        await pausableSleep(500);
+
+                        drawConnection('comp-bpp-after', 'comp-ready', 'active-path-6', 'proxy');
+                        await moveTo('comp-ready');
+                        await activateComponent('comp-ready', 'ready', 'proxy-active');
+
+                        infoPanel.innerHTML = `
+                            <div class="h-full flex flex-col items-center justify-center animate-[fadeIn_0.5s_ease-out]">
+                                <i class="fa-solid fa-masks-theater text-6xl text-proxy mb-6"></i>
+                                <h3 class="text-2xl font-bold text-white mb-2">Proxy Cached</h3>
+                                <div class="text-sm text-slate-300 text-center px-4 mt-4 bg-darkbg p-4 rounded border border-proxy/30">
+                                    <p>Because the bean required AOP (like @Transactional), the IoC container cached the <strong>Proxy wrapper</strong> instead of the raw bean.</p>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        await activateComponent('comp-bpp-after', 'bpp-after');
+                        drawConnection('comp-bpp-after', 'comp-ready', 'active-path-6', 'active');
+                        await moveTo('comp-ready');
+                        await activateComponent('comp-ready', 'ready');
+
+                        infoPanel.innerHTML = `
+                            <div class="h-full flex flex-col items-center justify-center animate-[fadeIn_0.5s_ease-out]">
+                                <i class="fa-solid fa-check-circle text-6xl text-spring-light mb-6"></i>
+                                <h3 class="text-2xl font-bold text-white mb-2">Bean is Ready</h3>
+                                <div class="text-sm text-slate-300 text-center px-4 mt-4 bg-darkbg p-4 rounded border border-spring/30">
+                                    <p>The standard Singleton bean is fully initialized and securely cached in the ApplicationContext for use by other components.</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    // 6. Destroy Phase simulation just lights up temporarily
+                    await pausableSleep(2000);
+                    if (!abortController.signal.aborted) {
+                        const pathType = isProxy ? 'proxy' : 'active';
+                        drawConnection('comp-ready', 'comp-destroy', 'active-path-7', pathType);
+                        packetLabel.textContent = "Shutdown Request";
+                        await moveTo('comp-destroy', 1000);
+                        await activateComponent('comp-destroy', 'destroy');
+                        packet.style.display = 'none'; // consumed
+                    }
+
+                } catch (e) {
+                    if (e.message !== "Aborted") console.error(e);
+                } finally {
+                    if (!abortController?.signal.aborted) {
+                        isSimulating = false;
+                        document.getElementById('btn-toggle-pause').classList.add('opacity-50', 'cursor-not-allowed');
+                    }
+                }
+            }
+
+            // Bind buttons
+            document.getElementById('btn-sim-standard').addEventListener('click', () => runLifecycleSimulation(false));
+            document.getElementById('btn-sim-proxy').addEventListener('click', () => runLifecycleSimulation(true));
+            document.getElementById('btn-toggle-pause').addEventListener('click', togglePause);
+            document.getElementById('btn-reset').addEventListener('click', resetSimulation);
+
+            window.addEventListener('resize', () => {
+                if (!isSimulating && viewVisual.classList.contains('hidden') === false) drawConnections();
+            });
+
+            setTimeout(drawConnections, 100);
+        });
+
+        const style = document.createElement('style');
+        style.innerHTML = `@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }`;
+        document.head.appendChild(style);
+    </script>
+</body>
+
+</html>

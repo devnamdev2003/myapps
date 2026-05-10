@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JPA Entity Relationships Flow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Code Highlighting -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/sql.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        darkbg: '#0f172a', panelbg: '#1e293b', compbg: '#334155', bordercolor: '#475569', textcolor: '#f8fafc', muted: '#94a3b8',
+                        java: '#38bdf8', // Sky blue for Java
+                        db: '#10b981', // Emerald for DB
+                        orm: '#f59e0b', // Amber for ORM
+                        rel: '#d946ef' // Fuchsia for Relationships
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        .component-box {
+            background-color: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .component-box.java-box {
+            border-color: rgba(56, 189, 248, 0.5);
+        }
+
+        .component-box.java-box:hover,
+        .component-box.java-box.active {
+            border-color: #38bdf8;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+        }
+
+        .component-box.db-box {
+            border-color: rgba(16, 185, 129, 0.5);
+        }
+
+        .component-box.db-box:hover,
+        .component-box.db-box.active {
+            border-color: #10b981;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .zone-container {
+            position: relative;
+            background-color: rgba(30, 41, 59, 0.3);
+            border: 1px dashed #475569;
+            border-radius: 0.75rem;
+            padding: 2.5rem 1.5rem 1.5rem 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .zone-title {
+            position: absolute;
+            top: -0.75rem;
+            left: 1rem;
+            background-color: #0f172a;
+            padding: 0 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #cbd5e1;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border: 1px solid #475569;
+            border-radius: 0.25rem;
+        }
+
+        svg.connector-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .connector-path {
+            fill: none;
+            stroke: #475569;
+            stroke-width: 2;
+            stroke-dasharray: 4, 4;
+            transition: stroke 0.3s ease, stroke-width 0.3s ease;
+        }
+
+        .connector-path.active {
+            stroke: #d946ef;
+            stroke-dasharray: none;
+            stroke-width: 3;
+            animation: flowDash 1s linear infinite;
+        }
+
+        .connector-path.db-link {
+            stroke: #10b981;
+            stroke-dasharray: none;
+            stroke-width: 3;
+        }
+
+        @keyframes flowDash {
+            from {
+                stroke-dashoffset: 20;
+            }
+
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        .packet {
+            position: absolute;
+            background-color: #f59e0b;
+            border-radius: 8px;
+            z-index: 50;
+            transform: translate(-50%, -50%);
+            display: none;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.5), inset 0 0 5px rgba(255, 255, 255, 0.8);
+            border: 2px solid #0f172a;
+            padding: 4px 8px;
+            white-space: nowrap;
+            font-size: 10px;
+            font-weight: bold;
+            color: #0f172a;
+        }
+
+        .markdown-body pre {
+            background-color: #0d1117;
+            border-radius: 6px;
+            padding: 16px;
+            overflow: auto;
+            border: 1px solid #30363d;
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .markdown-body code {
+            font-family: ui-monospace, SFMono-Regular, monospace;
+            font-size: 85%;
+        }
+
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            border-bottom: 2px solid transparent;
+            color: #94a3b8;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            border-bottom-color: #f8fafc;
+            color: #f8fafc;
+        }
+
+        .code-snippet {
+            background: #0f172a;
+            border: 1px solid #475569;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 11px;
+            text-align: left;
+            color: #e2e8f0;
+            margin-top: 8px;
+            overflow-x: auto;
+        }
+
+        .highlight-rel {
+            color: #d946ef;
+            font-weight: bold;
+        }
+
+        .db-table-row {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #334155;
+            padding: 4px 0;
+            font-size: 11px;
+            font-family: monospace;
+        }
+
+        .db-table-row:last-child {
+            border-bottom: none;
+        }
+
+        .db-pk {
+            color: #f59e0b;
+            font-weight: bold;
+        }
+
+        .db-fk {
+            color: #d946ef;
+            font-style: italic;
+        }
+
+        .cardity-label {
+            position: absolute;
+            background: #0f172a;
+            border: 1px solid #d946ef;
+            color: #d946ef;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 10px;
+            z-index: 5;
+            display: none;
+        }
+    </style>
+</head>
+
+<body class="antialiased h-screen flex flex-col overflow-hidden text-textcolor bg-darkbg">
+
+    <header class="bg-panelbg border-b border-bordercolor z-40 shadow-lg">
+        <div class="max-w-screen-2xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-diagram-project text-rel text-2xl drop-shadow-[0_0_8px_rgba(217,70,239,0.5)]"></i>
+                <h1 class="text-xl font-bold tracking-wide">JPA Entity Relationships</h1>
+            </div>
+            <div class="flex gap-4">
+                <div class="flex bg-darkbg rounded-lg p-1 border border-bordercolor">
+                    <button id="tab-visual" class="tab-btn active text-sm">Visual Flow</button>
+                    <button id="tab-principles" class="tab-btn text-sm">Principles & Code</button>
+                </div>
+            </div>
+            <div class="flex gap-2" id="sim-controls">
+                <button id="btn-1-1"
+                    class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded font-medium transition shadow-sm text-xs flex items-center border border-bordercolor">
+                    @OneToOne
+                </button>
+                <button id="btn-1-n"
+                    class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded font-medium transition shadow-sm text-xs flex items-center border border-bordercolor">
+                    @OneToMany
+                </button>
+                <button id="btn-n-1"
+                    class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded font-medium transition shadow-sm text-xs flex items-center border border-bordercolor">
+                    @ManyToOne
+                </button>
+                <button id="btn-n-m"
+                    class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded font-medium transition shadow-sm text-xs flex items-center border border-bordercolor">
+                    @ManyToMany
+                </button>
+                <button id="btn-toggle-pause"
+                    class="ml-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-bordercolor rounded font-medium transition shadow-sm text-sm flex items-center opacity-50 cursor-not-allowed">
+                    <i class="fa-solid fa-pause text-amber-400"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 flex overflow-hidden relative w-full h-full">
+        <!-- VISUAL FLOW VIEW -->
+        <div id="view-visual" class="flex w-full h-full">
+
+            <!-- Sidebar Inspector -->
+            <div
+                class="w-[350px] bg-panelbg border-r border-bordercolor flex flex-col z-30 shadow-[4px_0_15px_rgba(0,0,0,0.5)] relative">
+                <div class="p-4 border-b border-bordercolor bg-darkbg/80">
+                    <h2 class="text-xs font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                        <i class="fa-solid fa-microchip"></i> Relationship Inspector
+                    </h2>
+                </div>
+
+                <div class="p-6 flex-1 overflow-y-auto markdown-body" id="info-panel">
+                    <div class="h-full flex flex-col items-center justify-center text-muted opacity-80">
+                        <i class="fa-solid fa-hand-pointer text-5xl mb-4 text-slate-600"></i>
+                        <p class="text-center px-4">Select a relationship type from the top menu to see how Java Objects
+                            are mapped to Database Tables.</p>
+
+                        <div class="mt-8 border border-bordercolor rounded-lg p-4 bg-darkbg w-full">
+                            <p class="text-xs font-semibold mb-3 text-slate-300 border-b border-bordercolor pb-2">Key
+                                Concepts</p>
+                            <div class="flex items-center gap-3 mb-2 text-xs">
+                                <div class="w-3 h-3 rounded bg-rel"></div> <strong>Foreign Key:</strong> The column that
+                                links rows.
+                            </div>
+                            <div class="flex items-center gap-3 text-xs">
+                                <div class="w-3 h-3 border-2 border-rel rounded-full"></div> <strong>Owning
+                                    Side:</strong> The entity that <em>owns</em> the Foreign Key in the database.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Architecture Canvas -->
+            <div class="flex-1 overflow-auto p-8 relative bg-darkbg" id="diagram-scroll-container">
+                <div class="relative max-w-5xl mx-auto pb-20 mt-4" id="diagram-container">
+
+                    <svg class="connector-svg" id="svg-canvas"></svg>
+
+                    <!-- Dynamic Cardinality Labels -->
+                    <div id="label-left" class="cardity-label">1</div>
+                    <div id="label-right" class="cardity-label">1</div>
+
+                    <!-- Travelling Packet -->
+                    <div id="request-packet" class="packet">Map & Save</div>
+
+                    <!-- Zone 1: Java Heap (Object Oriented) -->
+                    <div class="zone-container border-java/30 bg-sky-900/5 mb-16" id="zone-java">
+                        <div class="zone-title text-java border-java/30"><i class="fa-brands fa-java mr-1"></i> Java
+                            Memory (Entities)</div>
+
+                        <div class="flex justify-around items-center pt-4 relative">
+                            <!-- Entity A -->
+                            <div class="component-box java-box w-64 bg-slate-800" id="comp-entity-a">
+                                <div class="text-xs text-java font-bold mb-1 uppercase tracking-widest">Entity</div>
+                                <div class="text-lg font-bold text-white flex items-center justify-center gap-2"
+                                    id="title-entity-a">
+                                    <i class="fa-solid fa-user text-java"></i> <span>User</span>
+                                </div>
+                                <div class="code-snippet" id="code-entity-a">
+                                    // Select a flow
+                                </div>
+                            </div>
+
+                            <!-- Middle Spacer / Direction Arrow -->
+                            <div class="text-slate-500 opacity-50 flex flex-col items-center">
+                                <span class="text-[10px] mb-1 font-bold tracking-widest uppercase">Object
+                                    Reference</span>
+                                <i class="fa-solid fa-arrows-left-right text-2xl"></i>
+                            </div>
+
+                            <!-- Entity B -->
+                            <div class="component-box java-box w-64 bg-slate-800" id="comp-entity-b">
+                                <div class="text-xs text-java font-bold mb-1 uppercase tracking-widest">Entity</div>
+                                <div class="text-lg font-bold text-white flex items-center justify-center gap-2"
+                                    id="title-entity-b">
+                                    <i class="fa-solid fa-id-card text-java"></i> <span>Profile</span>
+                                </div>
+                                <div class="code-snippet" id="code-entity-b">
+                                    // Select a flow
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Middle: ORM Layer -->
+                    <div class="flex justify-center mb-16 relative z-10">
+                        <div class="bg-slate-800 border border-orm/50 p-4 rounded-xl flex items-center gap-4 shadow-[0_0_15px_rgba(245,158,11,0.15)]"
+                            id="comp-orm">
+                            <i class="fa-solid fa-cubes text-3xl text-orm"></i>
+                            <div class="text-left">
+                                <div class="font-bold text-white">Hibernate ORM</div>
+                                <div class="text-[10px] text-orm/70">Translates Objects to Relational schema</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Zone 2: Database (Relational) -->
+                    <div class="zone-container border-db/30 bg-emerald-900/5 mb-8" id="zone-db">
+                        <div class="zone-title text-db border-db/30"><i class="fa-solid fa-database mr-1"></i>
+                            Relational Database</div>
+
+                        <div class="flex justify-between items-center pt-4 relative">
+
+                            <!-- Table A -->
+                            <div class="component-box db-box w-56 bg-slate-800" id="comp-table-a">
+                                <div class="text-xs text-db font-bold mb-1 uppercase tracking-widest"><i
+                                        class="fa-solid fa-table"></i> Table</div>
+                                <div class="text-md font-bold text-white mb-2" id="title-table-a">users</div>
+                                <div class="bg-darkbg border border-bordercolor rounded p-2 text-left"
+                                    id="schema-table-a">
+                                    <div class="db-table-row"><span class="db-pk">id (PK)</span><span>BIGINT</span>
+                                    </div>
+                                    <div class="db-table-row"><span>name</span><span>VARCHAR</span></div>
+                                    <div class="db-table-row" id="fk-row-a" style="display:none;"><span
+                                            class="db-fk">profile_id (FK)</span><span>BIGINT</span></div>
+                                </div>
+                            </div>
+
+                            <!-- Join Table (Only used in ManyToMany) -->
+                            <div class="component-box db-box w-48 bg-slate-800 hidden opacity-0 transition-opacity duration-500"
+                                id="comp-table-join">
+                                <div class="text-xs text-rel font-bold mb-1 uppercase tracking-widest"><i
+                                        class="fa-solid fa-link"></i> Join Table</div>
+                                <div class="text-md font-bold text-white mb-2" id="title-table-join">student_course
+                                </div>
+                                <div class="bg-darkbg border border-bordercolor rounded p-2 text-left"
+                                    id="schema-table-join">
+                                    <div class="db-table-row"><span class="db-fk">student_id
+                                            (FK)</span><span>BIGINT</span></div>
+                                    <div class="db-table-row"><span class="db-fk">course_id
+                                            (FK)</span><span>BIGINT</span></div>
+                                </div>
+                            </div>
+
+                            <!-- Table B -->
+                            <div class="component-box db-box w-56 bg-slate-800" id="comp-table-b">
+                                <div class="text-xs text-db font-bold mb-1 uppercase tracking-widest"><i
+                                        class="fa-solid fa-table"></i> Table</div>
+                                <div class="text-md font-bold text-white mb-2" id="title-table-b">profiles</div>
+                                <div class="bg-darkbg border border-bordercolor rounded p-2 text-left"
+                                    id="schema-table-b">
+                                    <div class="db-table-row"><span class="db-pk">id (PK)</span><span>BIGINT</span>
+                                    </div>
+                                    <div class="db-table-row"><span>bio</span><span>VARCHAR</span></div>
+                                    <div class="db-table-row" id="fk-row-b" style="display:none;"><span
+                                            class="db-fk">dept_id (FK)</span><span>BIGINT</span></div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div id="view-principles" class="hidden w-full h-full overflow-y-auto bg-darkbg p-8">
+            <div class="max-w-4xl mx-auto text-slate-300 markdown-body pb-16">
+                <h1 class="text-3xl font-bold text-white mb-6 border-b border-bordercolor pb-4">Understanding JPA Entity
+                    Relationships</h1>
+
+                <p class="text-lg leading-relaxed mb-8">The core challenge of an ORM (Object-Relational Mapper) like
+                    Hibernate is resolving the <strong>Object-Relational Impedance Mismatch</strong>. Java uses Objects
+                    and References (Lists, Sets) to represent relationships. Databases use Tables and Foreign Keys. JPA
+                    annotations bridge this gap.</p>
+
+                <div class="bg-panelbg border border-rel/50 p-5 rounded-lg mb-10 border-l-4 border-l-rel">
+                    <h3 class="text-rel font-bold mb-2 flex items-center">The "Owning Side" Concept</h3>
+                    <p class="text-sm">In a bidirectional relationship, one entity must be the "owner". <strong>The
+                            owning side is the entity that has the underlying Foreign Key column in its database
+                            table.</strong> The other side is the "inverse" side and must use the <code>mappedBy</code>
+                        attribute.</p>
+                </div>
+
+                <!-- OneToOne -->
+                <h2 class="text-2xl font-bold text-white mt-10 mb-4 border-b border-bordercolor pb-2">1. @OneToOne</h2>
+                <p class="mb-4">Used when exactly one instance of Entity A is associated with exactly one instance of
+                    Entity B (e.g., User and UserProfile).</p>
+                <div class="flex flex-col md:flex-row gap-4 mb-4">
+                    <div class="flex-1">
+                        <pre><code class="language-java">@Entity
+public class User {
+    @Id private Long id;
+    
+    // User is the OWNER (contains the FK)
+    @OneToOne
+    @JoinColumn(name = "profile_id") 
+    private Profile profile;
+}</code></pre>
+                    </div>
+                    <div class="flex-1">
+                        <pre><code class="language-java">@Entity
+public class Profile {
+    @Id private Long id;
+    
+    // Inverse side. Does NOT have the FK.
+    @OneToOne(mappedBy = "profile")
+    private User user;
+}</code></pre>
+                    </div>
+                </div>
+
+                <!-- OneToMany / ManyToOne -->
+                <h2 class="text-2xl font-bold text-white mt-12 mb-4 border-b border-bordercolor pb-2">2. @OneToMany &
+                    @ManyToOne</h2>
+                <p class="mb-4">The most common relationship. For example, one Department has many Employees.
+                    <strong>Rule of thumb: The @ManyToOne side is almost always the owning side</strong> because
+                    relational databases put the Foreign Key on the "Many" table.
+                </p>
+                <div class="flex flex-col md:flex-row gap-4 mb-4">
+                    <div class="flex-1">
+                        <pre><code class="language-java">@Entity
+public class Employee {
+    @Id private Long id;
+    
+    // Employee is the OWNER (FK in DB)
+    @ManyToOne
+    @JoinColumn(name = "dept_id")
+    private Department department;
+}</code></pre>
+                    </div>
+                    <div class="flex-1">
+                        <pre><code class="language-java">@Entity
+public class Department {
+    @Id private Long id;
+    
+    // Inverse side. Uses a Collection.
+    @OneToMany(mappedBy = "department")
+    private List&lt;Employee&gt; employees;
+}</code></pre>
+                    </div>
+                </div>
+
+                <!-- ManyToMany -->
+                <h2 class="text-2xl font-bold text-white mt-12 mb-4 border-b border-bordercolor pb-2">3. @ManyToMany
+                </h2>
+                <p class="mb-4">Used when multiple instances of Entity A can be related to multiple instances of Entity
+                    B (e.g., Students and Courses). Relational databases cannot represent this directly; they
+                    <strong>require a third "Join Table"</strong>.
+                </p>
+                <div class="flex flex-col md:flex-row gap-4 mb-4">
+                    <div class="flex-1">
+                        <pre><code class="language-java">@Entity
+public class Student {
+    @Id private Long id;
+    
+    // Student owns the relationship
+    @ManyToMany
+    @JoinTable(
+      name = "student_course", 
+      joinColumns = @JoinColumn(name = "student_id"), 
+      inverseJoinColumns = @JoinColumn(name = "course_id"))
+    private Set&lt;Course&gt; courses;
+}</code></pre>
+                    </div>
+                    <div class="flex-1">
+                        <pre><code class="language-java">@Entity
+public class Course {
+    @Id private Long id;
+    
+    // Inverse side
+    @ManyToMany(mappedBy = "courses")
+    private Set&lt;Student&gt; students;
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="content-library" class="hidden">
+
+        <!-- Info for OneToOne -->
+        <div id="info-1-1">
+            <h3 class="text-lg font-bold text-rel mb-3 border-b border-bordercolor pb-2">@OneToOne</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p><strong>Scenario:</strong> A <code>User</code> has exactly one <code>Profile</code>.</p>
+                <p><strong>Database View:</strong> The <code>users</code> table contains a foreign key column (e.g.,
+                    <code>profile_id</code>) that points to the Primary Key of the <code>profiles</code> table.
+                </p>
+                <p><strong>Ownership:</strong> The entity containing the <code>@JoinColumn</code> is the owner. If you
+                    save the owner, Hibernate automatically handles the foreign key link.</p>
+            </div>
+        </div>
+
+        <!-- Info for OneToMany -->
+        <div id="info-1-n">
+            <h3 class="text-lg font-bold text-rel mb-3 border-b border-bordercolor pb-2">@OneToMany</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p><strong>Scenario:</strong> A <code>Department</code> has a List of <code>Employees</code>.</p>
+                <p><strong>Database View:</strong> Relational DBs cannot store lists. Therefore, the
+                    <code>department</code> table has NO foreign keys. Instead, the <code>employee</code> table has a
+                    <code>dept_id</code> foreign key.
+                </p>
+                <p><strong>Ownership:</strong> Because the FK is on the Employee table, the <code>Employee</code> entity
+                    must be the owner (using <code>@ManyToOne</code>). The Department uses <code>mappedBy</code>.</p>
+            </div>
+        </div>
+
+        <!-- Info for ManyToOne -->
+        <div id="info-n-1">
+            <h3 class="text-lg font-bold text-rel mb-3 border-b border-bordercolor pb-2">@ManyToOne</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p><strong>Scenario:</strong> Many <code>Employees</code> belong to one <code>Department</code>.</p>
+                <p><strong>Database View:</strong> The <code>employee</code> table contains the <code>dept_id</code>
+                    foreign key pointing to the <code>department</code> table.</p>
+                <p><strong>Ownership:</strong> This is the <em>owning side</em> of the bidirectional One-To-Many
+                    relationship. This is where you place the <code>@JoinColumn</code> annotation.</p>
+            </div>
+        </div>
+
+        <!-- Info for ManyToMany -->
+        <div id="info-n-m">
+            <h3 class="text-lg font-bold text-rel mb-3 border-b border-bordercolor pb-2">@ManyToMany</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p><strong>Scenario:</strong> A <code>Student</code> takes many <code>Courses</code>, and a
+                    <code>Course</code> has many <code>Students</code>.
+                </p>
+                <p><strong>Database View:</strong> Neither entity table contains a foreign key. A third table, called a
+                    <strong>Join Table</strong> (e.g., <code>student_course</code>), is created. It contains two foreign
+                    keys pointing to both entities.
+                </p>
+                <p><strong>Ownership:</strong> You pick one side to be the owner and define the <code>@JoinTable</code>
+                    there. The other side uses <code>mappedBy</code>.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            hljs.highlightAll();
+
+            // Setup Tabs
+            const tabVisual = document.getElementById('tab-visual');
+            const tabPrinciples = document.getElementById('tab-principles');
+            const viewVisual = document.getElementById('view-visual');
+            const viewPrinciples = document.getElementById('view-principles');
+
+            tabVisual.addEventListener('click', () => {
+                tabVisual.classList.add('active'); tabPrinciples.classList.remove('active');
+                viewVisual.classList.remove('hidden'); viewPrinciples.classList.add('hidden');
+                document.getElementById('sim-controls').style.display = 'flex';
+                setTimeout(drawCurrentStateLines, 50);
+            });
+
+            tabPrinciples.addEventListener('click', () => {
+                tabPrinciples.classList.add('active'); tabVisual.classList.remove('active');
+                viewPrinciples.classList.remove('hidden'); viewVisual.classList.add('hidden');
+                document.getElementById('sim-controls').style.display = 'none';
+            });
+
+            // Architecture State & Elements
+            const svgCanvas = document.getElementById('svg-canvas');
+            const packet = document.getElementById('request-packet');
+            const diagramContainer = document.getElementById('diagram-container');
+            const infoPanel = document.getElementById('info-panel');
+            const btnPause = document.getElementById('btn-toggle-pause');
+
+            // Labels
+            const labelLeft = document.getElementById('label-left');
+            const labelRight = document.getElementById('label-right');
+
+            // Dynamic UI targets
+            const entATitle = document.getElementById('title-entity-a');
+            const entACode = document.getElementById('code-entity-a');
+            const entBTitle = document.getElementById('title-entity-b');
+            const entBCode = document.getElementById('code-entity-b');
+
+            const tblATitle = document.getElementById('title-table-a');
+            const tblAFkRow = document.getElementById('fk-row-a');
+            const tblBTitle = document.getElementById('title-table-b');
+            const tblBFkRow = document.getElementById('fk-row-b');
+
+            const tblJoin = document.getElementById('comp-table-join');
+            const tblJoinSchema = document.getElementById('schema-table-join');
+
+            // Animation Engine State
+            let isSimulating = false;
+            let abortController = null;
+            let isPaused = false;
+            let pauseLock = null;
+            let pauseResolve = null;
+            let currentPacketAnimation = null;
+            let activeSleepTimer = null;
+            let sleepResolveFn = null;
+            let sleepRemaining = 0;
+            let sleepStartTime = 0;
+            let currentActiveState = null; // '1-1', '1-n', etc.
+
+            // Helpers
+            function getCenterCoords(elementId) {
+                const el = document.getElementById(elementId);
+                if (!el) return { x: 0, y: 0 };
+                const elRect = el.getBoundingClientRect();
+                const containerRect = diagramContainer.getBoundingClientRect();
+                return {
+                    x: (elRect.left - containerRect.left) + (elRect.width / 2),
+                    y: (elRect.top - containerRect.top) + (elRect.height / 2)
+                };
+            }
+
+            // Draw final static connection lines
+            function drawCurrentStateLines() {
+                svgCanvas.innerHTML = `
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#475569" /></marker>
+                        <marker id="arrowhead-db" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#10b981" /></marker>
+                        <marker id="arrowhead-rel" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#d946ef" /></marker>
+                    </defs>
+                `;
+
+                labelLeft.style.display = 'none';
+                labelRight.style.display = 'none';
+
+                if (!currentActiveState) return;
+
+                // Position Labels
+                const posA = getCenterCoords('comp-table-a');
+                const posB = getCenterCoords('comp-table-b');
+                const posJoin = getCenterCoords('comp-table-join');
+
+                if (currentActiveState === '1-1') {
+                    // Line A to B
+                    drawPath('comp-table-a', 'comp-table-b', 'path-rel', 'db-link');
+                    placeLabel(labelLeft, posA, posB, 0.2, '1');
+                    placeLabel(labelRight, posA, posB, 0.8, '1');
+                }
+                else if (currentActiveState === '1-n') {
+                    // Dept to Emp (A to B)
+                    drawPath('comp-table-a', 'comp-table-b', 'path-rel', 'db-link');
+                    placeLabel(labelLeft, posA, posB, 0.2, '1');
+                    placeLabel(labelRight, posA, posB, 0.8, '*');
+                }
+                else if (currentActiveState === 'n-1') {
+                    // Emp to Dept (A to B)
+                    drawPath('comp-table-a', 'comp-table-b', 'path-rel', 'db-link');
+                    placeLabel(labelLeft, posA, posB, 0.2, '*');
+                    placeLabel(labelRight, posA, posB, 0.8, '1');
+                }
+                else if (currentActiveState === 'n-m') {
+                    // A to Join, Join to B
+                    drawPath('comp-table-a', 'comp-table-join', 'path-rel-1', 'db-link');
+                    drawPath('comp-table-join', 'comp-table-b', 'path-rel-2', 'db-link');
+                    placeLabel(labelLeft, posA, posJoin, 0.4, '*');
+                    placeLabel(labelRight, posJoin, posB, 0.6, '*');
+                }
+            }
+
+            function drawPath(id1, id2, pathId, styleClass) {
+                const p1 = getCenterCoords(id1);
+                const p2 = getCenterCoords(id2);
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("id", pathId);
+                path.classList.add("connector-path", styleClass);
+                path.setAttribute("d", `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y}`);
+
+                if (styleClass === 'active') path.setAttribute("marker-end", "url(#arrowhead-rel)");
+
+                svgCanvas.appendChild(path);
+                return path;
+            }
+
+            function placeLabel(lblElement, p1, p2, ratio, text) {
+                lblElement.style.display = 'block';
+                lblElement.textContent = text;
+                const x = p1.x + (p2.x - p1.x) * ratio;
+                const y = p1.y + (p2.y - p1.y) * ratio;
+                lblElement.style.left = `${x}px`;
+                lblElement.style.top = `${y - 15}px`; // Offset slightly above line
+            }
+
+            function updateInfoPanel(dataKey) {
+                const sourceContent = document.getElementById(`info-${dataKey}`);
+                if (sourceContent) {
+                    infoPanel.innerHTML = sourceContent.outerHTML;
+                    infoPanel.firstElementChild.removeAttribute('id');
+                    infoPanel.firstElementChild.style.animation = "fadeIn 0.2s ease-out";
+                }
+            }
+
+            // Pause/Resume Logic
+            function togglePause() {
+                if (!isSimulating) return;
+                isPaused = !isPaused;
+                if (isPaused) {
+                    btnPause.innerHTML = '<i class="fa-solid fa-play text-green-400"></i>';
+                    if (currentPacketAnimation) currentPacketAnimation.pause();
+                    document.querySelectorAll('.connector-path.active').forEach(p => p.style.animationPlayState = 'paused');
+                    pauseLock = new Promise(r => pauseResolve = r);
+                    if (activeSleepTimer) { clearTimeout(activeSleepTimer); activeSleepTimer = null; sleepRemaining -= (Date.now() - sleepStartTime); }
+                } else {
+                    btnPause.innerHTML = '<i class="fa-solid fa-pause text-amber-400"></i>';
+                    if (currentPacketAnimation) currentPacketAnimation.play();
+                    document.querySelectorAll('.connector-path.active').forEach(p => p.style.animationPlayState = 'running');
+                    if (pauseResolve) { pauseResolve(); pauseResolve = null; pauseLock = null; }
+                    if (sleepRemaining > 0 && sleepResolveFn) {
+                        sleepStartTime = Date.now();
+                        activeSleepTimer = setTimeout(() => { let res = sleepResolveFn; sleepResolveFn = null; sleepRemaining = 0; if (res) res(); }, sleepRemaining);
+                    }
+                }
+            }
+
+            function waitIfPaused() { return pauseLock ? pauseLock : Promise.resolve(); }
+
+            function pausableSleep(ms) {
+                return new Promise((resolve, reject) => {
+                    if (abortController?.signal.aborted) return reject(new Error("Aborted"));
+                    sleepRemaining = ms; sleepResolveFn = resolve;
+                    if (!isPaused) {
+                        sleepStartTime = Date.now();
+                        activeSleepTimer = setTimeout(() => { sleepResolveFn = null; sleepRemaining = 0; resolve(); }, sleepRemaining);
+                    }
+                    abortController.signal.addEventListener('abort', () => { clearTimeout(activeSleepTimer); reject(new Error("Aborted")); }, { once: true });
+                });
+            }
+
+            async function moveTo(compId, duration = 600) {
+                await waitIfPaused();
+                if (abortController?.signal.aborted) throw new Error("Aborted");
+
+                const coords = getCenterCoords(compId);
+                const currentLeft = packet.style.left || `${coords.x}px`;
+                const currentTop = packet.style.top || `${coords.y}px`;
+
+                currentPacketAnimation = packet.animate([
+                    { left: currentLeft, top: currentTop },
+                    { left: `${coords.x}px`, top: `${coords.y}px` }
+                ], { duration: duration, easing: 'ease-in-out', fill: 'forwards' });
+
+                if (isPaused) currentPacketAnimation.pause();
+
+                return new Promise((resolve, reject) => {
+                    currentPacketAnimation.onfinish = () => {
+                        packet.style.left = `${coords.x}px`; packet.style.top = `${coords.y}px`;
+                        currentPacketAnimation = null; resolve();
+                    };
+                    abortController.signal.addEventListener('abort', () => { if (currentPacketAnimation) currentPacketAnimation.cancel(); reject(new Error("Aborted")); }, { once: true });
+                });
+            }
+
+            // SIMULATION RUNNER
+            async function runSimulation(type) {
+                if (abortController) abortController.abort();
+                isSimulating = false; isPaused = false; pauseLock = null; pauseResolve = null;
+                if (activeSleepTimer) clearTimeout(activeSleepTimer);
+                if (currentPacketAnimation) { currentPacketAnimation.cancel(); currentPacketAnimation = null; }
+
+                btnPause.classList.remove('opacity-50', 'cursor-not-allowed');
+                btnPause.innerHTML = '<i class="fa-solid fa-pause text-amber-400"></i>';
+
+                svgCanvas.innerHTML = ''; // Clear lines
+                labelLeft.style.display = 'none';
+                labelRight.style.display = 'none';
+                tblJoin.classList.add('hidden', 'opacity-0');
+
+                // Clear active states
+                document.querySelectorAll('.active').forEach(el => {
+                    if (!el.classList.contains('tab-btn')) el.classList.remove('active');
+                });
+
+                abortController = new AbortController();
+                isSimulating = true;
+                currentActiveState = type;
+
+                // Setup UI based on type
+                if (type === '1-1') {
+                    entATitle.innerHTML = '<i class="fa-solid fa-user text-java"></i> <span>User</span>';
+                    entACode.innerHTML = `@OneToOne<br><span class="highlight-rel">@JoinColumn(name="profile_id")</span><br>Profile profile;`;
+                    entBTitle.innerHTML = '<i class="fa-solid fa-id-card text-java"></i> <span>Profile</span>';
+                    entBCode.innerHTML = `@OneToOne(mappedBy="user")<br>User user;`;
+
+                    tblATitle.textContent = "users";
+                    tblAFkRow.style.display = 'flex';
+                    tblAFkRow.innerHTML = '<span class="db-fk">profile_id (FK)</span><span>BIGINT</span>';
+
+                    tblBTitle.textContent = "profiles";
+                    tblBFkRow.style.display = 'none';
+                    updateInfoPanel('1-1');
+                }
+                else if (type === '1-n') {
+                    entATitle.innerHTML = '<i class="fa-solid fa-building text-java"></i> <span>Department</span>';
+                    entACode.innerHTML = `@OneToMany(mappedBy="dept")<br>List&lt;Employee&gt; employees;`;
+                    entBTitle.innerHTML = '<i class="fa-solid fa-user-tie text-java"></i> <span>Employee</span>';
+                    entBCode.innerHTML = `@ManyToOne<br><span class="highlight-rel">@JoinColumn(name="dept_id")</span><br>Department dept;`;
+
+                    tblATitle.textContent = "department";
+                    tblAFkRow.style.display = 'none';
+
+                    tblBTitle.textContent = "employee";
+                    tblBFkRow.style.display = 'flex';
+                    tblBFkRow.innerHTML = '<span class="db-fk">dept_id (FK)</span><span>BIGINT</span>';
+                    updateInfoPanel('1-n');
+                }
+                else if (type === 'n-1') {
+                    entATitle.innerHTML = '<i class="fa-solid fa-user-tie text-java"></i> <span>Employee</span>';
+                    entACode.innerHTML = `@ManyToOne<br><span class="highlight-rel">@JoinColumn(name="dept_id")</span><br>Department dept;`;
+                    entBTitle.innerHTML = '<i class="fa-solid fa-building text-java"></i> <span>Department</span>';
+                    entBCode.innerHTML = `@OneToMany(mappedBy="dept")<br>List&lt;Employee&gt; employees;`;
+
+                    tblATitle.textContent = "employee";
+                    tblAFkRow.style.display = 'flex';
+                    tblAFkRow.innerHTML = '<span class="db-fk">dept_id (FK)</span><span>BIGINT</span>';
+
+                    tblBTitle.textContent = "department";
+                    tblBFkRow.style.display = 'none';
+                    updateInfoPanel('n-1');
+                }
+                else if (type === 'n-m') {
+                    entATitle.innerHTML = '<i class="fa-solid fa-graduation-cap text-java"></i> <span>Student</span>';
+                    entACode.innerHTML = `@ManyToMany<br><span class="highlight-rel">@JoinTable(...)</span><br>Set&lt;Course&gt; courses;`;
+                    entBTitle.innerHTML = '<i class="fa-solid fa-book text-java"></i> <span>Course</span>';
+                    entBCode.innerHTML = `@ManyToMany(mappedBy="courses")<br>Set&lt;Student&gt; students;`;
+
+                    tblATitle.textContent = "student";
+                    tblAFkRow.style.display = 'none';
+                    tblBTitle.textContent = "course";
+                    tblBFkRow.style.display = 'none';
+
+                    tblJoin.classList.remove('hidden');
+                    // Add slight delay before fading in for smooth transition
+                    setTimeout(() => tblJoin.classList.remove('opacity-0'), 50);
+                    updateInfoPanel('n-m');
+                }
+
+                try {
+                    // START ANIMATION
+                    const startCoords = getCenterCoords('comp-entity-a');
+                    packet.style.left = `${startCoords.x}px`; packet.style.top = `${startCoords.y - 40}px`;
+                    packet.style.display = 'block';
+                    packet.textContent = "Save Entities";
+
+                    document.getElementById('comp-entity-a').classList.add('active');
+                    document.getElementById('comp-entity-b').classList.add('active');
+                    await pausableSleep(600);
+
+                    // To ORM
+                    drawPath('comp-entity-a', 'comp-orm', 'active-path-1', 'active');
+                    await moveTo('comp-orm', 600);
+                    packet.textContent = "Generate SQL";
+                    document.getElementById('comp-orm').classList.add('active');
+                    await pausableSleep(600);
+
+                    // To DB Tables
+                    document.getElementById('comp-entity-a').classList.remove('active');
+                    document.getElementById('comp-entity-b').classList.remove('active');
+
+                    if (type === 'n-m') {
+                        // Insert Student, Course, then Join Table
+                        drawPath('comp-orm', 'comp-table-a', 'active-path-2', 'active');
+                        packet.textContent = "INSERT Student";
+                        await moveTo('comp-table-a', 500);
+                        document.getElementById('comp-table-a').classList.add('active');
+
+                        drawPath('comp-table-a', 'comp-table-b', 'active-path-3', 'active'); // Visual jump
+                        packet.textContent = "INSERT Course";
+                        await moveTo('comp-table-b', 500);
+                        document.getElementById('comp-table-b').classList.add('active');
+
+                        drawPath('comp-table-b', 'comp-table-join', 'active-path-4', 'active');
+                        packet.textContent = "INSERT Join Row";
+                        await moveTo('comp-table-join', 500);
+                        document.getElementById('comp-table-join').classList.add('active');
+                    } else {
+                        // Standard insert A then B
+                        drawPath('comp-orm', 'comp-table-a', 'active-path-2', 'active');
+                        packet.textContent = "INSERT Row";
+                        await moveTo('comp-table-a', 500);
+                        document.getElementById('comp-table-a').classList.add('active');
+
+                        drawPath('comp-table-a', 'comp-table-b', 'active-path-3', 'active');
+                        packet.textContent = "INSERT Row (with FK)";
+                        await moveTo('comp-table-b', 500);
+                        document.getElementById('comp-table-b').classList.add('active');
+                    }
+
+                    await pausableSleep(500);
+                    packet.style.display = 'none'; // Hide packet
+
+                    // Draw final static DB relation lines
+                    svgCanvas.innerHTML = '';
+                    drawCurrentStateLines();
+
+                } catch (e) { if (e.message !== "Aborted") console.error(e); }
+                finally {
+                    if (!abortController?.signal.aborted) {
+                        isSimulating = false;
+                        btnPause.classList.add('opacity-50', 'cursor-not-allowed');
+                        document.getElementById('comp-orm').classList.remove('active');
+                        document.querySelectorAll('.db-box').forEach(b => b.classList.remove('active'));
+                    }
+                }
+            }
+
+            // Bind Buttons
+            document.getElementById('btn-1-1').addEventListener('click', () => runSimulation('1-1'));
+            document.getElementById('btn-1-n').addEventListener('click', () => runSimulation('1-n'));
+            document.getElementById('btn-n-1').addEventListener('click', () => runSimulation('n-1'));
+            document.getElementById('btn-n-m').addEventListener('click', () => runSimulation('n-m'));
+            document.getElementById('btn-toggle-pause').addEventListener('click', togglePause);
+
+            window.addEventListener('resize', () => { if (!isSimulating && viewVisual.classList.contains('hidden') === false) drawCurrentStateLines(); });
+
+            // Init default state visually (without simulation)
+            runSimulation('1-n'); // Runs the first time setup
+        });
+
+        const style = document.createElement('style');
+        style.innerHTML = `@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }`;
+        document.head.appendChild(style);
+    </script>
+</body>
+
+</html>

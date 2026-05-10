@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JWT Authentication Flow</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Code Highlighting -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/json.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        spring: { light: '#a3e635', DEFAULT: '#6db33f', dark: '#4d7c2a' },
+                        darkbg: '#0f172a',
+                        panelbg: '#1e293b',
+                        compbg: '#334155',
+                        bordercolor: '#475569',
+                        textcolor: '#f8fafc',
+                        muted: '#94a3b8',
+                        accent: '#06b6d4', // Cyan for JWT Token theme
+                        accent_light: '#22d3ee',
+                        indigo: '#6366f1', // Indigo for Security logic
+                        error: '#ef4444'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        .component-box {
+            background-color: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .component-box:hover {
+            border-color: #06b6d4;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px -2px rgba(6, 182, 212, 0.15);
+        }
+
+        .component-box.active {
+            border-color: #22d3ee;
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
+            transform: scale(1.05);
+            z-index: 30;
+            background-color: #083344;
+        }
+
+        .component-box.error-state {
+            border-color: #ef4444;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+            z-index: 30;
+            background-color: #451a1a;
+        }
+
+        .zone-container {
+            position: relative;
+            background-color: rgba(30, 41, 59, 0.3);
+            border: 1px dashed #475569;
+            border-radius: 0.75rem;
+            padding: 2.5rem 1.5rem 1.5rem 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .zone-title {
+            position: absolute;
+            top: -0.75rem;
+            left: 1rem;
+            background-color: #0f172a;
+            padding: 0 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #06b6d4;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border: 1px solid #475569;
+            border-radius: 0.25rem;
+        }
+
+        svg.connector-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .connector-path {
+            fill: none;
+            stroke: #475569;
+            stroke-width: 2;
+            stroke-dasharray: 4, 4;
+            transition: stroke 0.3s ease, stroke-width 0.3s ease;
+        }
+
+        .connector-path.active {
+            stroke: #06b6d4;
+            stroke-dasharray: none;
+            stroke-width: 3;
+            animation: flowDash 1s linear infinite;
+        }
+
+        .connector-path.auth-active {
+            stroke: #6366f1;
+            stroke-dasharray: none;
+            stroke-width: 3;
+            animation: flowDash 1s linear infinite;
+        }
+
+        .connector-path.error {
+            stroke: #ef4444;
+            stroke-dasharray: none;
+            stroke-width: 3;
+            animation: flowDash 1s linear infinite;
+        }
+
+        @keyframes flowDash {
+            from {
+                stroke-dashoffset: 20;
+            }
+
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        .packet {
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background-color: #f8fafc;
+            border-radius: 50%;
+            z-index: 50;
+            transform: translate(-50%, -50%);
+            display: none;
+            box-shadow: 0 0 10px #f8fafc;
+            border: 2px solid #0f172a;
+            transition: all 0.3s ease;
+        }
+
+        .packet.jwt-token {
+            background-color: #22d3ee;
+            box-shadow: 0 0 15px #22d3ee;
+            border-radius: 4px;
+            border-style: dashed;
+            border-color: #0891b2;
+        }
+
+        .packet.credentials {
+            background-color: #6366f1;
+            box-shadow: 0 0 15px #6366f1;
+            border-radius: 8px;
+        }
+
+        .packet.error {
+            background-color: #ef4444;
+            box-shadow: 0 0 15px #ef4444;
+            border-radius: 50%;
+        }
+
+        .packet-label-container {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(15, 23, 42, 0.95);
+            border: 1px solid #475569;
+            padding: 2px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .markdown-body pre {
+            background-color: #0d1117;
+            border-radius: 6px;
+            padding: 16px;
+            overflow: auto;
+            border: 1px solid #30363d;
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .markdown-body code {
+            font-family: ui-monospace, SFMono-Regular, monospace;
+            font-size: 85%;
+        }
+
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            border-bottom: 2px solid transparent;
+            color: #94a3b8;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            border-bottom-color: #06b6d4;
+            color: #f8fafc;
+        }
+    </style>
+</head>
+
+<body class="antialiased h-screen flex flex-col overflow-hidden text-textcolor bg-darkbg">
+
+    <header class="bg-panelbg border-b border-bordercolor z-40 shadow-lg">
+        <div class="max-w-screen-2xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i
+                    class="fa-solid fa-certificate text-accent_light text-2xl drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]"></i>
+                <h1 class="text-xl font-bold tracking-wide">JWT Authentication Flow</h1>
+            </div>
+            <div class="flex gap-4">
+                <div class="flex bg-darkbg rounded-lg p-1 border border-bordercolor">
+                    <button id="tab-visual" class="tab-btn active text-sm">Visual Flow</button>
+                    <button id="tab-principles" class="tab-btn text-sm">Principles & Code</button>
+                </div>
+            </div>
+            <div class="flex gap-2" id="sim-controls">
+                <button id="btn-sim-login"
+                    class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded font-medium transition shadow-sm text-sm flex items-center border border-indigo-400">
+                    <i class="fa-solid fa-right-to-bracket mr-2"></i> 1. Sim Login
+                </button>
+                <button id="btn-sim-valid"
+                    class="px-3 py-1.5 bg-cyan-700 hover:bg-cyan-600 text-white border border-cyan-400 rounded font-medium transition shadow-sm text-sm flex items-center">
+                    <i class="fa-solid fa-shield-check mr-2"></i> 2. Sim API Req (Valid)
+                </button>
+                <button id="btn-sim-invalid"
+                    class="px-3 py-1.5 bg-red-900/80 hover:bg-red-800 text-white border border-red-500 rounded font-medium transition shadow-sm text-sm flex items-center">
+                    <i class="fa-solid fa-shield-xmark mr-2"></i> 3. Sim API Req (Expired)
+                </button>
+                <button id="btn-toggle-pause"
+                    class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-bordercolor rounded font-medium transition shadow-sm text-sm flex items-center opacity-50 cursor-not-allowed">
+                    <i class="fa-solid fa-pause text-amber-400 mr-2"></i> Pause
+                </button>
+                <button id="btn-reset"
+                    class="px-3 py-1.5 bg-compbg hover:bg-slate-600 text-slate-200 border border-bordercolor rounded font-medium transition shadow-sm text-sm flex items-center">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 flex overflow-hidden relative w-full h-full">
+        <div id="view-visual" class="flex w-full h-full">
+
+            <!-- Sidebar Inspector -->
+            <div
+                class="w-[400px] bg-panelbg border-r border-bordercolor flex flex-col z-30 shadow-[4px_0_15px_rgba(0,0,0,0.5)]">
+                <div class="p-4 border-b border-bordercolor bg-darkbg/80">
+                    <h2 class="text-xs font-bold text-accent uppercase tracking-widest flex items-center gap-2">
+                        <i class="fa-solid fa-microchip"></i> Component Inspector
+                    </h2>
+                </div>
+                <div class="p-6 flex-1 overflow-y-auto markdown-body" id="info-panel">
+                    <div class="h-full flex flex-col items-center justify-center text-muted opacity-80">
+                        <i class="fa-solid fa-hand-pointer text-5xl mb-4 text-slate-600"></i>
+                        <p class="text-center px-4">Click on any component in the architecture to understand how
+                            stateless JWT authentication works.</p>
+
+                        <div class="mt-12 border border-bordercolor rounded-lg p-4 bg-darkbg w-full">
+                            <p class="text-xs font-semibold mb-3 text-slate-300 border-b border-bordercolor pb-2">
+                                Simulation Legend</p>
+                            <div class="flex items-center gap-3 mb-2 text-xs">
+                                <div class="w-3 h-3 rounded bg-indigo-500 shadow-[0_0_8px_#6366f1]"></div> Credentials
+                                (User/Pass)
+                            </div>
+                            <div class="flex items-center gap-3 mb-2 text-xs">
+                                <div
+                                    class="w-3 h-3 border border-cyan-500 border-dashed rounded bg-cyan-400 shadow-[0_0_8px_#22d3ee]">
+                                </div> JWT Bearer Token
+                            </div>
+                            <div class="flex items-center gap-3 text-xs">
+                                <div class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]"></div> Invalid /
+                                Expired Access
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Architecture Canvas -->
+            <div class="flex-1 overflow-auto p-8 relative bg-darkbg" id="diagram-scroll-container">
+                <div class="relative max-w-5xl mx-auto pb-20 mt-4" id="diagram-container">
+
+                    <svg class="connector-svg" id="svg-canvas"></svg>
+
+                    <!-- The travelling Packet -->
+                    <div id="request-packet" class="packet">
+                        <div class="packet-label-container" id="packet-label-container">
+                            <span class="text-[10px] font-bold text-white tracking-wide" id="packet-label">Req</span>
+                        </div>
+                    </div>
+
+                    <!-- Client -->
+                    <div class="flex justify-center mb-10 relative z-10">
+                        <div class="component-box w-48 bg-slate-800" id="comp-client" data-info="client">
+                            <i class="fa-solid fa-mobile-screen-button text-3xl text-slate-300 mb-2"></i>
+                            <div class="font-bold text-slate-100 text-sm">Frontend / Client</div>
+                        </div>
+                    </div>
+
+                    <!-- Dual Pipeline View -->
+                    <div class="flex flex-col md:flex-row gap-8 relative z-10">
+
+                        <!-- LEFT COLUMN: Login Phase -->
+                        <div class="flex-1 zone-container border-indigo-500/30 bg-indigo-900/5" id="zone-login">
+                            <div class="zone-title text-indigo-400 border-indigo-500/30"><i
+                                    class="fa-solid fa-right-to-bracket mr-1"></i> Phase 1: Authentication</div>
+
+                            <div class="flex flex-col items-center gap-8 pt-4">
+                                <div class="component-box w-full max-w-[220px] border-indigo-500/50 bg-indigo-900/20"
+                                    id="comp-auth-controller" data-info="auth-controller">
+                                    <i class="fa-solid fa-door-open text-2xl text-indigo-400 mb-2"></i>
+                                    <div class="text-sm font-bold text-indigo-100">AuthController</div>
+                                    <div class="text-[10px] text-indigo-300/60 mt-1">POST /api/auth/login</div>
+                                </div>
+
+                                <div class="component-box w-full max-w-[220px] border-slate-500/50 bg-slate-800"
+                                    id="comp-auth-manager" data-info="auth-manager">
+                                    <i class="fa-solid fa-database text-2xl text-slate-400 mb-2"></i>
+                                    <div class="text-sm font-bold text-slate-100">AuthenticationManager</div>
+                                    <div class="text-[10px] text-slate-400 mt-1">Verifies Hash in DB</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CENTER: The Brains (JWT Service) -->
+                        <div class="w-48 flex flex-col justify-center items-center z-20">
+                            <div class="component-box w-full border-accent border-2 bg-cyan-900/20 shadow-[0_0_20px_rgba(6,182,212,0.15)] py-6"
+                                id="comp-jwt-service" data-info="jwt-service">
+                                <i class="fa-solid fa-file-signature text-4xl text-accent mb-3"></i>
+                                <div class="text-base font-bold text-cyan-50">JwtService</div>
+                                <div
+                                    class="text-[10px] text-cyan-200/70 mt-2 bg-darkbg p-1 rounded border border-cyan-800">
+                                    Secret Key HS256</div>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT COLUMN: API Request Phase -->
+                        <div class="flex-1 zone-container border-spring/30 bg-spring-dark/5" id="zone-api">
+                            <div class="zone-title text-spring-light border-spring/30"><i
+                                    class="fa-solid fa-shield-check mr-1"></i> Phase 2: Authorization</div>
+
+                            <div class="flex flex-col items-center gap-8 pt-4">
+                                <div class="component-box w-full max-w-[220px] border-cyan-500/50 bg-cyan-900/20"
+                                    id="comp-jwt-filter" data-info="jwt-filter">
+                                    <i class="fa-solid fa-filter text-2xl text-cyan-400 mb-2"></i>
+                                    <div class="text-sm font-bold text-cyan-100">JwtAuthenticationFilter</div>
+                                    <div class="text-[10px] text-cyan-300/60 mt-1">Extracts 'Bearer &lt;token&gt;'</div>
+                                </div>
+
+                                <div class="component-box w-full max-w-[220px] border-spring-dark bg-spring-dark/20"
+                                    id="comp-sec-context" data-info="sec-context">
+                                    <i class="fa-solid fa-vault text-2xl text-spring-light mb-2"></i>
+                                    <div class="text-sm font-bold text-spring-light">SecurityContextHolder</div>
+                                    <div class="text-[10px] text-spring-light/60 mt-1">Sets User State Temporarily</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Target Resource -->
+                    <div class="flex justify-end mt-4 relative z-10 pr-[10%]">
+                        <div class="component-box w-64 border-teal-500/50 bg-teal-900/20" id="comp-resource"
+                            data-info="resource">
+                            <i class="fa-solid fa-server text-3xl text-teal-400 mb-2"></i>
+                            <div class="font-bold text-teal-100 text-sm">Protected Controller</div>
+                            <div class="text-[10px] text-teal-300/60 mt-1">GET /api/users/profile</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div id="view-principles" class="hidden w-full h-full overflow-y-auto bg-darkbg p-8">
+            <div class="max-w-4xl mx-auto text-slate-300 markdown-body pb-16">
+                <h1 class="text-3xl font-bold text-white mb-6 border-b border-bordercolor pb-4">Stateless Authentication
+                    with JWT</h1>
+
+                <p class="text-lg leading-relaxed mb-8">JSON Web Tokens (JWT) provide a stateless mechanism for
+                    authenticating API requests. Instead of storing a session ID in server memory/database, the server
+                    cryptographically signs a JSON payload containing the user's identity and roles, and sends it to the
+                    client.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                    <div class="bg-panelbg border border-bordercolor p-5 rounded-lg border-t-4 border-t-red-500">
+                        <h3 class="text-red-400 font-bold mb-2">1. Header</h3>
+                        <p class="text-xs">Specifies the algorithm used to sign the token (e.g., HS256) and the token
+                            type (JWT).</p>
+                    </div>
+                    <div class="bg-panelbg border border-bordercolor p-5 rounded-lg border-t-4 border-t-purple-500">
+                        <h3 class="text-purple-400 font-bold mb-2">2. Payload (Claims)</h3>
+                        <p class="text-xs">Contains the actual data: `sub` (username), `exp` (expiration time), and
+                            custom claims like roles.</p>
+                    </div>
+                    <div class="bg-panelbg border border-bordercolor p-5 rounded-lg border-t-4 border-t-accent">
+                        <h3 class="text-accent font-bold mb-2">3. Signature</h3>
+                        <p class="text-xs">Created by hashing the Header + Payload using a secret key known *only* to
+                            the server. Ensures integrity.</p>
+                    </div>
+                </div>
+
+                <h2 class="text-2xl font-bold text-white mt-10 mb-4 border-b border-bordercolor pb-2">Core
+                    Implementations</h2>
+
+                <h3 class="text-xl text-accent font-semibold mt-6 mb-2">1. The JwtService (Using io.jsonwebtoken
+                    library)</h3>
+                <p class="mb-4">This class is responsible for generating new tokens during login and validating incoming
+                    tokens on subsequent requests.</p>
+                <pre><code class="language-java">@Service
+public class JwtService {
+    @Value("${jwt.secret}")
+    private String secretKey; // Must be 256-bit+ secure key
+
+    public String generateToken(UserDetails userDetails) {
+        return Jwts.builder()
+            .setSubject(userDetails.getUsername())
+            .claim("roles", userDetails.getAuthorities())
+            .setIssuedAt(new Date(System.currentTimeMillis()))
+            .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10 hours
+            .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+            .compact();
+    }
+
+    public String extractUsername(String token) {
+        return Jwts.parserBuilder()
+            .setSigningKey(getSigningKey())
+            .build()
+            .parseClaimsJws(token) // Throws exception if signature is invalid or expired
+            .getBody()
+            .getSubject();
+    }
+}</code></pre>
+
+                <h3 class="text-xl text-cyan-400 font-semibold mt-8 mb-2">2. The JwtAuthenticationFilter</h3>
+                <p class="mb-4">This filter intercepts every incoming request. It extracts the token from the
+                    `Authorization: Bearer` header, validates it using the `JwtService`, and populates the Spring
+                    `SecurityContextHolder` so controllers know who is making the request.</p>
+                <pre><code class="language-java">@Component
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    @Autowired private JwtService jwtService;
+    @Autowired private UserDetailsService userDetailsService;
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+            throws ServletException, IOException {
+            
+        final String authHeader = request.getHeader("Authorization");
+        
+        // 1. Check if token exists
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            chain.doFilter(request, response);
+            return;
+        }
+
+        // 2. Extract Token
+        final String jwt = authHeader.substring(7);
+        final String username = jwtService.extractUsername(jwt);
+
+        // 3. If token valid and context is empty, set authentication
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+            
+            if (jwtService.isTokenValid(jwt, userDetails)) {
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities());
+                
+                // Save user details to Context for this request lifecycle
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            }
+        }
+        
+        // 4. Continue filter chain
+        chain.doFilter(request, response);
+    }
+}</code></pre>
+            </div>
+        </div>
+    </main>
+
+    <div id="content-library" class="hidden">
+
+        <div id="info-client">
+            <h3 class="text-lg font-bold text-slate-300 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-mobile-screen-button mr-2"></i>Frontend / Client</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>The client application (React, Angular, Mobile App) interacts with the server in two distinct ways:
+                </p>
+                <ul class="list-disc pl-4 mt-2 space-y-1 text-xs">
+                    <li><strong>Login:</strong> Sends raw credentials via POST. Expects a JWT string in response.</li>
+                    <li><strong>Requests:</strong> Attaches the received JWT to the HTTP Header:
+                        <code>Authorization: Bearer eyJhbGci...</code> for all subsequent secured API calls.
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="info-auth-controller">
+            <h3 class="text-lg font-bold text-indigo-400 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-door-open mr-2"></i>AuthController</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>The exposed public endpoint (e.g., <code>/api/auth/login</code>) designed to handle authentication
+                    requests.</p>
+                <p>It receives the username and password from the client request body and passes them to the
+                    <code>AuthenticationManager</code> to verify if they are correct.
+                </p>
+            </div>
+        </div>
+
+        <div id="info-auth-manager">
+            <h3 class="text-lg font-bold text-slate-400 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-database mr-2"></i>AuthenticationManager</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>Spring Security's core component for validating credentials.</p>
+                <p>It uses an <code>AuthenticationProvider</code> (usually DaoAuthenticationProvider) to fetch the
+                    user's encoded password from the database (via UserDetailsService) and compares it against the raw
+                    password provided in the request using a PasswordEncoder (like BCrypt).</p>
+            </div>
+        </div>
+
+        <div id="info-jwt-service">
+            <h3 class="text-lg font-bold text-accent mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-file-signature mr-2"></i>JwtService</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>The cryptographic brain of the operation. It has two main jobs:</p>
+                <p><strong>1. Sign (Generate):</strong> Takes verified user details, builds a JSON payload, and hashes
+                    it using a highly secure, server-side secret key (e.g., HMAC-SHA256).</p>
+                <p><strong>2. Verify (Parse):</strong> Takes an incoming token, recalculates the signature using the
+                    server's secret key, and compares it. If they match, the token wasn't tampered with. It also checks
+                    the <code>exp</code> (expiration) claim.</p>
+            </div>
+        </div>
+
+        <div id="info-jwt-filter">
+            <h3 class="text-lg font-bold text-cyan-400 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-filter mr-2"></i>JwtAuthenticationFilter</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>A custom filter extending <code>OncePerRequestFilter</code>, placed early in the Spring Security
+                    Filter Chain.</p>
+                <p>It intercepts every request, looking for the <code>Authorization</code> header. If it finds a Bearer
+                    token, it extracts it and sends it to the <code>JwtService</code> for verification.</p>
+            </div>
+        </div>
+
+        <div id="info-sec-context">
+            <h3 class="text-lg font-bold text-spring-light mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-vault mr-2"></i>SecurityContextHolder</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>If the <code>JwtAuthenticationFilter</code> determines the token is valid, it extracts the username
+                    and roles, creates an <code>Authentication</code> object, and places it in the SecurityContext.</p>
+                <p>Because JWT is stateless, the server doesn't remember this context between requests. The filter must
+                    rebuild this context on <strong>every single request</strong> using the provided token.</p>
+            </div>
+        </div>
+
+        <div id="info-resource">
+            <h3 class="text-lg font-bold text-teal-400 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-server mr-2"></i>Protected Controller</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>Your actual business logic endpoints (e.g., <code>@GetMapping("/api/profile")</code>).</p>
+                <p>By the time the request reaches here, Spring Security has already guaranteed the user is
+                    authenticated. You can safely use <code>@AuthenticationPrincipal</code> or check roles using
+                    <code>@PreAuthorize("hasRole('ADMIN')")</code> based on the claims extracted from the JWT.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            hljs.highlightAll();
+
+            // Tabs Logic
+            const tabVisual = document.getElementById('tab-visual');
+            const tabPrinciples = document.getElementById('tab-principles');
+            const viewVisual = document.getElementById('view-visual');
+            const viewPrinciples = document.getElementById('view-principles');
+            const simControls = document.getElementById('sim-controls');
+
+            tabVisual.addEventListener('click', () => {
+                tabVisual.classList.add('active'); tabPrinciples.classList.remove('active');
+                viewVisual.classList.remove('hidden'); viewPrinciples.classList.add('hidden');
+                simControls.style.display = 'flex';
+                setTimeout(drawConnections, 50);
+            });
+
+            tabPrinciples.addEventListener('click', () => {
+                tabPrinciples.classList.add('active'); tabVisual.classList.remove('active');
+                viewPrinciples.classList.remove('hidden'); viewVisual.classList.add('hidden');
+                simControls.style.display = 'none';
+            });
+
+            // Architecture Setup
+            const infoPanel = document.getElementById('info-panel');
+            const components = document.querySelectorAll('.component-box');
+            const svgCanvas = document.getElementById('svg-canvas');
+            const packet = document.getElementById('request-packet');
+            const packetLabel = document.getElementById('packet-label');
+            const diagramContainer = document.getElementById('diagram-container');
+
+            let isSimulating = false;
+            let abortController = null;
+            let isPaused = false;
+            let pauseLock = null;
+            let pauseResolve = null;
+            let currentPacketAnimation = null;
+            let activeSleepTimer = null;
+            let sleepResolveFn = null;
+            let sleepRemaining = 0;
+            let sleepStartTime = 0;
+
+            function getCenterCoords(elementId) {
+                const el = document.getElementById(elementId);
+                if (!el) return { x: 0, y: 0 };
+                const elRect = el.getBoundingClientRect();
+                const containerRect = diagramContainer.getBoundingClientRect();
+                return {
+                    x: (elRect.left - containerRect.left) + (elRect.width / 2),
+                    y: (elRect.top - containerRect.top) + (elRect.height / 2)
+                };
+            }
+
+            function drawConnection(id1, id2, pathId, style = 'normal', lineType = 'straight') {
+                const p1 = getCenterCoords(id1);
+                const p2 = getCenterCoords(id2);
+
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("id", pathId);
+                path.classList.add("connector-path");
+
+                let d = '';
+                if (lineType === 'curve-left') {
+                    d = `M ${p1.x} ${p1.y} C ${p1.x} ${p2.y}, ${p2.x} ${p1.y}, ${p2.x} ${p2.y}`;
+                } else if (lineType === 'curve-right') {
+                    d = `M ${p1.x} ${p1.y} C ${p1.x} ${p2.y}, ${p2.x} ${p1.y}, ${p2.x} ${p2.y}`;
+                } else {
+                    d = `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y}`;
+                }
+
+                path.setAttribute("d", d);
+
+                if (style === 'normal') { path.setAttribute("marker-end", "url(#arrowhead)"); }
+                else if (style === 'active') { path.classList.add('active'); path.setAttribute("marker-end", "url(#arrowhead-active)"); }
+                else if (style === 'auth-active') { path.classList.add('auth-active'); path.setAttribute("marker-end", "url(#arrowhead-auth)"); }
+                else if (style === 'error') { path.classList.add('error'); path.setAttribute("marker-end", "url(#arrowhead-error)"); }
+
+                svgCanvas.appendChild(path);
+                return path;
+            }
+
+            function drawConnections() {
+                svgCanvas.innerHTML = `
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#475569" /></marker>
+                        <marker id="arrowhead-active" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#06b6d4" /></marker>
+                        <marker id="arrowhead-auth" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#6366f1" /></marker>
+                        <marker id="arrowhead-error" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ef4444" /></marker>
+                    </defs>
+                `;
+
+                // Phase 1 flow
+                drawConnection('comp-client', 'comp-auth-controller', 'line-1', 'normal', 'curve-left');
+                drawConnection('comp-auth-controller', 'comp-auth-manager', 'line-2');
+                drawConnection('comp-auth-manager', 'comp-jwt-service', 'line-3', 'normal', 'curve-right');
+
+                // Phase 2 flow
+                drawConnection('comp-client', 'comp-jwt-filter', 'line-4', 'normal', 'curve-right');
+                drawConnection('comp-jwt-filter', 'comp-jwt-service', 'line-5', 'normal', 'curve-left');
+                drawConnection('comp-jwt-filter', 'comp-sec-context', 'line-6');
+                drawConnection('comp-sec-context', 'comp-resource', 'line-7', 'normal', 'curve-right');
+            }
+
+            function updateInfoPanel(dataKey) {
+                const sourceContent = document.getElementById(`info-${dataKey}`);
+                if (sourceContent) {
+                    infoPanel.innerHTML = sourceContent.outerHTML;
+                    infoPanel.firstElementChild.removeAttribute('id');
+                    infoPanel.firstElementChild.style.animation = "fadeIn 0.2s ease-out";
+                }
+                components.forEach(c => c.classList.remove('active', 'error-state'));
+                const activeComp = document.querySelector(`.component-box[data-info="${dataKey}"]`);
+                if (activeComp) activeComp.classList.add('active');
+            }
+
+            components.forEach(comp => {
+                comp.addEventListener('click', () => { if (!isSimulating) updateInfoPanel(comp.getAttribute('data-info')); });
+            });
+
+            // Pause/Resume Engine
+            function togglePause() {
+                if (!isSimulating) return;
+                isPaused = !isPaused;
+                const btn = document.getElementById('btn-toggle-pause');
+
+                if (isPaused) {
+                    btn.innerHTML = '<i class="fa-solid fa-play text-green-400 mr-2"></i> Resume';
+                    if (!packetLabel.textContent.includes("(Paused)")) packetLabel.textContent += " (Paused)";
+                    if (currentPacketAnimation) currentPacketAnimation.pause();
+                    document.querySelectorAll('.connector-path.active, .connector-path.auth-active, .connector-path.error').forEach(p => p.style.animationPlayState = 'paused');
+                    pauseLock = new Promise(r => pauseResolve = r);
+                    if (activeSleepTimer) {
+                        clearTimeout(activeSleepTimer); activeSleepTimer = null; sleepRemaining -= (Date.now() - sleepStartTime);
+                    }
+                } else {
+                    btn.innerHTML = '<i class="fa-solid fa-pause text-amber-400 mr-2"></i> Pause';
+                    packetLabel.textContent = packetLabel.textContent.replace(" (Paused)", "");
+                    if (currentPacketAnimation) currentPacketAnimation.play();
+                    document.querySelectorAll('.connector-path.active, .connector-path.auth-active, .connector-path.error').forEach(p => p.style.animationPlayState = 'running');
+                    if (pauseResolve) { pauseResolve(); pauseResolve = null; pauseLock = null; }
+                    if (sleepRemaining > 0 && sleepResolveFn) {
+                        sleepStartTime = Date.now();
+                        activeSleepTimer = setTimeout(() => { let res = sleepResolveFn; sleepResolveFn = null; sleepRemaining = 0; if (res) res(); }, sleepRemaining);
+                    }
+                }
+            }
+
+            function waitIfPaused() { return pauseLock ? pauseLock : Promise.resolve(); }
+
+            function pausableSleep(ms) {
+                return new Promise((resolve, reject) => {
+                    if (abortController?.signal.aborted) return reject(new Error("Aborted"));
+                    sleepRemaining = ms; sleepResolveFn = resolve;
+                    if (!isPaused) {
+                        sleepStartTime = Date.now();
+                        activeSleepTimer = setTimeout(() => { sleepResolveFn = null; sleepRemaining = 0; resolve(); }, sleepRemaining);
+                    }
+                    abortController.signal.addEventListener('abort', () => {
+                        clearTimeout(activeSleepTimer); reject(new Error("Aborted"));
+                    }, { once: true });
+                });
+            }
+
+            function resetSimulation() {
+                if (abortController) abortController.abort();
+                isSimulating = false; isPaused = false; pauseLock = null; pauseResolve = null;
+                if (activeSleepTimer) clearTimeout(activeSleepTimer);
+                if (currentPacketAnimation) { currentPacketAnimation.cancel(); currentPacketAnimation = null; }
+
+                const btnPause = document.getElementById('btn-toggle-pause');
+                btnPause.innerHTML = '<i class="fa-solid fa-pause text-amber-400 mr-2"></i> Pause';
+                btnPause.classList.add('opacity-50', 'cursor-not-allowed');
+
+                packet.style.display = 'none';
+                packet.className = 'packet';
+
+                components.forEach(c => c.classList.remove('active', 'error-state'));
+                drawConnections();
+
+                infoPanel.innerHTML = `
+                    <div class="h-full flex flex-col items-center justify-center text-muted opacity-80" style="animation: fadeIn 0.3s ease;">
+                        <i class="fa-solid fa-rotate-right text-4xl mb-4 text-slate-600"></i>
+                        <p class="text-center font-medium text-slate-300">Simulation Ready</p>
+                        <p class="text-center mt-2 text-xs">Run a simulation sequence to learn.</p>
+                    </div>
+                `;
+            }
+
+            async function moveTo(compId, duration = 600, yOffset = 0) {
+                await waitIfPaused();
+                if (abortController?.signal.aborted) throw new Error("Aborted");
+
+                const coords = getCenterCoords(compId);
+                coords.y += yOffset;
+
+                const currentLeft = packet.style.left || `${coords.x}px`;
+                const currentTop = packet.style.top || `${coords.y}px`;
+
+                currentPacketAnimation = packet.animate([
+                    { left: currentLeft, top: currentTop },
+                    { left: `${coords.x}px`, top: `${coords.y}px` }
+                ], { duration: duration, easing: 'ease-in-out', fill: 'forwards' });
+
+                if (isPaused) currentPacketAnimation.pause();
+
+                return new Promise((resolve, reject) => {
+                    currentPacketAnimation.onfinish = () => {
+                        packet.style.left = `${coords.x}px`; packet.style.top = `${coords.y}px`;
+                        currentPacketAnimation = null; resolve();
+                    };
+                    abortController.signal.addEventListener('abort', () => {
+                        if (currentPacketAnimation) currentPacketAnimation.cancel(); reject(new Error("Aborted"));
+                    }, { once: true });
+                });
+            }
+
+            async function activateComponent(compId, infoKey, type = 'active') {
+                await waitIfPaused();
+                if (abortController?.signal.aborted) throw new Error("Aborted");
+
+                const comp = document.getElementById(compId);
+                comp.classList.add(type);
+                updateInfoPanel(infoKey);
+
+                packet.animate([{ transform: 'translate(-50%, -50%) scale(1)' }, { transform: 'translate(-50%, -50%) scale(1.3)' }, { transform: 'translate(-50%, -50%) scale(1)' }], { duration: 300 });
+                await pausableSleep(600); // Read time
+            }
+
+            // SIMULATION RUNNER: LOGIN
+            async function runLoginSimulation() {
+                resetSimulation();
+                abortController = new AbortController();
+                isSimulating = true;
+                document.getElementById('btn-toggle-pause').classList.remove('opacity-50', 'cursor-not-allowed');
+
+                try {
+                    const startCoords = getCenterCoords('comp-client');
+                    packet.style.left = `${startCoords.x}px`; packet.style.top = `${startCoords.y - 50}px`;
+                    packet.className = 'packet credentials';
+                    packet.style.display = 'block';
+                    packetLabel.textContent = "{user, pass}";
+                    await pausableSleep(400);
+
+                    await moveTo('comp-client', 400);
+                    await activateComponent('comp-client', 'client');
+                    drawConnection('comp-client', 'comp-auth-controller', 'active-path-1', 'auth-active', 'curve-left');
+
+                    await moveTo('comp-auth-controller');
+                    await activateComponent('comp-auth-controller', 'auth-controller');
+
+                    drawConnection('comp-auth-controller', 'comp-auth-manager', 'active-path-2', 'auth-active');
+                    await moveTo('comp-auth-manager');
+                    await activateComponent('comp-auth-manager', 'auth-manager');
+
+                    drawConnection('comp-auth-manager', 'comp-jwt-service', 'active-path-3', 'active', 'curve-right');
+                    packetLabel.textContent = "Sign Token";
+                    await moveTo('comp-jwt-service');
+                    await activateComponent('comp-jwt-service', 'jwt-service');
+
+                    // Generate Token
+                    packet.className = 'packet jwt-token';
+                    packetLabel.textContent = "ey... JWT Token";
+                    await pausableSleep(500);
+
+                    // Return path (simplified straight back to client for visuals)
+                    drawConnection('comp-jwt-service', 'comp-client', 'active-path-4', 'active');
+                    await moveTo('comp-client', 1000);
+
+                    infoPanel.innerHTML = `
+                        <div class="h-full flex flex-col items-center justify-center animate-[fadeIn_0.5s_ease-out]">
+                            <i class="fa-solid fa-key text-6xl text-cyan-400 mb-6"></i>
+                            <h3 class="text-2xl font-bold text-white mb-2">Login Successful</h3>
+                            <div class="text-sm text-slate-300 text-center px-4 mt-4 bg-darkbg p-4 rounded border border-cyan-500/30">
+                                <p>The server verified credentials and signed a new JWT. The client will store this token (e.g., in localStorage) for future requests.</p>
+                            </div>
+                        </div>
+                    `;
+
+                } catch (e) { if (e.message !== "Aborted") console.error(e); }
+                finally { if (!abortController?.signal.aborted) { isSimulating = false; document.getElementById('btn-toggle-pause').classList.add('opacity-50', 'cursor-not-allowed'); } }
+            }
+
+            // SIMULATION RUNNER: API REQUEST (Valid & Invalid)
+            async function runApiSimulation(isValid) {
+                resetSimulation();
+                abortController = new AbortController();
+                isSimulating = true;
+                document.getElementById('btn-toggle-pause').classList.remove('opacity-50', 'cursor-not-allowed');
+
+                try {
+                    const startCoords = getCenterCoords('comp-client');
+                    packet.style.left = `${startCoords.x}px`; packet.style.top = `${startCoords.y - 50}px`;
+                    packet.className = isValid ? 'packet jwt-token' : 'packet error';
+                    packet.style.display = 'block';
+                    packetLabel.textContent = isValid ? "GET + Bearer ey..." : "GET + Expired Token";
+                    await pausableSleep(400);
+
+                    await moveTo('comp-client', 400);
+                    await activateComponent('comp-client', 'client');
+                    drawConnection('comp-client', 'comp-jwt-filter', 'active-path-1', 'active', 'curve-right');
+
+                    await moveTo('comp-jwt-filter');
+                    await activateComponent('comp-jwt-filter', 'jwt-filter');
+
+                    drawConnection('comp-jwt-filter', 'comp-jwt-service', 'active-path-2', 'active', 'curve-left');
+                    packetLabel.textContent = "Verify Signature";
+                    await moveTo('comp-jwt-service');
+                    await activateComponent('comp-jwt-service', 'jwt-service');
+
+                    if (isValid) {
+                        packetLabel.textContent = "Token Valid";
+                        await pausableSleep(400);
+
+                        // Path back to filter to update context
+                        drawConnection('comp-jwt-service', 'comp-jwt-filter', 'active-path-3', 'active', 'curve-right'); // fake visual return
+                        await moveTo('comp-jwt-filter', 500);
+                        packetLabel.textContent = "Set Context";
+
+                        drawConnection('comp-jwt-filter', 'comp-sec-context', 'active-path-4', 'active');
+                        await moveTo('comp-sec-context');
+                        await activateComponent('comp-sec-context', 'sec-context');
+
+                        drawConnection('comp-sec-context', 'comp-resource', 'active-path-5', 'active', 'curve-right');
+                        packetLabel.textContent = "Access Granted";
+                        await moveTo('comp-resource');
+                        await activateComponent('comp-resource', 'resource');
+
+                        infoPanel.innerHTML = `
+                            <div class="h-full flex flex-col items-center justify-center animate-[fadeIn_0.5s_ease-out]">
+                                <i class="fa-solid fa-shield-check text-6xl text-spring-light mb-6"></i>
+                                <h3 class="text-2xl font-bold text-white mb-2">Request Authorized</h3>
+                                <div class="text-sm text-slate-300 text-center px-4 mt-4 bg-darkbg p-4 rounded border border-spring/30">
+                                    <p>The signature was valid and not expired. The filter temporarily populated the SecurityContext, allowing the controller logic to execute.</p>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        // Error flow
+                        packetLabel.textContent = "Signature/Exp Failed";
+                        document.getElementById('comp-jwt-service').classList.add('error-state');
+                        await pausableSleep(600);
+
+                        drawConnection('comp-jwt-service', 'comp-jwt-filter', 'active-path-err1', 'error', 'curve-right');
+                        packetLabel.textContent = "Throw Exception";
+                        await moveTo('comp-jwt-filter', 500);
+                        document.getElementById('comp-jwt-filter').classList.add('error-state');
+
+                        drawConnection('comp-jwt-filter', 'comp-client', 'active-path-err2', 'error', 'curve-left');
+                        packetLabel.textContent = "401 Unauthorized";
+                        await moveTo('comp-client', 800, -20);
+
+                        infoPanel.innerHTML = `
+                            <div class="h-full flex flex-col items-center justify-center animate-[fadeIn_0.5s_ease-out]">
+                                <i class="fa-solid fa-shield-xmark text-6xl text-red-500 mb-6"></i>
+                                <h3 class="text-2xl font-bold text-white mb-2">Request Denied</h3>
+                                <div class="text-sm text-slate-300 text-center px-4 mt-4 bg-darkbg p-4 rounded border border-red-500/30">
+                                    <p>The JwtService threw an ExpiredJwtException or SignatureException. The filter aborted the request before it could reach the SecurityContext or Controller.</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                } catch (e) { if (e.message !== "Aborted") console.error(e); }
+                finally { if (!abortController?.signal.aborted) { isSimulating = false; document.getElementById('btn-toggle-pause').classList.add('opacity-50', 'cursor-not-allowed'); } }
+            }
+
+            // Bind buttons
+            document.getElementById('btn-sim-login').addEventListener('click', runLoginSimulation);
+            document.getElementById('btn-sim-valid').addEventListener('click', () => runApiSimulation(true));
+            document.getElementById('btn-sim-invalid').addEventListener('click', () => runApiSimulation(false));
+            document.getElementById('btn-toggle-pause').addEventListener('click', togglePause);
+            document.getElementById('btn-reset').addEventListener('click', resetSimulation);
+
+            window.addEventListener('resize', () => { if (!isSimulating && viewVisual.classList.contains('hidden') === false) drawConnections(); });
+            setTimeout(drawConnections, 100);
+        });
+
+        const style = document.createElement('style');
+        style.innerHTML = `@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }`;
+        document.head.appendChild(style);
+    </script>
+</body>
+
+</html>

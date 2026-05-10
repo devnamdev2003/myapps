@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring Security Architecture Flow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Code Highlighting -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/java.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        spring: {
+                            light: '#a3e635', // Lighter green for dark mode
+                            DEFAULT: '#6db33f', // Classic spring green
+                            dark: '#4d7c2a'
+                        },
+                        // Custom dark theme colors
+                        darkbg: '#0f172a', // slate-900
+                        panelbg: '#1e293b', // slate-800
+                        compbg: '#334155', // slate-700
+                        bordercolor: '#475569', // slate-600
+                        textcolor: '#f8fafc', // slate-50
+                        muted: '#94a3b8', // slate-400
+                        accent: '#38bdf8' // sky-400
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0f172a;
+            /* darkbg */
+            color: #f8fafc;
+        }
+
+        /* Scrollbar styles for dark mode */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        .component-box {
+            background-color: #1e293b;
+            /* panelbg */
+            border: 1px solid #475569;
+            /* bordercolor */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .component-box:hover {
+            border-color: #38bdf8;
+            /* accent hover */
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px -2px rgba(56, 189, 248, 0.15);
+        }
+
+        .component-box.active {
+            border-color: #a3e635;
+            /* spring-light */
+            box-shadow: 0 0 20px rgba(163, 230, 53, 0.3);
+            transform: scale(1.05);
+            z-index: 30;
+            background-color: #334155;
+        }
+
+        .component-box.error {
+            border-color: #ef4444;
+            /* red-500 */
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+            z-index: 30;
+            background-color: #451a1a;
+        }
+
+        .filter-chain {
+            background-color: rgba(30, 41, 59, 0.5);
+            border: 1px dashed #64748b;
+            border-radius: 0.5rem;
+            padding: 2.5rem 1.5rem 1.5rem 1.5rem;
+            margin: 1rem 0;
+            position: relative;
+        }
+
+        .zone-container {
+            position: relative;
+            background-color: rgba(30, 41, 59, 0.3);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 2.5rem 1.5rem 1.5rem 1.5rem;
+        }
+
+        .zone-title {
+            position: absolute;
+            top: -0.75rem;
+            left: 1rem;
+            background-color: #0f172a;
+            padding: 0 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #38bdf8;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border: 1px solid #334155;
+            border-radius: 0.25rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Robust SVG line styling */
+        svg.connector-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            /* Above background, below components */
+        }
+
+        .connector-path {
+            fill: none;
+            stroke: #475569;
+            /* default line color */
+            stroke-width: 2;
+            stroke-dasharray: 4, 4;
+            transition: stroke 0.3s ease, stroke-width 0.3s ease;
+        }
+
+        .connector-path.active {
+            stroke: #a3e635;
+            /* spring-light */
+            stroke-dasharray: none;
+            stroke-width: 3;
+            animation: flowDash 1s linear infinite;
+        }
+
+        .connector-path.error {
+            stroke: #ef4444;
+            /* red-500 */
+            stroke-dasharray: none;
+            stroke-width: 3;
+            animation: flowDash 1s linear infinite;
+        }
+
+        @keyframes flowDash {
+            from {
+                stroke-dashoffset: 20;
+            }
+
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        /* The moving packet */
+        .packet {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #38bdf8;
+            /* accent */
+            border-radius: 50%;
+            z-index: 50;
+            /* Topmost */
+            transform: translate(-50%, -50%);
+            display: none;
+            transition: left 0s linear, top 0s linear;
+            /* Set by JS */
+            box-shadow: 0 0 15px #38bdf8, inset 0 0 5px rgba(255, 255, 255, 0.8);
+            border: 2px solid #0f172a;
+        }
+
+        .packet.returning {
+            background-color: #a3e635;
+            box-shadow: 0 0 15px #a3e635, inset 0 0 5px rgba(255, 255, 255, 0.8);
+        }
+
+        .packet.error {
+            background-color: #ef4444;
+            box-shadow: 0 0 15px #ef4444, inset 0 0 5px rgba(255, 255, 255, 0.8);
+        }
+
+        .packet-label-container {
+            position: absolute;
+            top: -28px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(15, 23, 42, 0.95);
+            border: 1px solid #475569;
+            padding: 2px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+            pointer-events: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .markdown-body pre {
+            background-color: #0d1117;
+            border-radius: 6px;
+            padding: 16px;
+            overflow: auto;
+            border: 1px solid #30363d;
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .markdown-body code {
+            font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+            font-size: 85%;
+        }
+
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            border-bottom: 2px solid transparent;
+            color: #94a3b8;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            border-bottom-color: #38bdf8;
+            color: #f8fafc;
+        }
+    </style>
+</head>
+
+<body class="antialiased h-screen flex flex-col overflow-hidden text-textcolor bg-darkbg">
+
+    <!-- Header -->
+    <header class="bg-panelbg border-b border-bordercolor z-40 shadow-lg">
+        <div class="max-w-screen-2xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i
+                    class="fa-solid fa-shield-halved text-spring-light text-2xl drop-shadow-[0_0_8px_rgba(163,230,53,0.5)]"></i>
+                <h1 class="text-xl font-bold tracking-wide">Spring Security 6 Architecture</h1>
+            </div>
+            <div class="flex gap-4">
+                <div class="flex bg-darkbg rounded-lg p-1 border border-bordercolor">
+                    <button id="tab-visual" class="tab-btn active text-sm">Visual Flow</button>
+                    <button id="tab-principles" class="tab-btn text-sm">Principles & Code</button>
+                </div>
+            </div>
+            <div class="flex gap-2" id="sim-controls">
+                <button id="btn-success-flow"
+                    class="px-4 py-1.5 bg-spring-dark hover:bg-spring text-white rounded font-medium transition shadow-[0_0_10px_rgba(109,179,63,0.2)] text-sm flex items-center border border-spring">
+                    <i class="fa-solid fa-play mr-2"></i> Sim Success
+                </button>
+                <button id="btn-fail-flow"
+                    class="px-4 py-1.5 bg-red-900/50 hover:bg-red-800 text-red-100 border border-red-700 rounded font-medium transition shadow-sm text-sm flex items-center">
+                    <i class="fa-solid fa-bug mr-2"></i> Sim Failure
+                </button>
+                <button id="btn-toggle-pause"
+                    class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-bordercolor rounded font-medium transition shadow-sm text-sm flex items-center opacity-50 cursor-not-allowed">
+                    <i class="fa-solid fa-pause text-amber-400 mr-2"></i> Pause
+                </button>
+                <button id="btn-reset"
+                    class="px-3 py-1.5 bg-compbg hover:bg-slate-600 text-slate-200 border border-bordercolor rounded font-medium transition shadow-sm text-sm flex items-center">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex overflow-hidden relative w-full h-full">
+
+        <!-- VISUAL FLOW VIEW -->
+        <div id="view-visual" class="flex w-full h-full">
+            <!-- Info Panel (Left Sidebar) -->
+            <div
+                class="w-[400px] bg-panelbg border-r border-bordercolor flex flex-col z-30 shadow-[4px_0_15px_rgba(0,0,0,0.5)]">
+                <div class="p-4 border-b border-bordercolor bg-darkbg/80 flex justify-between items-center">
+                    <h2 class="text-xs font-bold text-accent uppercase tracking-widest flex items-center gap-2">
+                        <i class="fa-solid fa-microchip"></i> Component Inspector
+                    </h2>
+                </div>
+
+                <!-- Dynamic Content Area -->
+                <div class="p-6 flex-1 overflow-y-auto markdown-body" id="info-panel">
+                    <div class="h-full flex flex-col items-center justify-center text-muted opacity-80">
+                        <i class="fa-solid fa-hand-pointer text-5xl mb-4 text-slate-600"></i>
+                        <p class="text-center px-4">Click on any component in the diagram to explore its role, technical
+                            breakdown, and code examples.</p>
+
+                        <div class="mt-12 border border-bordercolor rounded-lg p-4 bg-darkbg w-full">
+                            <p class="text-xs font-semibold mb-3 text-slate-300 border-b border-bordercolor pb-2">
+                                Simulation Legend</p>
+                            <div class="flex items-center gap-3 mb-2 text-xs">
+                                <div class="w-3 h-3 rounded-full bg-accent shadow-[0_0_8px_#38bdf8]"></div> Incoming
+                                Request / Processing
+                            </div>
+                            <div class="flex items-center gap-3 mb-2 text-xs">
+                                <div class="w-3 h-3 rounded-full bg-spring-light shadow-[0_0_8px_#a3e635]"></div>
+                                Success / Authorized
+                            </div>
+                            <div class="flex items-center gap-3 text-xs">
+                                <div class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]"></div> Exception /
+                                Denied
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Architecture Diagram (Right Area) -->
+            <div class="flex-1 overflow-auto p-8 relative bg-darkbg" id="diagram-scroll-container">
+
+                <!-- Inner container for absolute positioning -->
+                <div class="relative max-w-5xl mx-auto pb-20 mt-8" id="diagram-container">
+
+                    <!-- SVG Canvas -->
+                    <svg class="connector-svg" id="svg-canvas">
+                        <defs>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#475569" />
+                            </marker>
+                            <marker id="arrowhead-active" markerWidth="10" markerHeight="7" refX="9" refY="3.5"
+                                orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#a3e635" />
+                            </marker>
+                            <marker id="arrowhead-error" markerWidth="10" markerHeight="7" refX="9" refY="3.5"
+                                orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#ef4444" />
+                            </marker>
+                        </defs>
+                    </svg>
+
+                    <!-- The moving packet -->
+                    <div id="request-packet" class="packet">
+                        <div class="packet-label-container" id="packet-label-container">
+                            <span class="text-[10px] font-bold text-white tracking-wide" id="packet-label">HTTP
+                                Req</span>
+                        </div>
+                    </div>
+
+                    <!-- Client -->
+                    <div class="flex justify-center mb-16 relative z-10 pt-2">
+                        <div class="component-box w-40 bg-slate-800" id="comp-client" data-info="client">
+                            <i class="fa-solid fa-laptop text-3xl text-accent mb-2"></i>
+                            <div class="font-bold text-slate-100 text-sm">Client Request</div>
+                        </div>
+                    </div>
+
+                    <!-- Filter Chain Level -->
+                    <div class="filter-chain mb-16" id="zone-sfc">
+                        <div class="zone-title"><i class="fa-solid fa-link mr-1"></i> SecurityFilterChain</div>
+
+                        <div class="flex justify-between items-center gap-4 relative z-10">
+
+                            <div class="component-box flex-1 min-w-[120px]" id="comp-filter1"
+                                data-info="securitycontext">
+                                <i class="fa-solid fa-box-archive text-xl text-slate-400 mb-2"></i>
+                                <div class="text-[11px] font-bold leading-tight text-slate-200">
+                                    SecurityContext<br>Filter</div>
+                            </div>
+
+                            <i class="fa-solid fa-arrow-right text-bordercolor"></i>
+
+                            <div class="component-box flex-1 min-w-[140px] border-accent/40 bg-sky-900/20"
+                                id="comp-filter-auth" data-info="authfilter">
+                                <i class="fa-solid fa-user-lock text-xl text-accent mb-2"></i>
+                                <div class="text-[11px] font-bold leading-tight text-sky-100">Authentication<br>Filter
+                                </div>
+                            </div>
+
+                            <i class="fa-solid fa-arrow-right text-bordercolor"></i>
+
+                            <div class="component-box flex-1 min-w-[120px] border-amber-500/30 bg-amber-900/10"
+                                id="comp-filter-exc" data-info="exceptionfilter">
+                                <i class="fa-solid fa-triangle-exclamation text-xl text-amber-500 mb-2"></i>
+                                <div class="text-[11px] font-bold leading-tight text-amber-200">
+                                    Exception<br>TranslationFilter</div>
+                            </div>
+
+                            <i class="fa-solid fa-arrow-right text-bordercolor"></i>
+
+                            <div class="component-box flex-1 min-w-[130px] border-purple-500/40 bg-purple-900/20"
+                                id="comp-filter-authz" data-info="authzfilter">
+                                <i class="fa-solid fa-shield-check text-xl text-purple-400 mb-2"></i>
+                                <div class="text-[11px] font-bold leading-tight text-purple-200">AuthorizationFilter
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Authentication Architecture -->
+                    <div class="flex flex-col lg:flex-row gap-10 relative z-10" id="zone-auth-arch">
+
+                        <!-- Core Auth Components -->
+                        <div class="zone-container w-full lg:w-2/3 border-accent/30 bg-slate-800/40 relative">
+                            <div class="zone-title text-accent"><i class="fa-solid fa-id-card mr-1"></i> Authentication
+                                Architecture</div>
+
+                            <div class="flex flex-col items-center gap-10 mt-4">
+                                <div class="component-box w-64 border-accent shadow-[0_0_15px_rgba(56,189,248,0.15)] bg-slate-800"
+                                    id="comp-auth-manager" data-info="authmanager">
+                                    <i class="fa-solid fa-network-wired text-2xl text-accent mb-2"></i>
+                                    <div class="font-bold text-sky-50 text-sm">AuthenticationManager</div>
+                                    <div class="text-[10px] text-sky-200/60 mt-1">Coordinates Validation</div>
+                                </div>
+
+                                <div class="component-box w-56 border-slate-500 bg-slate-800" id="comp-provider1"
+                                    data-info="authprovider">
+                                    <i class="fa-solid fa-plug text-xl text-slate-300 mb-2"></i>
+                                    <div class="text-sm font-bold text-slate-100">AuthenticationProvider</div>
+                                    <div class="text-[10px] text-slate-400 mt-1">e.g. DaoAuthenticationProvider</div>
+                                </div>
+
+                                <div class="flex gap-6 w-full justify-center">
+                                    <div class="component-box flex-1 max-w-[160px] border-yellow-600/50 bg-yellow-900/10 hover:border-yellow-500"
+                                        id="comp-userdetails" data-info="userdetailsservice">
+                                        <i class="fa-solid fa-users text-xl text-yellow-500 mb-2"></i>
+                                        <div class="text-xs font-bold text-yellow-100">UserDetailsService</div>
+                                        <div class="text-[9px] text-yellow-500/70 mt-1">Loads Data</div>
+                                    </div>
+                                    <div class="component-box flex-1 max-w-[160px] border-yellow-600/50 bg-yellow-900/10 hover:border-yellow-500"
+                                        id="comp-password" data-info="passwordencoder">
+                                        <i class="fa-solid fa-key text-xl text-yellow-500 mb-2"></i>
+                                        <div class="text-xs font-bold text-yellow-100">PasswordEncoder</div>
+                                        <div class="text-[9px] text-yellow-500/70 mt-1">Validates Hash</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Target & Context -->
+                        <div class="w-full lg:w-1/3 flex flex-col gap-10">
+                            <div class="component-box border-spring border bg-spring-dark/10 h-32 flex flex-col justify-center items-center shadow-[0_0_15px_rgba(109,179,63,0.1)] hover:border-spring-light"
+                                id="comp-context" data-info="securitycontext_holder">
+                                <i class="fa-solid fa-vault text-3xl text-spring-light mb-2"></i>
+                                <div class="font-bold text-spring-light text-sm">SecurityContextHolder</div>
+                                <div class="text-[10px] text-spring-light/70 mt-1">Stores Auth State</div>
+                            </div>
+
+                            <div class="component-box border-teal-500/50 bg-teal-900/20 h-40 flex flex-col justify-center items-center relative overflow-hidden group hover:border-teal-400"
+                                id="comp-resource" data-info="resource">
+                                <div
+                                    class="absolute inset-0 opacity-10 bg-[linear-gradient(#334155_1px,transparent_1px),linear-gradient(90deg,#334155_1px,transparent_1px)] bg-[size:10px_10px]">
+                                </div>
+                                <i
+                                    class="fa-solid fa-server text-4xl text-teal-400 mb-3 relative z-10 group-hover:drop-shadow-[0_0_8px_rgba(45,212,191,0.6)] transition-all"></i>
+                                <div class="font-bold text-teal-100 relative z-10">Target Resource</div>
+                                <div class="text-[10px] text-teal-300/60 mt-1 relative z-10">Secured Endpoint</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- PRINCIPLES & CODE VIEW (Hidden by default) -->
+        <div id="view-principles" class="hidden w-full h-full overflow-y-auto bg-darkbg p-8">
+            <div class="max-w-4xl mx-auto text-slate-300 markdown-body">
+                <h1 class="text-3xl font-bold text-white mb-6 border-b border-bordercolor pb-4">Spring Security 6:
+                    Architecture & Principles</h1>
+
+                <p class="text-lg leading-relaxed mb-8">In an era where data breaches cost millions and erode user
+                    trust, securing applications isn’t optional — it’s existential. Security isn’t just about tools;
+                    it’s about principles. Spring Security isn’t just a framework — it’s a manifestation of these
+                    principles.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+                    <div class="bg-panelbg border border-bordercolor p-5 rounded-lg border-l-4 border-l-sky-500">
+                        <h3 class="text-sky-400 font-bold mb-2 flex items-center"><i
+                                class="fa-solid fa-layer-group w-6"></i> Defense in Depth</h3>
+                        <p class="text-sm"><em>“Don’t rely on a single safeguard.”</em></p>
+                        <ul class="text-sm mt-2 list-disc list-inside">
+                            <li><strong>Layered Filters:</strong> A chain of security filters (e.g., auth, CSRF).</li>
+                            <li><strong>Redundant Checks:</strong> Method-level security (`@PreAuthorize`) alongside URL
+                                rules.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-panelbg border border-bordercolor p-5 rounded-lg border-l-4 border-l-spring-light">
+                        <h3 class="text-spring-light font-bold mb-2 flex items-center"><i
+                                class="fa-solid fa-user-shield w-6"></i> Least Privilege</h3>
+                        <p class="text-sm"><em>“Only grant necessary access.”</em></p>
+                        <ul class="text-sm mt-2 list-disc list-inside">
+                            <li><strong>RBAC:</strong> Restrict endpoints to specific roles.</li>
+                            <li><strong>Scope-Based:</strong> Limit third-party app permissions in OAuth2.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-panelbg border border-bordercolor p-5 rounded-lg border-l-4 border-l-red-500">
+                        <h3 class="text-red-400 font-bold mb-2 flex items-center"><i class="fa-solid fa-lock w-6"></i>
+                            Fail-Secure Defaults</h3>
+                        <p class="text-sm"><em>“Deny access unless explicitly permitted.”</em></p>
+                        <ul class="text-sm mt-2 list-disc list-inside">
+                            <li>All endpoints require auth unless whitelisted.</li>
+                            <li>Automatic CSRF protection for stateful flows.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-panelbg border border-bordercolor p-5 rounded-lg border-l-4 border-l-purple-500">
+                        <h3 class="text-purple-400 font-bold mb-2 flex items-center"><i
+                                class="fa-solid fa-file-shield w-6"></i> Confidentiality & Integrity</h3>
+                        <p class="text-sm"><em>“Protect data from eavesdropping and tampering.”</em></p>
+                        <ul class="text-sm mt-2 list-disc list-inside">
+                            <li>HTTPS enforcement.</li>
+                            <li>Password hashing (e.g., `BCryptPasswordEncoder`).</li>
+                            <li>JWT signature validation.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h2 class="text-2xl font-bold text-white mt-10 mb-4 border-b border-bordercolor pb-2">Core Components
+                    Configuration</h2>
+
+                <h3 class="text-xl text-accent font-semibold mt-6 mb-2">1. SecurityFilterChain</h3>
+                <p class="mb-4">Defines the order and behavior of security filters applied to incoming requests. Each
+                    filter handles a specific task.</p>
+                <pre><code class="language-java">@Bean
+SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+    http
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/admin/**").hasRole("ADMIN")
+            .anyRequest().authenticated()
+        )
+        .formLogin(Customizer.withDefaults())
+        .addFilterBefore(
+            new CustomFilter(),
+            BasicAuthenticationFilter.class
+        );
+    return http.build();
+}</code></pre>
+
+                <h3 class="text-xl text-accent font-semibold mt-8 mb-2">2. AuthenticationManager & Provider</h3>
+                <p class="mb-4">Coordinates the authentication process by delegating to one or more
+                    <code>AuthenticationProvider</code> instances to validate credentials.
+                </p>
+                <pre><code class="language-java">@Component
+public class ApiKeyAuthProvider implements AuthenticationProvider {
+    @Override
+    public Authentication authenticate(Authentication auth) {
+        String apiKey = (String) auth.getCredentials();
+        if (isValidApiKey(apiKey)) {
+            return new ApiKeyAuthenticationToken(
+                apiKey,
+                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+            );
+        }
+        throw new BadCredentialsException("Invalid API Key");
+    }
+
+    @Override
+    public boolean supports(Class<?> authentication) {
+        return ApiKeyAuthenticationToken.class.isAssignableFrom(authentication);
+    }
+}</code></pre>
+
+                <h3 class="text-xl text-yellow-400 font-semibold mt-8 mb-2">3. UserDetailsService & PasswordEncoder</h3>
+                <p class="mb-4">Loads user data from storage and validates hashes to ensure passwords are never stored
+                    in plaintext.</p>
+                <pre><code class="language-java">@Service
+public class CustomUserDetailsService implements UserDetailsService {
+    @Autowired
+    private UserRepository userRepository;
+
+    @Override
+    public UserDetails loadUserByUsername(String username) {
+        User user = userRepository.findByEmail(username)
+            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        return new org.springframework.security.core.userdetails.User(
+            user.getEmail(),
+            user.getPassword(),
+            user.getRoles().stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                .toList()
+        );
+    }
+}
+
+@Bean
+public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder(12); // Strength 12 recommended
+}</code></pre>
+            </div>
+        </div>
+    </main>
+
+    <!-- Hidden Content Library for Info Panel -->
+    <div id="content-library" class="hidden">
+
+        <div id="info-client">
+            <h3 class="text-lg font-bold text-accent mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-laptop mr-2"></i>Client Request</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>The journey begins when a client (browser, mobile app, or another API) sends an HTTP request to your
+                    application.</p>
+                <p>Before reaching your controllers, this request is intercepted by the Servlet Container (like Tomcat),
+                    which passes it to Spring Security via the <code>DelegatingFilterProxy</code> and
+                    <code>FilterChainProxy</code>.
+                </p>
+            </div>
+        </div>
+
+        <div id="info-securitycontext">
+            <h3 class="text-lg font-bold text-slate-200 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-link text-slate-400 mr-2"></i>SecurityFilterChain</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p><strong>What It Does:</strong> Defines the order and behavior of security filters applied to incoming
+                    requests. It represents the <span class="text-sky-400 font-semibold">Defense in Depth</span>
+                    principle.</p>
+                <p>Filters process requests sequentially. If a filter rejects the request (e.g., missing CSRF token),
+                    the chain stops.</p>
+                <pre
+                    class="bg-darkbg p-2 rounded border border-bordercolor text-[10px] mt-2 overflow-x-auto text-sky-200"><code>http.authorizeHttpRequests(auth -> auth
+    .requestMatchers("/admin/**").hasRole("ADMIN")
+    .anyRequest().authenticated()
+)</code></pre>
+            </div>
+        </div>
+
+        <div id="info-authfilter">
+            <h3 class="text-lg font-bold text-accent mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-user-lock mr-2"></i>Authentication Filter</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>Filters like <code>UsernamePasswordAuthenticationFilter</code> or
+                    <code>BearerTokenAuthenticationFilter</code> intercept requests to extract credentials.
+                </p>
+                <p>They create an <em>unauthenticated</em> token and pass it to the <code>AuthenticationManager</code>.
+                    If auth succeeds, the resulting token is saved in the SecurityContext.</p>
+            </div>
+        </div>
+
+        <div id="info-exceptionfilter">
+            <h3 class="text-lg font-bold text-amber-400 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-triangle-exclamation mr-2"></i>ExceptionTranslationFilter</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>Acts as a safety net just before authorization.</p>
+                <p>It catches security exceptions thrown by filters further down (or by your app logic) and translates
+                    them into HTTP responses:</p>
+                <ul class="list-disc pl-4 text-xs space-y-1 mt-2">
+                    <li><strong class="text-amber-500">AuthenticationException:</strong> User needs to log in (Returns
+                        401).</li>
+                    <li><strong class="text-red-400">AccessDeniedException:</strong> User lacks permission (Returns
+                        403).</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="info-authzfilter">
+            <h3 class="text-lg font-bold text-purple-400 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-shield-check mr-2"></i>AuthorizationFilter</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>The final gatekeeper before your actual application code is executed.</p>
+                <p>It enforces the <span class="text-purple-400 font-semibold">Principle of Least Privilege</span>. It
+                    checks the current authenticated user's roles against the security constraints defined for the
+                    requested URL.</p>
+            </div>
+        </div>
+
+        <div id="info-authmanager">
+            <h3 class="text-lg font-bold text-accent mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-network-wired mr-2"></i>AuthenticationManager</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p><strong>What It Does:</strong> Coordinates the authentication process.</p>
+                <p>It receives an <code>Authentication</code> object (e.g., from a filter) and iterates through its
+                    configured list of <code>AuthenticationProvider</code> instances until it finds one that supports
+                    the token type.</p>
+                <p>It then delegates the actual validation to that provider.</p>
+            </div>
+        </div>
+
+        <div id="info-authprovider">
+            <h3 class="text-lg font-bold text-slate-100 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-plug text-slate-400 mr-2"></i>AuthenticationProvider</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>Where the actual validation logic lives. You might have different providers for DB lookup, LDAP, or
+                    API Keys.</p>
+                <p>The standard <code>DaoAuthenticationProvider</code> uses the <code>UserDetailsService</code> to fetch
+                    the user and the <code>PasswordEncoder</code> to verify the password.</p>
+            </div>
+        </div>
+
+        <div id="info-userdetailsservice">
+            <h3 class="text-lg font-bold text-yellow-400 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-users mr-2"></i>UserDetailsService</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p><strong>What It Does:</strong> Loads user-specific data from a storage layer (database, LDAP, etc.).
+                </p>
+                <p>It returns a <code>UserDetails</code> object containing the user's stored password hash, granted
+                    authorities (roles), and account status, which Spring uses for evaluation.</p>
+            </div>
+        </div>
+
+        <div id="info-passwordencoder">
+            <h3 class="text-lg font-bold text-yellow-400 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-key mr-2"></i>PasswordEncoder</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p><strong>What It Does:</strong> Encodes and validates passwords, ensuring <span
+                        class="text-yellow-400 font-semibold">Confidentiality</span>.</p>
+                <p>It prevents password leaks if the DB is compromised. Always use strong algorithms like BCrypt
+                    (strength 12+), Argon2, or SCrypt.</p>
+                <pre
+                    class="bg-darkbg p-2 rounded border border-bordercolor text-[10px] mt-2 overflow-x-auto text-yellow-200"><code>return new BCryptPasswordEncoder(12);</code></pre>
+            </div>
+        </div>
+
+        <div id="info-securitycontext_holder">
+            <h3 class="text-lg font-bold text-spring-light mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-vault mr-2"></i>SecurityContextHolder</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>The heart of state management. After successful authentication, the resulting
+                    <code>Authentication</code> object is stored here.
+                </p>
+                <p>By default, it uses a <code>ThreadLocal</code>, meaning anywhere in your application (on that request
+                    thread), you can access the current user's details without passing them as arguments.</p>
+            </div>
+        </div>
+
+        <div id="info-resource">
+            <h3 class="text-lg font-bold text-teal-400 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-server mr-2"></i>Target Resource</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>Your protected application code (e.g., a Spring MVC Controller).</p>
+                <p>Because of Spring Security's <span class="text-red-400 font-semibold">Fail-Secure Defaults</span>, a
+                    request only reaches this point if it successfully traversed the entire filter chain, authenticated
+                    successfully, and was authorized for access.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Syntax Highlighting
+            hljs.highlightAll();
+
+            // Tabs Logic
+            const tabVisual = document.getElementById('tab-visual');
+            const tabPrinciples = document.getElementById('tab-principles');
+            const viewVisual = document.getElementById('view-visual');
+            const viewPrinciples = document.getElementById('view-principles');
+            const simControls = document.getElementById('sim-controls');
+
+            tabVisual.addEventListener('click', () => {
+                tabVisual.classList.add('active');
+                tabPrinciples.classList.remove('active');
+                viewVisual.classList.remove('hidden');
+                viewPrinciples.classList.add('hidden');
+                simControls.style.display = 'flex';
+                setTimeout(drawConnections, 50); // Redraw lines when becoming visible
+            });
+
+            tabPrinciples.addEventListener('click', () => {
+                tabPrinciples.classList.add('active');
+                tabVisual.classList.remove('active');
+                viewPrinciples.classList.remove('hidden');
+                viewVisual.classList.add('hidden');
+                simControls.style.display = 'none';
+            });
+
+
+            // Architecture Logic
+            const infoPanel = document.getElementById('info-panel');
+            const components = document.querySelectorAll('.component-box');
+            const svgCanvas = document.getElementById('svg-canvas');
+            const packet = document.getElementById('request-packet');
+            const packetLabel = document.getElementById('packet-label');
+            const diagramContainer = document.getElementById('diagram-container');
+
+            let isSimulating = false;
+            let abortController = null;
+
+            // Pause State Variables
+            let isPaused = false;
+            let pauseLock = null;
+            let pauseResolve = null;
+            let currentPacketAnimation = null;
+            let activeSleepTimer = null;
+            let sleepResolveFn = null;
+            let sleepRemaining = 0;
+            let sleepStartTime = 0;
+
+            // Robust coordinate calculation relative to the SVG container
+            function getCenterCoords(elementId) {
+                const el = document.getElementById(elementId);
+                if (!el) return { x: 0, y: 0 };
+
+                // Get rects relative to the viewport
+                const elRect = el.getBoundingClientRect();
+                const containerRect = diagramContainer.getBoundingClientRect();
+
+                // Calculate center relative to the top-left of the diagram container
+                // This ignores scroll position of the parent divs
+                const x = (elRect.left - containerRect.left) + (elRect.width / 2);
+                const y = (elRect.top - containerRect.top) + (elRect.height / 2);
+
+                return { x, y };
+            }
+
+            // Draw SVG connection
+            function drawConnection(id1, id2, pathId, style = 'normal', curved = false) {
+                const p1 = getCenterCoords(id1);
+                const p2 = getCenterCoords(id2);
+
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("id", pathId);
+                path.classList.add("connector-path");
+
+                let d = '';
+                if (curved) {
+                    const midY = p1.y + (p2.y - p1.y) / 2;
+                    d = `M ${p1.x} ${p1.y} C ${p1.x} ${midY}, ${p2.x} ${midY}, ${p2.x} ${p2.y}`;
+                } else {
+                    d = `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y}`;
+                }
+
+                path.setAttribute("d", d);
+
+                if (style === 'normal') {
+                    path.setAttribute("marker-end", "url(#arrowhead)");
+                } else if (style === 'active') {
+                    path.classList.add('active');
+                    path.setAttribute("marker-end", "url(#arrowhead-active)");
+                } else if (style === 'error') {
+                    path.classList.add('error');
+                    path.setAttribute("marker-end", "url(#arrowhead-error)");
+                }
+
+                svgCanvas.appendChild(path);
+                return path;
+            }
+
+            function clearDynamicPaths() {
+                const paths = svgCanvas.querySelectorAll('path[id^="active-path-"]');
+                paths.forEach(p => p.remove());
+            }
+
+            function drawConnections() {
+                // Clear existing paths, keep defs
+                svgCanvas.innerHTML = `
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#475569" /></marker>
+                        <marker id="arrowhead-active" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#a3e635" /></marker>
+                        <marker id="arrowhead-error" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ef4444" /></marker>
+                    </defs>
+                `;
+
+                // Base structural lines
+                drawConnection('comp-client', 'comp-filter1', 'line-base-1');
+
+                drawConnection('comp-filter-auth', 'comp-auth-manager', 'line-base-auth1', 'normal', true);
+                drawConnection('comp-auth-manager', 'comp-provider1', 'line-base-auth2');
+                drawConnection('comp-provider1', 'comp-userdetails', 'line-base-auth3', 'normal', true);
+                drawConnection('comp-provider1', 'comp-password', 'line-base-auth4', 'normal', true);
+
+                drawConnection('comp-filter-auth', 'comp-context', 'line-base-succ1', 'normal', true);
+                drawConnection('comp-filter-authz', 'comp-resource', 'line-base-final', 'normal', true);
+            }
+
+            // UI Updates
+            function updateInfoPanel(dataKey) {
+                const sourceContent = document.getElementById(`info-${dataKey}`);
+                if (sourceContent) {
+                    infoPanel.innerHTML = sourceContent.outerHTML;
+                    infoPanel.firstElementChild.removeAttribute('id');
+                    infoPanel.firstElementChild.classList.add('animate-[fadeIn_0.2s_ease-out]');
+                }
+
+                components.forEach(c => {
+                    c.classList.remove('active', 'error');
+                });
+
+                const activeComp = document.querySelector(`.component-box[data-info="${dataKey}"]`);
+                if (activeComp) {
+                    activeComp.classList.add('active');
+                }
+            }
+
+            components.forEach(comp => {
+                comp.addEventListener('click', () => {
+                    if (!isSimulating) {
+                        updateInfoPanel(comp.getAttribute('data-info'));
+                    }
+                });
+            });
+
+            // --- Simulation Logic ---
+
+            function togglePause() {
+                if (!isSimulating) return;
+
+                isPaused = !isPaused;
+                const btn = document.getElementById('btn-toggle-pause');
+
+                if (isPaused) {
+                    btn.innerHTML = '<i class="fa-solid fa-play text-green-400 mr-2"></i> Resume';
+                    if (!packetLabel.textContent.includes("(Paused)")) {
+                        packetLabel.textContent += " (Paused)";
+                    }
+
+                    if (currentPacketAnimation) currentPacketAnimation.pause();
+                    document.querySelectorAll('.connector-path.active, .connector-path.error').forEach(p => {
+                        p.style.animationPlayState = 'paused';
+                    });
+
+                    pauseLock = new Promise(r => pauseResolve = r);
+
+                    if (activeSleepTimer) {
+                        clearTimeout(activeSleepTimer);
+                        activeSleepTimer = null;
+                        sleepRemaining -= (Date.now() - sleepStartTime);
+                    }
+                } else {
+                    btn.innerHTML = '<i class="fa-solid fa-pause text-amber-400 mr-2"></i> Pause';
+                    packetLabel.textContent = packetLabel.textContent.replace(" (Paused)", "");
+
+                    if (currentPacketAnimation) currentPacketAnimation.play();
+                    document.querySelectorAll('.connector-path.active, .connector-path.error').forEach(p => {
+                        p.style.animationPlayState = 'running';
+                    });
+
+                    if (pauseResolve) {
+                        pauseResolve();
+                        pauseResolve = null;
+                        pauseLock = null;
+                    }
+
+                    if (sleepRemaining > 0 && sleepResolveFn) {
+                        sleepStartTime = Date.now();
+                        activeSleepTimer = setTimeout(() => {
+                            let res = sleepResolveFn;
+                            sleepResolveFn = null;
+                            sleepRemaining = 0;
+                            if (res) res();
+                        }, sleepRemaining);
+                    }
+                }
+            }
+
+            function waitIfPaused() {
+                return pauseLock ? pauseLock : Promise.resolve();
+            }
+
+            function pausableSleep(ms) {
+                return new Promise((resolve, reject) => {
+                    if (abortController?.signal.aborted) return reject(new Error("Aborted"));
+
+                    sleepRemaining = ms;
+                    sleepResolveFn = resolve;
+
+                    if (!isPaused) {
+                        sleepStartTime = Date.now();
+                        activeSleepTimer = setTimeout(() => {
+                            sleepResolveFn = null;
+                            sleepRemaining = 0;
+                            resolve();
+                        }, sleepRemaining);
+                    }
+
+                    abortController.signal.addEventListener('abort', () => {
+                        clearTimeout(activeSleepTimer);
+                        reject(new Error("Aborted"));
+                    }, { once: true });
+                });
+            }
+
+            function resetSimulation() {
+                if (abortController) {
+                    abortController.abort();
+                }
+                isSimulating = false;
+
+                // Reset Pause State
+                isPaused = false;
+                pauseLock = null;
+                pauseResolve = null;
+                if (activeSleepTimer) clearTimeout(activeSleepTimer);
+                if (currentPacketAnimation) {
+                    currentPacketAnimation.cancel();
+                    currentPacketAnimation = null;
+                }
+
+                const btnPause = document.getElementById('btn-toggle-pause');
+                btnPause.innerHTML = '<i class="fa-solid fa-pause text-amber-400 mr-2"></i> Pause';
+                btnPause.classList.add('opacity-50', 'cursor-not-allowed');
+
+                packet.style.transition = 'none';
+                packet.style.display = 'none';
+                packet.className = 'packet';
+                packet.style.backgroundColor = '';
+                packet.style.boxShadow = '';
+                packetLabel.textContent = "HTTP Req";
+
+                components.forEach(c => c.classList.remove('active', 'error'));
+
+                drawConnections();
+
+                document.getElementById('info-panel').innerHTML = `
+                    <div class="h-full flex flex-col items-center justify-center text-muted opacity-80 animate-[fadeIn_0.3s_ease]">
+                        <i class="fa-solid fa-rotate-right text-4xl mb-4 text-slate-600"></i>
+                        <p class="text-center font-medium text-slate-300">Simulation Ready</p>
+                        <p class="text-center mt-2 text-xs">Run a simulation or click components to explore.</p>
+                    </div>
+                `;
+            }
+
+            async function moveTo(compId, duration = 700) {
+                await waitIfPaused();
+                if (abortController?.signal.aborted) throw new Error("Aborted");
+
+                const coords = getCenterCoords(compId);
+
+                packet.style.transition = 'background-color 0.3s, box-shadow 0.3s, transform 0.3s';
+                const currentLeft = packet.style.left || `${coords.x}px`;
+                const currentTop = packet.style.top || `${coords.y}px`;
+
+                currentPacketAnimation = packet.animate([
+                    { left: currentLeft, top: currentTop },
+                    { left: `${coords.x}px`, top: `${coords.y}px` }
+                ], {
+                    duration: duration,
+                    easing: 'ease-in-out',
+                    fill: 'forwards'
+                });
+
+                if (isPaused) {
+                    currentPacketAnimation.pause();
+                }
+
+                return new Promise((resolve, reject) => {
+                    currentPacketAnimation.onfinish = () => {
+                        packet.style.left = `${coords.x}px`;
+                        packet.style.top = `${coords.y}px`;
+                        currentPacketAnimation = null;
+                        resolve();
+                    };
+
+                    abortController.signal.addEventListener('abort', () => {
+                        if (currentPacketAnimation) currentPacketAnimation.cancel();
+                        reject(new Error("Aborted"));
+                    }, { once: true });
+                });
+            }
+
+            async function activateComponent(compId, infoKey, type = 'active') {
+                await waitIfPaused();
+                if (abortController?.signal.aborted) throw new Error("Aborted");
+
+                const comp = document.getElementById(compId);
+                comp.classList.add(type);
+
+                updateInfoPanel(infoKey);
+
+                packet.style.transform = 'translate(-50%, -50%) scale(1.3)';
+                await pausableSleep(200);
+                packet.style.transform = 'translate(-50%, -50%) scale(1)';
+                await pausableSleep(600); // Read time
+            }
+
+            function drawActivePath(id1, id2, type = 'active', curved = false) {
+                if (abortController?.signal.aborted) return;
+                return drawConnection(id1, id2, `active-path-${Date.now()}`, type, curved);
+            }
+
+            async function runSimulation(isSuccess) {
+                resetSimulation();
+
+                abortController = new AbortController();
+                isSimulating = true;
+
+                const btnPause = document.getElementById('btn-toggle-pause');
+                btnPause.classList.remove('opacity-50', 'cursor-not-allowed');
+
+                try {
+                    // Start position
+                    const startCoords = getCenterCoords('comp-client');
+                    packet.style.transition = 'none';
+                    packet.style.left = `${startCoords.x}px`;
+                    packet.style.top = `${startCoords.y - 50}px`;
+                    packet.style.display = 'block';
+                    void packet.offsetWidth; // reflow
+
+                    packetLabel.textContent = isSuccess ? "Valid Req" : "Invalid Req";
+                    await pausableSleep(400);
+
+                    // Flow into chain
+                    await moveTo('comp-client', 400);
+                    await activateComponent('comp-client', 'client');
+
+                    drawActivePath('comp-client', 'comp-filter1');
+                    await moveTo('comp-filter1');
+                    await activateComponent('comp-filter1', 'securitycontext');
+
+                    await moveTo('comp-filter-auth');
+                    await activateComponent('comp-filter-auth', 'authfilter');
+
+                    // Auth delegation
+                    packetLabel.textContent = "AuthToken";
+                    drawActivePath('comp-filter-auth', 'comp-auth-manager', 'active', true);
+                    await moveTo('comp-auth-manager');
+                    await activateComponent('comp-auth-manager', 'authmanager');
+
+                    drawActivePath('comp-auth-manager', 'comp-provider1');
+                    await moveTo('comp-provider1');
+                    await activateComponent('comp-provider1', 'authprovider');
+
+                    // Check DB/Hash
+                    drawActivePath('comp-provider1', 'comp-userdetails', 'active', true);
+                    await moveTo('comp-userdetails');
+                    await activateComponent('comp-userdetails', 'userdetailsservice');
+
+                    drawActivePath('comp-provider1', 'comp-password', 'active', true);
+                    await moveTo('comp-password');
+                    await activateComponent('comp-password', 'passwordencoder');
+
+                    if (isSuccess) {
+                        packet.classList.add('returning');
+                        packetLabel.textContent = "Success";
+
+                        await moveTo('comp-provider1', 400);
+                        await moveTo('comp-auth-manager', 400);
+
+                        drawActivePath('comp-auth-manager', 'comp-context', 'active', true);
+                        await moveTo('comp-context');
+                        await activateComponent('comp-context', 'securitycontext_holder');
+                        packetLabel.textContent = "Stored Context";
+
+                        await moveTo('comp-filter-auth', 500);
+                        packet.classList.remove('returning');
+                        packetLabel.textContent = "Req (Auth'd)";
+
+                        await moveTo('comp-filter-exc');
+                        await activateComponent('comp-filter-exc', 'exceptionfilter');
+
+                        await moveTo('comp-filter-authz');
+                        await activateComponent('comp-filter-authz', 'authzfilter');
+
+                        drawActivePath('comp-filter-authz', 'comp-resource', 'active', true);
+                        await moveTo('comp-resource');
+                        await activateComponent('comp-resource', 'resource');
+
+                        packet.classList.add('returning');
+                        packetLabel.textContent = "200 OK";
+
+                        infoPanel.innerHTML = `
+                            <div class="h-full flex flex-col items-center justify-center animate-[fadeIn_0.5s_ease-out]">
+                                <i class="fa-solid fa-circle-check text-6xl text-spring-light mb-6"></i>
+                                <h3 class="text-2xl font-bold text-white mb-2">Access Granted</h3>
+                                <div class="text-sm text-slate-300 text-center px-4 space-y-2 mt-4 bg-darkbg p-4 rounded border border-spring/30">
+                                    <p>Authentication verified against DB & Hash.</p>
+                                    <p>Context stored in ThreadLocal.</p>
+                                    <p>AuthorizationFilter verified RBAC roles.</p>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        packet.classList.add('error');
+                        packetLabel.textContent = "BadCredentials";
+
+                        document.getElementById('comp-provider1').classList.add('error');
+                        await moveTo('comp-provider1', 400);
+
+                        document.getElementById('comp-auth-manager').classList.add('error');
+                        drawActivePath('comp-provider1', 'comp-auth-manager', 'error');
+                        await moveTo('comp-auth-manager', 400);
+
+                        drawActivePath('comp-auth-manager', 'comp-filter-auth', 'error', true);
+                        await moveTo('comp-filter-auth', 500);
+                        await activateComponent('comp-filter-auth', 'authfilter', 'error');
+
+                        drawActivePath('comp-filter-auth', 'comp-client', 'error', true);
+                        packetLabel.textContent = "401 Unauthorized";
+                        await moveTo('comp-client', 700);
+
+                        infoPanel.innerHTML = `
+                            <div class="h-full flex flex-col items-center justify-center animate-[fadeIn_0.5s_ease-out]">
+                                <i class="fa-solid fa-shield-xmark text-6xl text-red-500 mb-6"></i>
+                                <h3 class="text-2xl font-bold text-white mb-2">Access Denied</h3>
+                                <div class="text-sm text-slate-300 text-center px-4 space-y-2 mt-4 bg-darkbg p-4 rounded border border-red-500/30">
+                                    <p>PasswordEncoder rejected credentials.</p>
+                                    <p>ExceptionTranslationFilter handled the error.</p>
+                                    <p>Target Resource remained protected.</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                } catch (e) {
+                    if (e.message !== "Aborted") console.error(e);
+                } finally {
+                    if (!abortController?.signal.aborted) {
+                        isSimulating = false;
+                        document.getElementById('btn-toggle-pause').classList.add('opacity-50', 'cursor-not-allowed');
+                    }
+                }
+            }
+
+            // Listeners
+            document.getElementById('btn-success-flow').addEventListener('click', () => runSimulation(true));
+            document.getElementById('btn-fail-flow').addEventListener('click', () => runSimulation(false));
+            document.getElementById('btn-toggle-pause').addEventListener('click', togglePause);
+            document.getElementById('btn-reset').addEventListener('click', resetSimulation);
+
+            // Redraw on resize
+            window.addEventListener('resize', () => {
+                if (!isSimulating && viewVisual.classList.contains('hidden') === false) {
+                    drawConnections();
+                }
+            });
+
+            // Initial Draw
+            setTimeout(drawConnections, 100);
+        });
+
+        // CSS Keyframe for info panel fade
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(5px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+
+</html>

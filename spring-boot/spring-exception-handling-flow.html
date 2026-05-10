@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring Boot Exception Handling Flow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Code Highlighting -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/json.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        spring: {
+                            light: '#a3e635',
+                            DEFAULT: '#6db33f',
+                            dark: '#4d7c2a'
+                        },
+                        // Theme colors
+                        darkbg: '#0f172a',
+                        panelbg: '#1e293b',
+                        compbg: '#334155',
+                        bordercolor: '#475569',
+                        textcolor: '#f8fafc',
+                        muted: '#94a3b8',
+                        accent: '#8b5cf6', // Violet for exception handling theme
+                        accent_light: '#a78bfa',
+                        error: '#ef4444',
+                        warning: '#f59e0b'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        .component-box {
+            background-color: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .component-box:hover {
+            border-color: #8b5cf6;
+            /* Violet */
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px -2px rgba(139, 92, 246, 0.15);
+        }
+
+        .component-box.active {
+            border-color: #a78bfa;
+            box-shadow: 0 0 20px rgba(167, 139, 250, 0.3);
+            transform: scale(1.05);
+            z-index: 30;
+            background-color: #2e1065;
+            /* Deep violet */
+        }
+
+        .component-box.error-state {
+            border-color: #ef4444;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+            z-index: 30;
+            background-color: #451a1a;
+        }
+
+        .zone-container {
+            position: relative;
+            background-color: rgba(30, 41, 59, 0.3);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 2.5rem 1.5rem 1.5rem 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .zone-title {
+            position: absolute;
+            top: -0.75rem;
+            left: 1rem;
+            background-color: #0f172a;
+            padding: 0 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #8b5cf6;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border: 1px solid #334155;
+            border-radius: 0.25rem;
+        }
+
+        svg.connector-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .connector-path {
+            fill: none;
+            stroke: #475569;
+            stroke-width: 2;
+            stroke-dasharray: 4, 4;
+            transition: stroke 0.3s ease, stroke-width 0.3s ease;
+        }
+
+        .connector-path.active {
+            stroke: #8b5cf6;
+            /* Violet */
+            stroke-dasharray: none;
+            stroke-width: 3;
+            animation: flowDash 1s linear infinite;
+        }
+
+        .connector-path.error {
+            stroke: #ef4444;
+            /* Red */
+            stroke-dasharray: none;
+            stroke-width: 3;
+            animation: flowDash 1s linear infinite;
+        }
+
+        @keyframes flowDash {
+            from {
+                stroke-dashoffset: 20;
+            }
+
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        .packet {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #38bdf8;
+            /* Blue for normal req */
+            border-radius: 50%;
+            z-index: 50;
+            transform: translate(-50%, -50%);
+            display: none;
+            box-shadow: 0 0 15px #38bdf8, inset 0 0 5px rgba(255, 255, 255, 0.8);
+            border: 2px solid #0f172a;
+        }
+
+        .packet.returning {
+            background-color: #a78bfa;
+            /* Violet for problem detail */
+            box-shadow: 0 0 15px #a78bfa, inset 0 0 5px rgba(255, 255, 255, 0.8);
+        }
+
+        .packet.error {
+            background-color: #ef4444;
+            /* Red for exception bubbling */
+            box-shadow: 0 0 15px #ef4444, inset 0 0 5px rgba(255, 255, 255, 0.8);
+        }
+
+        .packet-label-container {
+            position: absolute;
+            top: -28px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(15, 23, 42, 0.95);
+            border: 1px solid #475569;
+            padding: 2px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .markdown-body pre {
+            background-color: #0d1117;
+            border-radius: 6px;
+            padding: 16px;
+            overflow: auto;
+            border: 1px solid #30363d;
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .markdown-body code {
+            font-family: ui-monospace, SFMono-Regular, monospace;
+            font-size: 85%;
+        }
+
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            border-bottom: 2px solid transparent;
+            color: #94a3b8;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            border-bottom-color: #8b5cf6;
+            color: #f8fafc;
+        }
+    </style>
+</head>
+
+<body class="antialiased h-screen flex flex-col overflow-hidden text-textcolor bg-darkbg">
+
+    <!-- Header -->
+    <header class="bg-panelbg border-b border-bordercolor z-40 shadow-lg">
+        <div class="max-w-screen-2xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i
+                    class="fa-solid fa-bug-slash text-accent_light text-2xl drop-shadow-[0_0_8px_rgba(167,139,250,0.5)]"></i>
+                <h1 class="text-xl font-bold tracking-wide">Global Exception Handling Flow</h1>
+            </div>
+            <div class="flex gap-4">
+                <div class="flex bg-darkbg rounded-lg p-1 border border-bordercolor">
+                    <button id="tab-visual" class="tab-btn active text-sm">Visual Flow</button>
+                    <button id="tab-principles" class="tab-btn text-sm">Principles & Code</button>
+                </div>
+            </div>
+            <div class="flex gap-2" id="sim-controls">
+                <button id="btn-sim-404"
+                    class="px-3 py-1.5 bg-accent hover:bg-purple-500 text-white rounded font-medium transition shadow-sm text-sm flex items-center border border-purple-400">
+                    <i class="fa-solid fa-magnifying-glass-minus mr-2"></i> Sim 404 (Not Found)
+                </button>
+                <button id="btn-sim-400"
+                    class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white border border-amber-500 rounded font-medium transition shadow-sm text-sm flex items-center">
+                    <i class="fa-solid fa-clipboard-list mr-2"></i> Sim 400 (Validation)
+                </button>
+                <button id="btn-toggle-pause"
+                    class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-bordercolor rounded font-medium transition shadow-sm text-sm flex items-center opacity-50 cursor-not-allowed">
+                    <i class="fa-solid fa-pause text-amber-400 mr-2"></i> Pause
+                </button>
+                <button id="btn-reset"
+                    class="px-3 py-1.5 bg-compbg hover:bg-slate-600 text-slate-200 border border-bordercolor rounded font-medium transition shadow-sm text-sm flex items-center">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 flex overflow-hidden relative w-full h-full">
+        <!-- VISUAL FLOW VIEW -->
+        <div id="view-visual" class="flex w-full h-full">
+
+            <!-- Info Panel -->
+            <div
+                class="w-[400px] bg-panelbg border-r border-bordercolor flex flex-col z-30 shadow-[4px_0_15px_rgba(0,0,0,0.5)]">
+                <div class="p-4 border-b border-bordercolor bg-darkbg/80">
+                    <h2 class="text-xs font-bold text-accent uppercase tracking-widest flex items-center gap-2">
+                        <i class="fa-solid fa-microchip"></i> Component Inspector
+                    </h2>
+                </div>
+                <div class="p-6 flex-1 overflow-y-auto markdown-body" id="info-panel">
+                    <div class="h-full flex flex-col items-center justify-center text-muted opacity-80">
+                        <i class="fa-solid fa-hand-pointer text-5xl mb-4 text-slate-600"></i>
+                        <p class="text-center px-4">Click on any component in the diagram to explore its role in the
+                            global exception handling architecture.</p>
+
+                        <div class="mt-12 border border-bordercolor rounded-lg p-4 bg-darkbg w-full">
+                            <p class="text-xs font-semibold mb-3 text-slate-300 border-b border-bordercolor pb-2">
+                                Simulation Legend</p>
+                            <div class="flex items-center gap-3 mb-2 text-xs">
+                                <div class="w-3 h-3 rounded-full bg-sky-400 shadow-[0_0_8px_#38bdf8]"></div> Incoming
+                                HTTP Request
+                            </div>
+                            <div class="flex items-center gap-3 mb-2 text-xs">
+                                <div class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]"></div> Exception
+                                Thrown / Bubbling
+                            </div>
+                            <div class="flex items-center gap-3 text-xs">
+                                <div class="w-3 h-3 rounded-full bg-accent_light shadow-[0_0_8px_#a78bfa]"></div>
+                                Standardized ProblemDetail JSON
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Architecture Diagram -->
+            <div class="flex-1 overflow-auto p-8 relative bg-darkbg" id="diagram-scroll-container">
+                <div class="relative max-w-5xl mx-auto pb-20 mt-8" id="diagram-container">
+
+                    <svg class="connector-svg" id="svg-canvas"></svg>
+
+                    <div id="request-packet" class="packet">
+                        <div class="packet-label-container" id="packet-label-container">
+                            <span class="text-[10px] font-bold text-white tracking-wide" id="packet-label">HTTP
+                                Req</span>
+                        </div>
+                    </div>
+
+                    <!-- Client -->
+                    <div class="flex justify-center mb-12 relative z-10">
+                        <div class="component-box w-40 bg-slate-800" id="comp-client" data-info="client">
+                            <i class="fa-solid fa-laptop-code text-3xl text-sky-400 mb-2"></i>
+                            <div class="font-bold text-slate-100 text-sm">REST Client</div>
+                        </div>
+                    </div>
+
+                    <!-- Spring MVC Execution Chain -->
+                    <div class="zone-container border-sky-900/50" id="zone-mvc">
+                        <div class="zone-title text-sky-400 border-sky-900/50"><i class="fa-solid fa-route mr-1"></i>
+                            Spring MVC Request Lifecycle</div>
+
+                        <div class="flex justify-between items-center gap-8 relative z-10 pt-4">
+                            <!-- DispatcherServlet -->
+                            <div class="component-box flex-1 min-w-[150px] border-sky-500/30 bg-sky-900/10"
+                                id="comp-dispatcher" data-info="dispatcherservlet">
+                                <i class="fa-solid fa-network-wired text-2xl text-sky-400 mb-2"></i>
+                                <div class="text-sm font-bold text-sky-100">DispatcherServlet</div>
+                                <div class="text-[10px] text-sky-300/60 mt-1">Front Controller</div>
+                            </div>
+
+                            <!-- Controller -->
+                            <div class="component-box flex-1 min-w-[150px] border-emerald-500/30 bg-emerald-900/10"
+                                id="comp-controller" data-info="controller">
+                                <i class="fa-solid fa-code text-2xl text-emerald-400 mb-2"></i>
+                                <div class="text-sm font-bold text-emerald-100">@RestController</div>
+                                <div class="text-[10px] text-emerald-300/60 mt-1">API Endpoints</div>
+                            </div>
+
+                            <!-- Service Layer -->
+                            <div class="component-box flex-1 min-w-[150px] border-indigo-500/30 bg-indigo-900/10"
+                                id="comp-service" data-info="service">
+                                <i class="fa-solid fa-layer-group text-2xl text-indigo-400 mb-2"></i>
+                                <div class="text-sm font-bold text-indigo-100">@Service</div>
+                                <div class="text-[10px] text-indigo-300/60 mt-1">Business Logic</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Arrow down to Exception Handling -->
+                    <div class="h-16 flex justify-center items-center w-full relative z-0">
+                        <!-- Space for vertical lines -->
+                    </div>
+
+                    <!-- Global Exception Handling Layer -->
+                    <div class="zone-container border-accent/30 bg-violet-900/10 mt-8" id="zone-advice">
+                        <div class="zone-title text-accent border-accent/30"><i
+                                class="fa-solid fa-stethoscope mr-1"></i> Global Exception Handling</div>
+
+                        <div class="flex flex-col items-center gap-8 relative z-10 pt-4">
+
+                            <!-- Controller Advice -->
+                            <div class="component-box w-64 border-accent shadow-[0_0_15px_rgba(139,92,246,0.15)] bg-slate-800"
+                                id="comp-advice" data-info="restcontrolleradvice">
+                                <i class="fa-solid fa-tower-observation text-3xl text-accent mb-2"></i>
+                                <div class="font-bold text-violet-50 text-base">@RestControllerAdvice</div>
+                                <div class="text-xs text-violet-300/70 mt-1">Global Interceptor</div>
+                            </div>
+
+                            <!-- Handlers Row -->
+                            <div class="flex gap-6 w-full justify-center">
+                                <div class="component-box flex-1 max-w-[200px] border-pink-500/30 bg-pink-900/10"
+                                    id="comp-handler-404" data-info="handler-404">
+                                    <i class="fa-solid fa-magnifying-glass-minus text-xl text-pink-400 mb-2"></i>
+                                    <div class="text-xs font-bold text-pink-100">@ExceptionHandler</div>
+                                    <div class="text-[10px] text-pink-300/70 mt-1 font-mono">(UserNotFoundEx.class)
+                                    </div>
+                                </div>
+                                <div class="component-box flex-1 max-w-[200px] border-amber-500/30 bg-amber-900/10"
+                                    id="comp-handler-400" data-info="handler-400">
+                                    <i class="fa-solid fa-clipboard-list text-xl text-amber-400 mb-2"></i>
+                                    <div class="text-xs font-bold text-amber-100">@ExceptionHandler</div>
+                                    <div class="text-[10px] text-amber-300/70 mt-1 font-mono">
+                                        (MethodArgNotValidEx.class)</div>
+                                </div>
+                            </div>
+
+                            <!-- ProblemDetail Standard -->
+                            <div class="component-box w-72 border-emerald-500 border bg-emerald-900/20 mt-4"
+                                id="comp-problemdetail" data-info="problemdetail">
+                                <i class="fa-solid fa-file-code text-2xl text-emerald-400 mb-2"></i>
+                                <div class="font-bold text-emerald-50 text-sm">ProblemDetail (RFC 7807)</div>
+                                <div class="text-[10px] text-emerald-300/70 mt-1">Standardized Error JSON Payload</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- PRINCIPLES & CODE VIEW -->
+        <div id="view-principles" class="hidden w-full h-full overflow-y-auto bg-darkbg p-8">
+            <div class="max-w-4xl mx-auto text-slate-300 markdown-body pb-16">
+                <h1 class="text-3xl font-bold text-white mb-6 border-b border-bordercolor pb-4">Spring Boot: Global
+                    Exception Handling</h1>
+
+                <p class="text-lg leading-relaxed mb-8">Building robust REST APIs isn't just about handling the happy
+                    path; it's about how gracefully your application fails. Unhandled exceptions result in generic 500
+                    server errors with messy stack traces exposing internal architecture. Spring Boot provides a
+                    powerful, elegant way to handle errors globally.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+                    <div class="bg-panelbg border border-bordercolor p-5 rounded-lg border-l-4 border-l-sky-500">
+                        <h3 class="text-sky-400 font-bold mb-2 flex items-center"><i
+                                class="fa-solid fa-code-merge w-6"></i> Centralization</h3>
+                        <p class="text-sm">Don't clutter your `@RestController` methods with `try/catch` blocks.
+                            Separate business logic from error handling logic to adhere to the Single Responsibility
+                            Principle.</p>
+                    </div>
+                    <div class="bg-panelbg border border-bordercolor p-5 rounded-lg border-l-4 border-l-emerald-500">
+                        <h3 class="text-emerald-400 font-bold mb-2 flex items-center"><i
+                                class="fa-solid fa-file-contract w-6"></i> Standardization</h3>
+                        <p class="text-sm">Clients expect a consistent error format. Spring 3.0 introduced native
+                            support for <strong>RFC 7807 Problem Details</strong>, creating a universal JSON structure
+                            for HTTP API errors.</p>
+                    </div>
+                </div>
+
+                <h2 class="text-2xl font-bold text-white mt-10 mb-4 border-b border-bordercolor pb-2">Core Components
+                </h2>
+
+                <h3 class="text-xl text-accent font-semibold mt-6 mb-2">1. @RestControllerAdvice</h3>
+                <p class="mb-4">This annotation is a specialized `@Component` that allows you to consolidate your
+                    multiple, scattered `@ExceptionHandler`s into a single, global error handling component.</p>
+                <pre><code class="language-java">@RestControllerAdvice
+public class GlobalExceptionHandler {
+    // Exception handlers go here
+}</code></pre>
+
+                <h3 class="text-xl text-pink-400 font-semibold mt-8 mb-2">2. Handling Custom Business Exceptions (e.g.,
+                    404 Not Found)</h3>
+                <p class="mb-4">When your service layer throws a `UserNotFoundException`, the dispatcher routes it here.
+                    We map it to a 404 Not Found status and return a `ProblemDetail`.</p>
+                <pre><code class="language-java">@ExceptionHandler(UserNotFoundException.class)
+public ProblemDetail handleUserNotFoundException(UserNotFoundException ex) {
+    ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.NOT_FOUND, 
+            ex.getMessage()
+    );
+    problemDetail.setTitle("User Not Found");
+    problemDetail.setType(URI.create("https://api.example.com/errors/not-found"));
+    problemDetail.setProperty("timestamp", Instant.now());
+    
+    return problemDetail;
+}</code></pre>
+
+                <h3 class="text-xl text-amber-400 font-semibold mt-8 mb-2">3. Handling Validation Exceptions (e.g., 400
+                    Bad Request)</h3>
+                <p class="mb-4">When a client sends bad data that fails `@Valid` checks, Spring throws a
+                    `MethodArgumentNotValidException`. We can catch this, extract the specific field errors, and append
+                    them to our `ProblemDetail`.</p>
+                <pre><code class="language-java">@ExceptionHandler(MethodArgumentNotValidException.class)
+public ProblemDetail handleValidationErrors(MethodArgumentNotValidException ex) {
+    ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST, 
+            "Request validation failed"
+    );
+    
+    // Extract field-level errors
+    List&lt;Map&lt;String, String&gt;&gt; fieldErrors = ex.getBindingResult().getFieldErrors()
+        .stream()
+        .map(err -> Map.of(
+            "field", err.getField(),
+            "message", err.getDefaultMessage()
+        )).toList();
+
+    // Add custom property to RFC 7807 spec
+    problemDetail.setProperty("invalid_params", fieldErrors);
+    
+    return problemDetail;
+}</code></pre>
+
+                <h3 class="text-xl text-emerald-400 font-semibold mt-8 mb-2">The RFC 7807 Output</h3>
+                <p class="mb-4">The resulting JSON response looks exactly like the standardized spec demands:</p>
+                <pre><code class="language-json">{
+  "type": "about:blank",
+  "title": "Bad Request",
+  "status": 400,
+  "detail": "Request validation failed",
+  "instance": "/api/users",
+  "invalid_params": [
+    {
+      "field": "email",
+      "message": "must be a well-formed email address"
+    }
+  ]
+}</code></pre>
+            </div>
+        </div>
+    </main>
+
+    <!-- Hidden Content Library for Info Panel -->
+    <div id="content-library" class="hidden">
+
+        <div id="info-client">
+            <h3 class="text-lg font-bold text-sky-400 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-laptop-code mr-2"></i>REST Client</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>The consumer of your API. It could be a React frontend, a mobile app, or another microservice.</p>
+                <p>The client expects structured, predictable responses. If an error occurs, it needs to know
+                    <strong>what</strong> went wrong (HTTP Status) and <strong>why</strong> (Error Body) so it can
+                    display appropriate UI to the user (e.g., highlighting invalid form fields).
+                </p>
+            </div>
+        </div>
+
+        <div id="info-dispatcherservlet">
+            <h3 class="text-lg font-bold text-sky-300 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-network-wired mr-2"></i>DispatcherServlet</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>The Front Controller of Spring MVC. All incoming HTTP requests come here first.</p>
+                <p>It routes requests to the correct `@RestController`. More importantly for this flow, if an exception
+                    is thrown anywhere in the controller or service layer, it bubbles back up to the
+                    `DispatcherServlet`.</p>
+                <p>The DispatcherServlet uses a `HandlerExceptionResolver` to figure out which `@ExceptionHandler`
+                    method should process the thrown exception.</p>
+            </div>
+        </div>
+
+        <div id="info-controller">
+            <h3 class="text-lg font-bold text-emerald-400 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-code mr-2"></i>@RestController</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>The entry point for your business logic.</p>
+                <p>Exceptions can originate here directly. For example, if you use `@Valid` on a `@RequestBody`
+                    parameter and the validation fails, Spring automatically throws a `MethodArgumentNotValidException`
+                    right before your controller method even executes.</p>
+            </div>
+        </div>
+
+        <div id="info-service">
+            <h3 class="text-lg font-bold text-indigo-400 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-layer-group mr-2"></i>@Service Layer</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>Where your core business logic and database interactions happen.</p>
+                <p>This is where custom business exceptions are usually thrown. For example, if a database query
+                    `findById` returns empty, the service throws a `UserNotFoundException`. This exception bubbles up
+                    through the controller back to the dispatcher.</p>
+            </div>
+        </div>
+
+        <div id="info-restcontrolleradvice">
+            <h3 class="text-lg font-bold text-accent mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-tower-observation mr-2"></i>@RestControllerAdvice</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>A specialized form of `@ControllerAdvice` combining it with `@ResponseBody`.</p>
+                <p>It acts as an interceptor that surrounds the logic of all your controllers. By placing your
+                    `@ExceptionHandler` methods inside this class, you ensure that if an exception occurs in
+                    <em>any</em> controller, this class will handle it globally.
+                </p>
+            </div>
+        </div>
+
+        <div id="info-handler-404">
+            <h3 class="text-lg font-bold text-pink-400 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-magnifying-glass-minus mr-2"></i>@ExceptionHandler (404)</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>A method specifically designated to catch a particular Exception type (e.g.,
+                    `UserNotFoundException`).</p>
+                <p>Instead of the app crashing, Spring invokes this method. You write code here to convert the raw
+                    exception into a clean `ProblemDetail` object with a `404 Not Found` HTTP status code.</p>
+            </div>
+        </div>
+
+        <div id="info-handler-400">
+            <h3 class="text-lg font-bold text-amber-400 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-clipboard-list mr-2"></i>@ExceptionHandler (400)</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>Handles validation failures (`MethodArgumentNotValidException`).</p>
+                <p>This handler extracts the `BindingResult` from the exception, iterates through the field-level
+                    validation errors (e.g., "Email is invalid", "Password too short"), and adds them to a custom list
+                    inside the standard ProblemDetail JSON.</p>
+            </div>
+        </div>
+
+        <div id="info-problemdetail">
+            <h3 class="text-lg font-bold text-emerald-400 mb-3 border-b border-bordercolor pb-2"><i
+                    class="fa-solid fa-file-code mr-2"></i>ProblemDetail</h3>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                <p>Introduced in Spring Framework 6 (Spring Boot 3), this class represents an RFC 7807 "Problem Details
+                    for HTTP APIs" payload.</p>
+                <p>It standardizes error responses with fields like:</p>
+                <ul class="list-disc pl-5 text-xs text-slate-400 space-y-1">
+                    <li><code>type</code>: URI identifying the problem type.</li>
+                    <li><code>title</code>: Short summary.</li>
+                    <li><code>status</code>: HTTP status code.</li>
+                    <li><code>detail</code>: Human-readable explanation.</li>
+                    <li><code>instance</code>: URI of the specific occurrence.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            hljs.highlightAll();
+
+            // Tabs Logic
+            const tabVisual = document.getElementById('tab-visual');
+            const tabPrinciples = document.getElementById('tab-principles');
+            const viewVisual = document.getElementById('view-visual');
+            const viewPrinciples = document.getElementById('view-principles');
+            const simControls = document.getElementById('sim-controls');
+
+            tabVisual.addEventListener('click', () => {
+                tabVisual.classList.add('active'); tabPrinciples.classList.remove('active');
+                viewVisual.classList.remove('hidden'); viewPrinciples.classList.add('hidden');
+                simControls.style.display = 'flex';
+                setTimeout(drawConnections, 50);
+            });
+
+            tabPrinciples.addEventListener('click', () => {
+                tabPrinciples.classList.add('active'); tabVisual.classList.remove('active');
+                viewPrinciples.classList.remove('hidden'); viewVisual.classList.add('hidden');
+                simControls.style.display = 'none';
+            });
+
+            // SVG & Architecture setup
+            const infoPanel = document.getElementById('info-panel');
+            const components = document.querySelectorAll('.component-box');
+            const svgCanvas = document.getElementById('svg-canvas');
+            const packet = document.getElementById('request-packet');
+            const packetLabel = document.getElementById('packet-label');
+            const diagramContainer = document.getElementById('diagram-container');
+
+            let isSimulating = false;
+            let abortController = null;
+            let isPaused = false;
+            let pauseLock = null;
+            let pauseResolve = null;
+            let currentPacketAnimation = null;
+            let activeSleepTimer = null;
+            let sleepResolveFn = null;
+            let sleepRemaining = 0;
+            let sleepStartTime = 0;
+
+            function getCenterCoords(elementId) {
+                const el = document.getElementById(elementId);
+                if (!el) return { x: 0, y: 0 };
+                const elRect = el.getBoundingClientRect();
+                const containerRect = diagramContainer.getBoundingClientRect();
+                return {
+                    x: (elRect.left - containerRect.left) + (elRect.width / 2),
+                    y: (elRect.top - containerRect.top) + (elRect.height / 2)
+                };
+            }
+
+            function drawConnection(id1, id2, pathId, style = 'normal', curved = false, customOffset = 0) {
+                const p1 = getCenterCoords(id1);
+                const p2 = getCenterCoords(id2);
+
+                // Adjusting connection points to edges instead of direct center to center for vertical flow
+                let startY = p1.y + customOffset;
+                let endY = p2.y;
+
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("id", pathId);
+                path.classList.add("connector-path");
+
+                let d = '';
+                if (curved) {
+                    const midY = startY + (endY - startY) / 2;
+                    d = `M ${p1.x} ${startY} C ${p1.x} ${midY}, ${p2.x} ${midY}, ${p2.x} ${endY}`;
+                } else {
+                    d = `M ${p1.x} ${startY} L ${p2.x} ${endY}`;
+                }
+
+                path.setAttribute("d", d);
+
+                if (style === 'normal') { path.setAttribute("marker-end", "url(#arrowhead)"); }
+                else if (style === 'active') { path.classList.add('active'); path.setAttribute("marker-end", "url(#arrowhead-active)"); }
+                else if (style === 'error') { path.classList.add('error'); path.setAttribute("marker-end", "url(#arrowhead-error)"); }
+
+                svgCanvas.appendChild(path);
+                return path;
+            }
+
+            function drawConnections() {
+                svgCanvas.innerHTML = `
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#475569" /></marker>
+                        <marker id="arrowhead-active" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#8b5cf6" /></marker>
+                        <marker id="arrowhead-error" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ef4444" /></marker>
+                    </defs>
+                `;
+
+                // Horizontal MVC flow
+                drawConnection('comp-client', 'comp-dispatcher', 'line-base-1', 'normal', true);
+                drawConnection('comp-dispatcher', 'comp-controller', 'line-base-2');
+                drawConnection('comp-controller', 'comp-service', 'line-base-3');
+
+                // Vertical flow to advice
+                drawConnection('comp-dispatcher', 'comp-advice', 'line-base-advice', 'normal', true);
+
+                drawConnection('comp-advice', 'comp-handler-404', 'line-base-h1', 'normal', true);
+                drawConnection('comp-advice', 'comp-handler-400', 'line-base-h2', 'normal', true);
+
+                drawConnection('comp-handler-404', 'comp-problemdetail', 'line-base-p1', 'normal', true);
+                drawConnection('comp-handler-400', 'comp-problemdetail', 'line-base-p2', 'normal', true);
+            }
+
+            function updateInfoPanel(dataKey) {
+                const sourceContent = document.getElementById(`info-${dataKey}`);
+                if (sourceContent) {
+                    infoPanel.innerHTML = sourceContent.outerHTML;
+                    infoPanel.firstElementChild.removeAttribute('id');
+                    infoPanel.firstElementChild.style.animation = "fadeIn 0.2s ease-out";
+                }
+                components.forEach(c => c.classList.remove('active', 'error-state'));
+                const activeComp = document.querySelector(`.component-box[data-info="${dataKey}"]`);
+                if (activeComp) activeComp.classList.add('active');
+            }
+
+            components.forEach(comp => {
+                comp.addEventListener('click', () => { if (!isSimulating) updateInfoPanel(comp.getAttribute('data-info')); });
+            });
+
+            // Pause/Resume Logic
+            function togglePause() {
+                if (!isSimulating) return;
+                isPaused = !isPaused;
+                const btn = document.getElementById('btn-toggle-pause');
+
+                if (isPaused) {
+                    btn.innerHTML = '<i class="fa-solid fa-play text-green-400 mr-2"></i> Resume';
+                    if (!packetLabel.textContent.includes("(Paused)")) packetLabel.textContent += " (Paused)";
+                    if (currentPacketAnimation) currentPacketAnimation.pause();
+                    document.querySelectorAll('.connector-path.active, .connector-path.error').forEach(p => p.style.animationPlayState = 'paused');
+                    pauseLock = new Promise(r => pauseResolve = r);
+                    if (activeSleepTimer) {
+                        clearTimeout(activeSleepTimer);
+                        activeSleepTimer = null;
+                        sleepRemaining -= (Date.now() - sleepStartTime);
+                    }
+                } else {
+                    btn.innerHTML = '<i class="fa-solid fa-pause text-amber-400 mr-2"></i> Pause';
+                    packetLabel.textContent = packetLabel.textContent.replace(" (Paused)", "");
+                    if (currentPacketAnimation) currentPacketAnimation.play();
+                    document.querySelectorAll('.connector-path.active, .connector-path.error').forEach(p => p.style.animationPlayState = 'running');
+                    if (pauseResolve) { pauseResolve(); pauseResolve = null; pauseLock = null; }
+                    if (sleepRemaining > 0 && sleepResolveFn) {
+                        sleepStartTime = Date.now();
+                        activeSleepTimer = setTimeout(() => {
+                            let res = sleepResolveFn; sleepResolveFn = null; sleepRemaining = 0; if (res) res();
+                        }, sleepRemaining);
+                    }
+                }
+            }
+
+            function waitIfPaused() { return pauseLock ? pauseLock : Promise.resolve(); }
+
+            function pausableSleep(ms) {
+                return new Promise((resolve, reject) => {
+                    if (abortController?.signal.aborted) return reject(new Error("Aborted"));
+                    sleepRemaining = ms; sleepResolveFn = resolve;
+                    if (!isPaused) {
+                        sleepStartTime = Date.now();
+                        activeSleepTimer = setTimeout(() => { sleepResolveFn = null; sleepRemaining = 0; resolve(); }, sleepRemaining);
+                    }
+                    abortController.signal.addEventListener('abort', () => {
+                        clearTimeout(activeSleepTimer); reject(new Error("Aborted"));
+                    }, { once: true });
+                });
+            }
+
+            // SIMULATION FUNCTIONS
+            function resetSimulation() {
+                if (abortController) abortController.abort();
+                isSimulating = false; isPaused = false; pauseLock = null; pauseResolve = null;
+                if (activeSleepTimer) clearTimeout(activeSleepTimer);
+                if (currentPacketAnimation) { currentPacketAnimation.cancel(); currentPacketAnimation = null; }
+
+                const btnPause = document.getElementById('btn-toggle-pause');
+                btnPause.innerHTML = '<i class="fa-solid fa-pause text-amber-400 mr-2"></i> Pause';
+                btnPause.classList.add('opacity-50', 'cursor-not-allowed');
+
+                packet.style.display = 'none'; packet.className = 'packet'; packet.style.backgroundColor = ''; packet.style.boxShadow = '';
+                components.forEach(c => c.classList.remove('active', 'error-state'));
+                drawConnections();
+
+                infoPanel.innerHTML = `
+                    <div class="h-full flex flex-col items-center justify-center text-muted opacity-80" style="animation: fadeIn 0.3s ease;">
+                        <i class="fa-solid fa-rotate-right text-4xl mb-4 text-slate-600"></i>
+                        <p class="text-center font-medium text-slate-300">Simulation Ready</p>
+                        <p class="text-center mt-2 text-xs">Choose a scenario above.</p>
+                    </div>
+                `;
+            }
+
+            async function moveTo(compId, duration = 600, yOffset = 0) {
+                await waitIfPaused();
+                if (abortController?.signal.aborted) throw new Error("Aborted");
+
+                const coords = getCenterCoords(compId);
+                coords.y += yOffset;
+
+                const currentLeft = packet.style.left || `${coords.x}px`;
+                const currentTop = packet.style.top || `${coords.y}px`;
+
+                currentPacketAnimation = packet.animate([
+                    { left: currentLeft, top: currentTop },
+                    { left: `${coords.x}px`, top: `${coords.y}px` }
+                ], { duration: duration, easing: 'ease-in-out', fill: 'forwards' });
+
+                if (isPaused) currentPacketAnimation.pause();
+
+                return new Promise((resolve, reject) => {
+                    currentPacketAnimation.onfinish = () => {
+                        packet.style.left = `${coords.x}px`; packet.style.top = `${coords.y}px`;
+                        currentPacketAnimation = null; resolve();
+                    };
+                    abortController.signal.addEventListener('abort', () => {
+                        if (currentPacketAnimation) currentPacketAnimation.cancel(); reject(new Error("Aborted"));
+                    }, { once: true });
+                });
+            }
+
+            async function activateComponent(compId, infoKey, type = 'active') {
+                await waitIfPaused();
+                if (abortController?.signal.aborted) throw new Error("Aborted");
+
+                const comp = document.getElementById(compId);
+                comp.classList.add(type);
+                updateInfoPanel(infoKey);
+
+                packet.animate([{ transform: 'translate(-50%, -50%) scale(1)' }, { transform: 'translate(-50%, -50%) scale(1.4)' }, { transform: 'translate(-50%, -50%) scale(1)' }], { duration: 300 });
+                await pausableSleep(700); // Read time
+            }
+
+            // SIMULATION RUNNER
+            async function runExceptionSimulation(type) {
+                resetSimulation();
+                abortController = new AbortController();
+                isSimulating = true;
+                document.getElementById('btn-toggle-pause').classList.remove('opacity-50', 'cursor-not-allowed');
+
+                try {
+                    // Start
+                    const startCoords = getCenterCoords('comp-client');
+                    packet.style.left = `${startCoords.x}px`; packet.style.top = `${startCoords.y - 50}px`;
+                    packet.style.display = 'block';
+
+                    packetLabel.textContent = type === '404' ? "GET /users/99" : "POST /users (Bad Data)";
+                    await pausableSleep(400);
+
+                    // To Dispatcher
+                    await moveTo('comp-client', 400);
+                    await activateComponent('comp-client', 'client');
+                    drawConnection('comp-client', 'comp-dispatcher', 'active-path-1', 'active', true);
+
+                    await moveTo('comp-dispatcher');
+                    await activateComponent('comp-dispatcher', 'dispatcherservlet');
+
+                    // To Controller
+                    drawConnection('comp-dispatcher', 'comp-controller', 'active-path-2', 'active');
+                    await moveTo('comp-controller');
+                    await activateComponent('comp-controller', 'controller');
+
+                    if (type === '404') {
+                        // 404 goes to Service logic
+                        drawConnection('comp-controller', 'comp-service', 'active-path-3', 'active');
+                        await moveTo('comp-service');
+                        await activateComponent('comp-service', 'service');
+
+                        // Error Occurs!
+                        packet.classList.add('error');
+                        packetLabel.textContent = "Throw UserNotFoundEx";
+                        document.getElementById('comp-service').classList.add('error-state');
+                        await pausableSleep(500);
+
+                        // Bubble back
+                        drawConnection('comp-service', 'comp-controller', 'active-path-err1', 'error');
+                        await moveTo('comp-controller', 400);
+                        document.getElementById('comp-controller').classList.add('error-state');
+
+                        drawConnection('comp-controller', 'comp-dispatcher', 'active-path-err2', 'error');
+                        await moveTo('comp-dispatcher', 400);
+                        document.getElementById('comp-dispatcher').classList.add('error-state');
+                    } else {
+                        // 400 Validation error happens immediately in controller
+                        packet.classList.add('error');
+                        packetLabel.textContent = "Throw MethodArgNotValidEx";
+                        document.getElementById('comp-controller').classList.add('error-state');
+                        await pausableSleep(500);
+
+                        // Bubble back
+                        drawConnection('comp-controller', 'comp-dispatcher', 'active-path-err2', 'error');
+                        await moveTo('comp-dispatcher', 400);
+                        document.getElementById('comp-dispatcher').classList.add('error-state');
+                    }
+
+                    // Dispatcher routes to Advice
+                    packetLabel.textContent = "Resolve Exception";
+                    drawConnection('comp-dispatcher', 'comp-advice', 'active-path-advice', 'active', true);
+                    packet.classList.remove('error'); // Resolver handles it
+                    packet.style.backgroundColor = '#a78bfa'; // Violet
+                    packet.style.boxShadow = '0 0 15px #a78bfa';
+                    await moveTo('comp-advice');
+                    await activateComponent('comp-advice', 'restcontrolleradvice');
+
+                    // Route to specific handler
+                    const handlerId = type === '404' ? 'comp-handler-404' : 'comp-handler-400';
+                    const handlerKey = type === '404' ? 'handler-404' : 'handler-400';
+
+                    drawConnection('comp-advice', handlerId, 'active-path-handler', 'active', true);
+                    await moveTo(handlerId);
+                    await activateComponent(handlerId, handlerKey);
+
+                    // Generate ProblemDetail
+                    packetLabel.textContent = "Map to ProblemDetail";
+                    drawConnection(handlerId, 'comp-problemdetail', 'active-path-pd', 'active', true);
+                    await moveTo('comp-problemdetail');
+                    await activateComponent('comp-problemdetail', 'problemdetail');
+
+                    // Return to Client
+                    packet.classList.add('returning');
+                    packetLabel.textContent = type === '404' ? "404 Problem JSON" : "400 Problem JSON";
+                    drawConnection('comp-problemdetail', 'comp-client', 'active-path-return', 'active', true);
+                    await moveTo('comp-client', 800, -20); // Move back to client, slightly offset
+
+                    infoPanel.innerHTML = `
+                        <div class="h-full flex flex-col items-center justify-center" style="animation: fadeIn 0.5s ease-out;">
+                            <i class="fa-solid fa-file-code text-6xl text-emerald-400 mb-6"></i>
+                            <h3 class="text-2xl font-bold text-white mb-2">JSON Response Sent</h3>
+                            <div class="text-sm text-slate-300 text-center px-4 mt-4 bg-darkbg p-4 rounded border border-emerald-500/30">
+                                <p class="font-bold mb-2">HTTP ${type}</p>
+                                <p>The client receives a clean, standardized RFC 7807 JSON body explaining the error, rather than a raw stack trace.</p>
+                            </div>
+                        </div>
+                    `;
+
+                } catch (e) {
+                    if (e.message !== "Aborted") console.error(e);
+                } finally {
+                    if (!abortController?.signal.aborted) {
+                        isSimulating = false;
+                        document.getElementById('btn-toggle-pause').classList.add('opacity-50', 'cursor-not-allowed');
+                    }
+                }
+            }
+
+            // Bind buttons
+            document.getElementById('btn-sim-404').addEventListener('click', () => runExceptionSimulation('404'));
+            document.getElementById('btn-sim-400').addEventListener('click', () => runExceptionSimulation('400'));
+            document.getElementById('btn-toggle-pause').addEventListener('click', togglePause);
+            document.getElementById('btn-reset').addEventListener('click', resetSimulation);
+
+            window.addEventListener('resize', () => {
+                if (!isSimulating && viewVisual.classList.contains('hidden') === false) drawConnections();
+            });
+
+            setTimeout(drawConnections, 100);
+        });
+
+        const style = document.createElement('style');
+        style.innerHTML = `@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }`;
+        document.head.appendChild(style);
+    </script>
+</body>
+
+</html>
