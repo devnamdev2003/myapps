@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redis Pub/Sub Flow | Interactive Architecture</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Code Highlighting -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        darkbg: '#0f172a', panelbg: '#1e293b', compbg: '#334155', bordercolor: '#475569', textcolor: '#f8fafc', muted: '#94a3b8',
+                        redis: '#dc2626', // Redis Red
+                        redis_light: '#ef4444',
+                        publisher: '#38bdf8', // Sky Blue
+                        subscriber: '#10b981', // Emerald Green
+                        channel: '#f59e0b' // Amber
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        .component-box {
+            background-color: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .component-box:hover {
+            transform: translateY(-2px);
+            border-color: #ef4444;
+        }
+
+        .component-box.active {
+            border-color: #ef4444;
+            box-shadow: 0 0 20px rgba(220, 38, 38, 0.3);
+            background-color: #451a1a;
+        }
+
+        .zone-container {
+            position: relative;
+            background-color: rgba(30, 41, 59, 0.3);
+            border: 1px dashed #475569;
+            border-radius: 0.75rem;
+            padding: 2.5rem 1.5rem 1.5rem 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .zone-title {
+            position: absolute;
+            top: -0.75rem;
+            left: 1rem;
+            background-color: #0f172a;
+            padding: 0 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #cbd5e1;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border: 1px solid #475569;
+            border-radius: 0.25rem;
+        }
+
+        svg.connector-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .connector-path {
+            fill: none;
+            stroke: #475569;
+            stroke-width: 2;
+            stroke-dasharray: 4, 4;
+        }
+
+        .connector-path.active {
+            stroke: #ef4444;
+            stroke-dasharray: none;
+            stroke-width: 3;
+            animation: flowDash 1s linear infinite;
+        }
+
+        @keyframes flowDash {
+            from {
+                stroke-dashoffset: 20;
+            }
+
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        .packet {
+            position: absolute;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            color: white;
+            z-index: 50;
+            transform: translate(-50%, -50%);
+            display: none;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .packet.msg {
+            background-color: #f59e0b;
+        }
+
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            border-bottom: 2px solid transparent;
+            color: #94a3b8;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            border-bottom-color: #ef4444;
+            color: #f8fafc;
+        }
+
+        .channel-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+
+        .markdown-body pre {
+            background-color: #0d1117;
+            border-radius: 6px;
+            padding: 16px;
+            overflow: auto;
+            border: 1px solid #30363d;
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .markdown-body code {
+            font-family: ui-monospace, SFMono-Regular, monospace;
+            font-size: 85%;
+        }
+    </style>
+</head>
+
+<body class="antialiased h-screen flex flex-col overflow-hidden text-textcolor bg-darkbg">
+
+    <header class="bg-panelbg border-b border-bordercolor z-40 shadow-lg">
+        <div class="max-w-screen-2xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i
+                    class="fa-solid fa-tower-broadcast text-redis_light text-2xl drop-shadow-[0_0_8px_rgba(220,38,38,0.5)]"></i>
+                <h1 class="text-xl font-bold tracking-wide">Redis Pub/Sub Flow</h1>
+            </div>
+            <div class="flex gap-4">
+                <div class="flex bg-darkbg rounded-lg p-1 border border-bordercolor">
+                    <button id="tab-visual" class="tab-btn active text-sm">Visual Flow</button>
+                    <button id="tab-principles" class="tab-btn text-sm">Principles & Code</button>
+                </div>
+            </div>
+            <div class="flex gap-2" id="sim-controls">
+                <button id="btn-pub-news"
+                    class="px-3 py-1.5 bg-sky-700 hover:bg-sky-600 text-white rounded font-medium transition shadow-sm text-sm flex items-center border border-sky-500">
+                    <i class="fa-solid fa-paper-plane mr-2"></i> Publish to 'news'
+                </button>
+                <button id="btn-pub-alerts"
+                    class="px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-white rounded font-medium transition shadow-sm text-sm flex items-center border border-amber-500">
+                    <i class="fa-solid fa-triangle-exclamation mr-2"></i> Publish to 'alerts'
+                </button>
+                <button id="btn-reset"
+                    class="px-3 py-1.5 bg-compbg hover:bg-slate-600 text-slate-200 border border-bordercolor rounded font-medium transition shadow-sm text-sm flex items-center">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 flex overflow-hidden relative w-full h-full">
+        <!-- VISUAL FLOW VIEW -->
+        <div id="view-visual" class="flex w-full h-full">
+            <!-- Sidebar -->
+            <div class="w-[380px] bg-panelbg border-r border-bordercolor flex flex-col z-30 shadow-xl">
+                <div class="p-4 border-b border-bordercolor bg-darkbg/80">
+                    <h2 class="text-xs font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                        <i class="fa-solid fa-microchip"></i> Node Inspector
+                    </h2>
+                </div>
+                <div class="p-6 flex-1 overflow-y-auto markdown-body" id="info-panel">
+                    <div class="h-full flex flex-col items-center justify-center text-muted opacity-80">
+                        <i class="fa-solid fa-rss text-5xl mb-4 text-slate-600"></i>
+                        <p class="text-center px-4">Redis Pub/Sub is a messaging paradigm where senders (publishers) do
+                            not program the messages to be sent directly to specific receivers (subscribers).</p>
+                        <div class="mt-8 border border-bordercolor rounded-lg p-4 bg-darkbg w-full">
+                            <p class="text-xs font-semibold mb-3 text-slate-300 border-b border-bordercolor pb-2">Topic
+                                Legend</p>
+                            <div class="flex items-center gap-3 mb-2 text-xs">
+                                <div class="channel-indicator bg-sky-400"></div> Channel: 'news'
+                            </div>
+                            <div class="flex items-center gap-3 text-xs">
+                                <div class="channel-indicator bg-amber-500"></div> Channel: 'alerts'
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Stream Console -->
+                <div class="border-t border-bordercolor bg-darkbg p-4 h-1/3 min-h-[200px] flex flex-col">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Live Message Stream</h3>
+                    <div id="stream-console"
+                        class="flex-1 font-mono text-[11px] overflow-y-auto space-y-1 text-slate-400 bg-black/30 p-2 rounded border border-white/5">
+                        <div class="italic opacity-50">Waiting for messages...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Canvas -->
+            <div class="flex-1 overflow-auto p-8 relative bg-darkbg" id="diagram-scroll-container">
+                <div class="relative max-w-5xl mx-auto pb-20 mt-4" id="diagram-container">
+                    <svg class="connector-svg" id="svg-canvas"></svg>
+
+                    <!-- Publisher Zone -->
+                    <div class="flex justify-center gap-12 mb-20 relative z-10">
+                        <div class="component-box w-48 border-publisher/50 bg-sky-900/10" id="comp-pub-1"
+                            data-info="publisher">
+                            <i class="fa-solid fa-bullhorn text-2xl text-publisher mb-2"></i>
+                            <div class="text-sm font-bold text-sky-100">App Service A</div>
+                            <div class="text-[10px] text-publisher/70 mt-1">Publisher</div>
+                        </div>
+                        <div class="component-box w-48 border-publisher/50 bg-sky-900/10" id="comp-pub-2"
+                            data-info="publisher">
+                            <i class="fa-solid fa-bullhorn text-2xl text-publisher mb-2"></i>
+                            <div class="text-sm font-bold text-sky-100">Worker Node B</div>
+                            <div class="text-[10px] text-publisher/70 mt-1">Publisher</div>
+                        </div>
+                    </div>
+
+                    <!-- Redis Server -->
+                    <div class="flex justify-center mb-20 relative z-10">
+                        <div class="component-box w-80 border-redis border-2 bg-slate-800 shadow-[0_0_30px_rgba(220,38,38,0.15)]"
+                            id="comp-redis" data-info="redis">
+                            <div class="flex items-center justify-center gap-4 py-2">
+                                <i class="fa-solid fa-database text-4xl text-redis"></i>
+                                <div class="text-left">
+                                    <div class="font-bold text-white text-xl">Redis Server</div>
+                                    <div class="text-[10px] text-muted uppercase tracking-tighter">Message Broker
+                                        (Stateless)</div>
+                                </div>
+                            </div>
+                            <div class="flex justify-around mt-4 pt-4 border-t border-bordercolor">
+                                <div class="px-3 py-1 bg-sky-900/30 border border-sky-500/30 rounded text-[10px] text-sky-300 font-bold"
+                                    id="channel-news">CH: news</div>
+                                <div class="px-3 py-1 bg-amber-900/30 border border-amber-500/30 rounded text-[10px] text-amber-300 font-bold"
+                                    id="channel-alerts">CH: alerts</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Subscriber Zone -->
+                    <div class="flex justify-between relative z-10 px-4">
+                        <div class="component-box w-44 border-subscriber/50 bg-emerald-900/10" id="comp-sub-1"
+                            data-info="subscriber">
+                            <i class="fa-solid fa-ear-listen text-2xl text-subscriber mb-2"></i>
+                            <div class="text-sm font-bold text-emerald-100">Sub: Analytics</div>
+                            <div class="text-[10px] text-subscriber/70 mt-1">Listening: 'news'</div>
+                        </div>
+                        <div class="component-box w-44 border-subscriber/50 bg-emerald-900/10" id="comp-sub-2"
+                            data-info="subscriber">
+                            <i class="fa-solid fa-ear-listen text-2xl text-subscriber mb-2"></i>
+                            <div class="text-sm font-bold text-emerald-100">Sub: Emailer</div>
+                            <div class="text-[10px] text-subscriber/70 mt-1">Listening: 'news', 'alerts'</div>
+                        </div>
+                        <div class="component-box w-44 border-subscriber/50 bg-emerald-900/10" id="comp-sub-3"
+                            data-info="subscriber">
+                            <i class="fa-solid fa-ear-listen text-2xl text-subscriber mb-2"></i>
+                            <div class="text-sm font-bold text-emerald-100">Sub: Dashboard</div>
+                            <div class="text-[10px] text-subscriber/70 mt-1">Listening: 'alerts'</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PRINCIPLES VIEW -->
+        <div id="view-principles" class="hidden w-full h-full overflow-y-auto bg-darkbg p-8">
+            <div class="max-w-4xl mx-auto text-slate-300 markdown-body pb-16">
+                <h1 class="text-3xl font-bold text-white mb-6 border-b border-bordercolor pb-4">Redis Pub/Sub: Real-time
+                    Messaging</h1>
+                <p class="text-lg leading-relaxed mb-8">Redis Pub/Sub (Publish/Subscribe) is a messaging system where
+                    publishers send messages to channels, and subscribers receive messages from the channels they are
+                    interested in. It is a <strong>Stateless</strong> "fire and forget" system.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+                    <div class="bg-panelbg border border-bordercolor p-5 rounded-lg border-l-4 border-l-redis">
+                        <h3 class="text-redis_light font-bold mb-2">Fire and Forget</h3>
+                        <p class="text-sm">Messages are not persisted. If a subscriber is offline when a message is
+                            published, they will <strong>never</strong> receive it. For persistence, use Redis Streams
+                            or Redis Lists.</p>
+                    </div>
+                    <div class="bg-panelbg border border-bordercolor p-5 rounded-lg border-l-4 border-l-subscriber">
+                        <h3 class="text-subscriber font-bold mb-2">One-to-Many</h3>
+                        <p class="text-sm">A single <code>PUBLISH</code> command can reach hundreds of thousands of
+                            subscribers simultaneously with very low latency.</p>
+                    </div>
+                </div>
+
+                <h2 class="text-2xl font-bold text-white mt-10 mb-4 border-b border-bordercolor pb-2">Common Commands
+                </h2>
+                <pre><code class="language-bash"># Subscribe to one or more channels
+SUBSCRIBE news alerts
+
+# Subscribe to channels matching a pattern
+PSUBSCRIBE user.*
+
+# Publish a message to a channel
+PUBLISH news "New architecture flow launched!"</code></pre>
+
+                <h2 class="text-2xl font-bold text-white mt-12 mb-4 border-b border-bordercolor pb-2">Implementation
+                    (Node.js)</h2>
+                <pre><code class="language-javascript">const redis = require('redis');
+const publisher = redis.createClient();
+const subscriber = redis.createClient();
+
+// Subscriber Logic
+await subscriber.connect();
+await subscriber.subscribe('news', (message) => {
+  console.log('Received news:', message);
+});
+
+// Publisher Logic
+await publisher.connect();
+await publisher.publish('news', 'Hello World!');</code></pre>
+
+                <h3 class="text-xl text-amber-400 font-semibold mt-10 mb-2">When to use Pub/Sub?</h3>
+                <ul class="list-disc pl-5 space-y-2">
+                    <li><strong>Real-time Notifications:</strong> Sending alerts to active web-socket users.</li>
+                    <li><strong>Chat Systems:</strong> Distributing chat messages across multiple server instances.</li>
+                    <li><strong>Cache Invalidation:</strong> Notifying other app nodes to purge their local caches when
+                        data changes.</li>
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <!-- Content Library -->
+    <div id="content-library" class="hidden">
+        <div id="info-publisher">
+            <h3 class="text-lg font-bold text-publisher mb-3 border-b border-bordercolor pb-2">The Publisher</h3>
+            <p class="text-sm text-slate-300">Any client application can act as a publisher. It sends a message to a
+                specific "channel" string. The publisher has no knowledge of how many (if any) subscribers are
+                listening.</p>
+        </div>
+        <div id="info-redis">
+            <h3 class="text-lg font-bold text-redis_light mb-3 border-b border-bordercolor pb-2">Redis Broker</h3>
+            <p class="text-sm text-slate-300">Redis manages the mapping between channels and active client connections.
+                When a message arrives at a channel, Redis immediately pushes the payload to all sockets currently
+                subscribed to that channel.</p>
+        </div>
+        <div id="info-subscriber">
+            <h3 class="text-lg font-bold text-subscriber mb-3 border-b border-bordercolor pb-2">The Subscriber</h3>
+            <p class="text-sm text-slate-300">Subscribers maintain an open, long-lived connection to Redis. While in
+                "subscription mode," the client can only receive messages and manage subscriptions
+                (SUBSCRIBE/UNSUBSCRIBE).</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            hljs.highlightAll();
+
+            const tabVisual = document.getElementById('tab-visual');
+            const tabPrinciples = document.getElementById('tab-principles');
+            const viewVisual = document.getElementById('view-visual');
+            const viewPrinciples = document.getElementById('view-principles');
+            const svgCanvas = document.getElementById('svg-canvas');
+            const diagramContainer = document.getElementById('diagram-container');
+            const consoleEl = document.getElementById('stream-console');
+            const infoPanel = document.getElementById('info-panel');
+
+            // Tab Switching
+            tabVisual.addEventListener('click', () => {
+                tabVisual.classList.add('active'); tabPrinciples.classList.remove('active');
+                viewVisual.classList.remove('hidden'); viewPrinciples.classList.add('hidden');
+                document.getElementById('sim-controls').classList.remove('hidden');
+                setTimeout(drawConnections, 50);
+            });
+            tabPrinciples.addEventListener('click', () => {
+                tabPrinciples.classList.add('active'); tabVisual.classList.remove('active');
+                viewPrinciples.classList.remove('hidden'); viewVisual.classList.add('hidden');
+                document.getElementById('sim-controls').classList.add('hidden');
+            });
+
+            function getCenterCoords(id) {
+                const el = document.getElementById(id);
+                const rect = el.getBoundingClientRect();
+                const container = diagramContainer.getBoundingClientRect();
+                return {
+                    x: (rect.left - container.left) + (rect.width / 2),
+                    y: (rect.top - container.top) + (rect.height / 2)
+                };
+            }
+
+            function drawConnections() {
+                svgCanvas.innerHTML = `<defs><marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#475569" /></marker></defs>`;
+
+                // Pubs to Redis
+                ['comp-pub-1', 'comp-pub-2'].forEach(id => {
+                    const p1 = getCenterCoords(id); const p2 = getCenterCoords('comp-redis');
+                    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    path.setAttribute("d", `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y - 40}`);
+                    path.setAttribute("class", "connector-path");
+                    path.setAttribute("marker-end", "url(#arrow)");
+                    svgCanvas.appendChild(path);
+                });
+
+                // Redis to Subs
+                ['comp-sub-1', 'comp-sub-2', 'comp-sub-3'].forEach(id => {
+                    const p1 = getCenterCoords('comp-redis'); const p2 = getCenterCoords(id);
+                    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    path.setAttribute("d", `M ${p1.x} ${p1.y + 50} L ${p2.x} ${p2.y}`);
+                    path.setAttribute("class", "connector-path");
+                    path.setAttribute("marker-end", "url(#arrow)");
+                    svgCanvas.appendChild(path);
+                });
+            }
+
+            function logToConsole(channel, msg) {
+                if (consoleEl.innerText.includes('Waiting')) consoleEl.innerHTML = '';
+                const div = document.createElement('div');
+                div.innerHTML = `<span class="text-slate-500">[${new Date().toLocaleTimeString()}]</span> <span class="text-${channel === 'news' ? 'sky-400' : 'amber-500'} font-bold">${channel}</span>: ${msg}`;
+                consoleEl.prepend(div);
+            }
+
+            async function animateMessage(channel) {
+                const pubId = Math.random() > 0.5 ? 'comp-pub-1' : 'comp-pub-2';
+                const start = getCenterCoords(pubId);
+                const redisMid = getCenterCoords('comp-redis');
+
+                const packet = document.createElement('div');
+                packet.className = `packet msg`;
+                packet.textContent = channel === 'news' ? 'BREAKING NEWS' : 'SYSTEM ALERT';
+                packet.style.left = `${start.x}px`;
+                packet.style.top = `${start.y}px`;
+                packet.style.display = 'block';
+                packet.style.backgroundColor = channel === 'news' ? '#38bdf8' : '#f59e0b';
+                diagramContainer.appendChild(packet);
+
+                document.getElementById(pubId).classList.add('active');
+
+                // Move to Redis
+                await packet.animate([
+                    { left: `${start.x}px`, top: `${start.y}px` },
+                    { left: `${redisMid.x}px`, top: `${redisMid.y - 40}px` }
+                ], { duration: 600, easing: 'ease-in' }).finished;
+
+                document.getElementById(pubId).classList.remove('active');
+                document.getElementById('comp-redis').classList.add('active');
+                document.getElementById(`channel-${channel}`).style.transform = 'scale(1.2)';
+                packet.remove();
+
+                await new Promise(r => setTimeout(r, 200));
+
+                // Determine Subs
+                const subIds = channel === 'news' ? ['comp-sub-1', 'comp-sub-2'] : ['comp-sub-2', 'comp-sub-3'];
+
+                subIds.forEach(async (id) => {
+                    const end = getCenterCoords(id);
+                    const p = document.createElement('div');
+                    p.className = `packet msg`;
+                    p.textContent = channel === 'news' ? 'NEWS' : 'ALERT';
+                    p.style.left = `${redisMid.x}px`;
+                    p.style.top = `${redisMid.y + 50}px`;
+                    p.style.display = 'block';
+                    p.style.backgroundColor = channel === 'news' ? '#38bdf8' : '#f59e0b';
+                    diagramContainer.appendChild(p);
+
+                    logToConsole(channel, `Message broadcast to ${id}`);
+
+                    await p.animate([
+                        { left: `${redisMid.x}px`, top: `${redisMid.y + 50}px` },
+                        { left: `${end.x}px`, top: `${end.y}px` }
+                    ], { duration: 800, easing: 'ease-out' }).finished;
+
+                    document.getElementById(id).classList.add('active');
+                    setTimeout(() => document.getElementById(id).classList.remove('active'), 500);
+                    p.remove();
+                });
+
+                setTimeout(() => {
+                    document.getElementById('comp-redis').classList.remove('active');
+                    document.getElementById(`channel-${channel}`).style.transform = 'scale(1)';
+                }, 600);
+            }
+
+            document.querySelectorAll('.component-box').forEach(box => {
+                box.addEventListener('click', () => {
+                    const type = box.getAttribute('data-info');
+                    const content = document.getElementById(`info-${type}`);
+                    if (content) {
+                        infoPanel.innerHTML = content.outerHTML;
+                        infoPanel.firstElementChild.removeAttribute('id');
+                    }
+                });
+            });
+
+            document.getElementById('btn-pub-news').addEventListener('click', () => animateMessage('news'));
+            document.getElementById('btn-pub-alerts').addEventListener('click', () => animateMessage('alerts'));
+            document.getElementById('btn-reset').addEventListener('click', () => { consoleEl.innerHTML = '<div class="italic opacity-50">Waiting for messages...</div>'; });
+
+            window.addEventListener('resize', drawConnections);
+            setTimeout(drawConnections, 100);
+        });
+    </script>
+</body>
+
+</html>

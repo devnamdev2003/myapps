@@ -736,50 +736,118 @@
                         class="fa-solid fa-times"></i></button>
             </div>
             <div class="p-6 overflow-y-auto space-y-6">
-                <!-- File Upload -->
-                <div
-                    class="bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-2xl p-5">
-                    <label class="block text-sm font-bold text-blue-800 dark:text-blue-300 mb-2">Upload JSON
-                        File</label>
-                    <input type="file" id="importJsonFileInput" accept=".json"
-                        class="w-full text-sm text-gray-600 dark:text-gray-400 file:mr-4 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition cursor-pointer bg-white dark:bg-gray-900 rounded-xl p-1 shadow-sm border border-gray-200 dark:border-gray-700">
+
+                <div class="flex border-b border-gray-200 dark:border-gray-700">
+                    <button type="button" id="tabFullImport" onclick="switchImportMode('full')"
+                        class="px-4 py-2 border-b-2 border-brand text-brand font-bold text-sm outline-none transition-colors">Full
+                        Import</button>
+                    <button type="button" id="tabAdvImport" onclick="switchImportMode('adv')"
+                        class="px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 font-bold text-sm outline-none transition-colors">Advanced
+                        Import</button>
                 </div>
 
-                <div class="flex items-center text-gray-400 my-2">
-                    <div class="flex-1 border-t border-gray-200 dark:border-gray-700"></div>
-                    <span class="px-4 text-[10px] font-bold uppercase tracking-widest text-gray-400">OR</span>
-                    <div class="flex-1 border-t border-gray-200 dark:border-gray-700"></div>
-                </div>
-
-                <!-- Paste JSON -->
-                <div>
-                    <label class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">Paste JSON Data</label>
-                    <textarea id="importJsonTextarea" rows="6" placeholder='Paste JSON array of categories...'
-                        class="w-full px-5 py-4 rounded-2xl border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand focus:border-brand outline-none font-mono text-sm bg-gray-50 dark:bg-gray-900 shadow-inner"></textarea>
-                    <p id="importSampleHint" class="text-xs text-gray-500 mt-2 font-medium">The parser adapts
-                        automatically to arrays.</p>
-                </div>
-
-                <!-- Sample JSON -->
-                <details
-                    class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
-                    <summary
-                        class="p-4 font-bold cursor-pointer text-sm outline-none hover:bg-gray-50 dark:hover:bg-gray-700/50 transition flex items-center justify-between">
-                        <span>View Sample JSON Format</span>
-                        <i class="fa-solid fa-chevron-down text-gray-400 text-xs"></i>
-                    </summary>
+                <div id="fullImportSection" class="space-y-6">
                     <div
-                        class="p-0 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#0f172a] relative group">
-                        <button onclick="copySampleJson(this)"
-                            class="absolute top-3 right-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:text-brand dark:hover:text-brand px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all flex items-center space-x-2 z-10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100">
-                            <i class="fa-regular fa-copy"></i>
-                            <span>Copy</span>
-                        </button>
-
-                        <pre
-                            class="m-0"><code id="importSampleCode" class="text-xs text-gray-600 dark:text-gray-400 overflow-x-auto p-4 pt-12 sm:pt-4 block bg-transparent"></code></pre>
+                        class="bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-2xl p-5">
+                        <label class="block text-sm font-bold text-blue-800 dark:text-blue-300 mb-2">Upload JSON
+                            File</label>
+                        <input type="file" id="importJsonFileInput" accept=".json"
+                            class="w-full text-sm text-gray-600 dark:text-gray-400 file:mr-4 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition cursor-pointer bg-white dark:bg-gray-900 rounded-xl p-1 shadow-sm border border-gray-200 dark:border-gray-700">
                     </div>
-                </details>
+
+                    <div class="flex items-center text-gray-400 my-2">
+                        <div class="flex-1 border-t border-gray-200 dark:border-gray-700"></div>
+                        <span class="px-4 text-[10px] font-bold uppercase tracking-widest text-gray-400">OR</span>
+                        <div class="flex-1 border-t border-gray-200 dark:border-gray-700"></div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">Paste Full JSON
+                            Data</label>
+                        <textarea id="importJsonTextarea" rows="6" placeholder='Paste JSON array of categories...'
+                            class="w-full px-5 py-4 rounded-2xl border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand focus:border-brand outline-none font-mono text-sm bg-gray-50 dark:bg-gray-900 shadow-inner"></textarea>
+                        <p id="importSampleHint" class="text-xs text-gray-500 mt-2 font-medium">The parser adapts
+                            automatically to arrays.</p>
+                    </div>
+
+                    <details
+                        class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+                        <summary
+                            class="p-4 font-bold cursor-pointer text-sm outline-none hover:bg-gray-50 dark:hover:bg-gray-700/50 transition flex items-center justify-between">
+                            <span>View Sample JSON Format</span>
+                            <i class="fa-solid fa-chevron-down text-gray-400 text-xs"></i>
+                        </summary>
+                        <div
+                            class="p-0 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#0f172a] relative group">
+                            <button onclick="copySampleJson(this)"
+                                class="absolute top-3 right-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:text-brand dark:hover:text-brand px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all flex items-center space-x-2 z-10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100">
+                                <i class="fa-regular fa-copy"></i><span>Copy</span>
+                            </button>
+                            <pre
+                                class="m-0"><code id="importSampleCode" class="text-xs text-gray-600 dark:text-gray-400 overflow-x-auto p-4 pt-12 sm:pt-4 block bg-transparent"></code></pre>
+                        </div>
+                    </details>
+                </div>
+
+                <div id="advImportSection" class="space-y-4 hidden">
+                    <div id="advImportEmptyState"
+                        class="hidden text-center py-10 bg-gray-50 dark:bg-gray-900/50 rounded-3xl border border-dashed border-gray-200 dark:border-gray-700">
+                        <div
+                            class="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 text-brand rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <i class="fa-solid fa-folder-open text-2xl"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-gray-800 dark:text-white mb-2">No Categories Found</h4>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 px-6">Please create at least one Category in
+                            your workbook before using the Advanced Import feature.</p>
+                    </div>
+
+                    <div id="advImportFormState" class="space-y-4 hidden">
+                        <div>
+                            <label class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">Select Category
+                                <span class="text-red-500">*</span></label>
+                            <select id="advImportCategory" onchange="populateAdvImportLabs()"
+                                class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 outline-none">
+                                <option value="">-- Select Category --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">Select Lab
+                                <span class="text-gray-400 font-normal">(Optional - Appends copied steps to this
+                                    lab)</span></label>
+                            <select id="advImportLab"
+                                class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 outline-none">
+                                <option value="">-- Create as New Lab --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">Paste Copied
+                                Lab
+                                Data <span class="text-red-500">*</span></label>
+                            <textarea id="advImportTextarea" rows="6"
+                                placeholder='Paste the JSON you copied from a specific lab...'
+                                class="w-full px-5 py-4 rounded-2xl border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand focus:border-brand outline-none font-mono text-sm bg-gray-50 dark:bg-gray-900 shadow-inner transition-all"></textarea>
+                        </div>
+
+                        <details
+                            class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+                            <summary
+                                class="p-4 font-bold cursor-pointer text-sm outline-none hover:bg-gray-50 dark:hover:bg-gray-700/50 transition flex items-center justify-between">
+                                <span>View Sample Copied Format</span>
+                                <i class="fa-solid fa-chevron-down text-gray-400 text-xs"></i>
+                            </summary>
+                            <div
+                                class="p-0 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#0f172a] relative group">
+                                <button onclick="copySampleAdvJson(this)"
+                                    class="absolute top-3 right-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:text-brand dark:hover:text-brand px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all flex items-center space-x-2 z-10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100">
+                                    <i class="fa-regular fa-copy"></i><span>Copy</span>
+                                </button>
+                                <pre
+                                    class="m-0"><code id="advImportSampleCode" class="text-xs text-gray-600 dark:text-gray-400 overflow-x-auto p-4 pt-12 sm:pt-4 block bg-transparent"></code></pre>
+                            </div>
+                        </details>
+                    </div>
+                </div>
+
             </div>
             <div
                 class="p-6 border-t border-gray-100 dark:border-gray-700 flex justify-end space-x-3 bg-gray-50 dark:bg-gray-900/50 shrink-0">
@@ -1560,7 +1628,7 @@
         }
 
         function closeAllDropdowns() {
-            const dropdowns = document.querySelectorAll('[id^="dropdown-"], [id^="step-dropdown-"]');
+            const dropdowns = document.querySelectorAll('[id^="dropdown-"], [id^="step-dropdown-"], [id^="lab-dropdown-"]');
             dropdowns.forEach(d => d.classList.add('hidden'));
 
             // Reset z-index of all task rows back to normal
@@ -1854,8 +1922,8 @@
                             <span>Back to Categories</span>
                         </button>
                     </div>
-                    <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 lg:p-8 mb-6 relative overflow-hidden">
-                        <div class="absolute top-0 left-0 w-2 h-full bg-brand"></div>
+                    <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 lg:p-8 mb-6 relative overflow-visible z-20">
+                        <div class="absolute top-0 left-0 w-2 h-full bg-brand rounded-l-3xl"></div>
                         <div class="flex items-start space-x-5 pl-2">
                             <div class="bg-brand/10 p-4 rounded-2xl text-brand shrink-0">
                                 <i class="${escapeHTML(foundLab.icon)} text-3xl"></i>
@@ -1864,13 +1932,24 @@
                                 <div class="flex justify-between items-start gap-4">
                                     <h3 class="text-2xl font-extrabold text-gray-800 dark:text-white mb-2 leading-tight">${escapeHTML(foundLab.title)}</h3>
                                     ${!isSharedMode ? `
-                                    <div class="flex shrink-0 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700 p-1">
-                                        <button onclick="openManageLabModal('${escapeHTML(foundLab.id)}')" class="text-gray-400 hover:text-blue-500 hover:bg-white dark:hover:bg-gray-700 transition px-2.5 py-1.5 rounded mr-1" title="Edit ${escapeHTML(wb.moduleLabel)}">
-                                            <i class="fa-solid fa-pen text-sm"></i>
+                                    <div class="relative shrink-0 ml-2">
+                                        <button onclick="event.stopPropagation(); toggleLabDropdown('${escapeHTML(foundLab.id)}')" class="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 bg-gray-50 dark:bg-gray-900/50 hover:bg-white dark:hover:bg-gray-700 transition px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm" title="Options">
+                                            <i class="fa-solid fa-ellipsis-vertical text-sm"></i>
                                         </button>
-                                        <button onclick="deleteLab('${escapeHTML(foundLab.id)}')" class="text-gray-400 hover:text-red-500 hover:bg-white dark:hover:bg-gray-700 transition px-2.5 py-1.5 rounded" title="Delete ${escapeHTML(wb.moduleLabel)}">
-                                            <i class="fa-solid fa-trash text-sm"></i>
-                                        </button>
+                                        <div id="lab-dropdown-${escapeHTML(foundLab.id)}" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden transform origin-top-right transition-all z-30">
+                                            <div class="py-1">
+                                                <button onclick="event.stopPropagation(); closeAllDropdowns(); openManageLabModal('${escapeHTML(foundLab.id)}')" class="w-full text-left px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center transition-colors">
+                                                    <i class="fa-solid fa-pen w-5 text-center mr-2 text-blue-500"></i> Edit
+                                                </button>
+                                                <button onclick="event.stopPropagation(); closeAllDropdowns(); copyLabData('${escapeHTML(foundLab.id)}')" class="w-full text-left px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center transition-colors">
+                                                    <i class="fa-solid fa-copy w-5 text-center mr-2 text-green-500"></i> Copy Lab
+                                                </button>
+                                                <div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                                                <button onclick="event.stopPropagation(); closeAllDropdowns(); deleteLab('${escapeHTML(foundLab.id)}')" class="w-full text-left px-4 py-2.5 text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center transition-colors">
+                                                    <i class="fa-solid fa-trash w-5 text-center mr-2"></i> Delete
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                     ` : ''}
                                 </div>
@@ -2795,6 +2874,8 @@
         // ==========================================
         // WORKBOOK SPECIFIC IMPORT (JSON CATEGORIES)
         // ==========================================
+        let currentImportMode = 'full';
+
         function openImportModal() {
             const wb = getActiveWorkbook();
             if (wb) {
@@ -2827,97 +2908,268 @@
   }
 ]`;
                 document.getElementById('importSampleCode').innerText = sampleJson;
+                // Advanced Import Sample JSON
+                const sampleAdvJson = `{
+  "title": "Sample ${wb.moduleLabel}",
+  "icon": "fa-solid fa-star",
+  "description": "Short description here.",
+  "steps": [
+    { 
+      "text": "First ${wb.stepLabel.toLowerCase()}",
+      "description": "Optional details or **markdown** code here."
+    },
+    { 
+      "text": "Second ${wb.stepLabel.toLowerCase()}" 
+    }
+  ]
+}`;
+                if (document.getElementById('advImportSampleCode')) {
+                    document.getElementById('advImportSampleCode').innerText = sampleAdvJson;
+                }
+                // Toggle Advanced Import Empty State vs Form State
+                const advEmptyState = document.getElementById('advImportEmptyState');
+                const advFormState = document.getElementById('advImportFormState');
+
+                if (wb.categories.length === 0) {
+                    advEmptyState.classList.remove('hidden');
+                    advFormState.classList.add('hidden');
+                } else {
+                    advEmptyState.classList.add('hidden');
+                    advFormState.classList.remove('hidden');
+
+                    // Populate Advanced Import Category Dropdown
+                    const catSelect = document.getElementById('advImportCategory');
+                    catSelect.innerHTML = '<option value="">-- Select Category --</option>';
+                    wb.categories.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.category;
+                        opt.textContent = c.category;
+                        catSelect.appendChild(opt);
+                    });
+                    document.getElementById('advImportLab').innerHTML = '<option value="">-- Create as New Lab --</option>';
+                }
             }
+
+            // Default to full import tab on open
+            switchImportMode('full');
             document.getElementById('importModal').classList.remove('hidden');
 
             const importScroll = document.querySelector('#importModal .overflow-y-auto');
             if (importScroll) importScroll.scrollTop = 0;
         }
 
+        function switchImportMode(mode) {
+            currentImportMode = mode;
+            const btnFull = document.getElementById('tabFullImport');
+            const btnAdv = document.getElementById('tabAdvImport');
+            const secFull = document.getElementById('fullImportSection');
+            const secAdv = document.getElementById('advImportSection');
+
+            const activeClass = 'px-4 py-2 border-b-2 border-brand text-brand font-bold text-sm outline-none transition-colors';
+            const inactiveClass = 'px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 font-bold text-sm outline-none transition-colors';
+
+            if (mode === 'full') {
+                btnFull.className = activeClass;
+                btnAdv.className = inactiveClass;
+                secFull.classList.remove('hidden');
+                secAdv.classList.add('hidden');
+            } else {
+                btnAdv.className = activeClass;
+                btnFull.className = inactiveClass;
+                secAdv.classList.remove('hidden');
+                secFull.classList.add('hidden');
+            }
+        }
+
+        function populateAdvImportLabs() {
+            const wb = getActiveWorkbook();
+            const catName = document.getElementById('advImportCategory').value;
+            const labSelect = document.getElementById('advImportLab');
+            labSelect.innerHTML = '<option value="">-- Create as New Lab --</option>';
+
+            if (!wb || !catName) return;
+
+            const category = wb.categories.find(c => c.category === catName);
+            if (category) {
+                category.labs.forEach(l => {
+                    const opt = document.createElement('option');
+                    opt.value = l.id;
+                    opt.textContent = l.title;
+                    labSelect.appendChild(opt);
+                });
+            }
+        }
+
         function closeImportModal() {
             document.getElementById('importModal').classList.add('hidden');
             document.getElementById('importJsonFileInput').value = '';
             document.getElementById('importJsonTextarea').value = '';
+            document.getElementById('advImportTextarea').value = '';
         }
 
         async function executeLabImport() {
-            const fileInput = document.getElementById('importJsonFileInput');
-            const textArea = document.getElementById('importJsonTextarea');
-            let jsonString = '';
+            const wb = getActiveWorkbook();
+            if (!wb) return;
 
-            if (fileInput.files.length > 0) {
-                try { jsonString = await fileInput.files[0].text(); }
-                catch (e) { return alert('Error reading file.'); }
-            } else if (textArea.value.trim() !== '') {
-                jsonString = textArea.value.trim();
+            if (currentImportMode === 'full') {
+                // NORMAL FULL IMPORT LOGIC
+                const fileInput = document.getElementById('importJsonFileInput');
+                const textArea = document.getElementById('importJsonTextarea');
+                let jsonString = '';
+
+                if (fileInput.files.length > 0) {
+                    try { jsonString = await fileInput.files[0].text(); }
+                    catch (e) { return alert('Error reading file.'); }
+                } else if (textArea.value.trim() !== '') {
+                    jsonString = textArea.value.trim();
+                } else {
+                    return alert('Upload file or paste JSON.');
+                }
+
+                try {
+                    const importedCategories = JSON.parse(jsonString);
+                    if (!Array.isArray(importedCategories)) throw new Error("Expected a JSON array of categories.");
+
+                    const expectedModKey = wb.moduleLabel.toLowerCase() + 's';
+                    const expectedStepKey = wb.stepLabel.toLowerCase() + 's';
+
+                    importedCategories.forEach(newCat => {
+                        if (typeof newCat !== 'object' || newCat === null) return;
+                        const arrayKeys = Object.keys(newCat).filter(k => Array.isArray(newCat[k]));
+                        const moduleKeyToUse = Array.isArray(newCat[expectedModKey]) ? expectedModKey : (arrayKeys.length > 0 ? arrayKeys[0] : null);
+                        const importModules = moduleKeyToUse ? newCat[moduleKeyToUse] : null;
+
+                        if (!newCat.category || !importModules) return;
+
+                        let existCat = wb.categories.find(c => c.category === newCat.category);
+                        if (!existCat) {
+                            existCat = { category: newCat.category, labs: [] };
+                            wb.categories.push(existCat);
+                        }
+
+                        importModules.forEach(newMod => {
+                            if (typeof newMod !== 'object' || newMod === null) return;
+                            const stepArrayKeys = Object.keys(newMod).filter(k => Array.isArray(newMod[k]));
+                            const stepKeyToUse = Array.isArray(newMod[expectedStepKey]) ? expectedStepKey : (stepArrayKeys.length > 0 ? stepArrayKeys[0] : null);
+                            const importSteps = stepKeyToUse ? newMod[stepKeyToUse] : [];
+
+                            const labId = 'lab-import-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                            const steps = importSteps.map((step, idx) => {
+                                const sid = `step-${labId}-${idx}`;
+                                appState.progressData[sid] = false;
+                                return {
+                                    id: sid,
+                                    text: typeof step === 'string' ? step : (step.text || 'Unnamed step'),
+                                    description: typeof step === 'object' ? (step.description || '') : ''
+                                };
+                            });
+
+                            existCat.labs.push({
+                                id: labId,
+                                title: newMod.title || `Untitled ${wb.moduleLabel}`,
+                                icon: newMod.icon || 'fa-solid fa-vial',
+                                description: newMod.description || 'Imported item.',
+                                steps
+                            });
+                        });
+                    });
+
+                    saveState();
+                    touchActiveWorkbook();
+                    alert(`Successfully imported full data!`);
+                    closeImportModal();
+                    openWorkbook(wb.id, false, activeLabId);
+                } catch (err) {
+                    alert('Parsing error: ' + err.message);
+                }
+
             } else {
-                return alert('Upload file or paste JSON.');
-            }
+                // ADVANCED IMPORT LOGIC
+                const catElement = document.getElementById('advImportCategory');
+                const textElement = document.getElementById('advImportTextarea');
 
-            try {
-                const importedCategories = JSON.parse(jsonString);
-                if (!Array.isArray(importedCategories)) throw new Error("Expected a JSON array of categories.");
+                const catName = catElement.value;
+                const labId = document.getElementById('advImportLab').value;
+                const jsonString = textElement.value.trim();
 
-                const wb = getActiveWorkbook();
-                const expectedModKey = wb.moduleLabel.toLowerCase() + 's';
-                const expectedStepKey = wb.stepLabel.toLowerCase() + 's';
+                // Reset visual error states
+                catElement.classList.remove('border-red-500', 'ring-2', 'ring-red-500');
+                textElement.classList.remove('border-red-500', 'ring-2', 'ring-red-500');
 
-                importedCategories.forEach(newCat => {
-                    // Safe import structure evaluation
-                    if (typeof newCat !== 'object' || newCat === null) return;
+                // Validation: Mandatory Category
+                if (!catName) {
+                    catElement.classList.add('border-red-500', 'ring-2', 'ring-red-500');
+                    return alert('Validation Error: Selecting a Category is mandatory.');
+                }
 
-                    // Flexible module detection: Find expected key, or just grab the first array property
-                    const arrayKeys = Object.keys(newCat).filter(k => Array.isArray(newCat[k]));
-                    const moduleKeyToUse = Array.isArray(newCat[expectedModKey]) ? expectedModKey : (arrayKeys.length > 0 ? arrayKeys[0] : null);
-                    const importModules = moduleKeyToUse ? newCat[moduleKeyToUse] : null;
+                // Validation: Mandatory JSON Data
+                if (!jsonString) {
+                    textElement.classList.add('border-red-500', 'ring-2', 'ring-red-500');
+                    return alert('Validation Error: Please paste the copied Lab JSON data.');
+                }
 
-                    if (!newCat.category || !importModules) return;
+                try {
+                    const copiedLab = JSON.parse(jsonString);
 
-                    let existCat = wb.categories.find(c => c.category === newCat.category);
-                    if (!existCat) {
-                        existCat = { category: newCat.category, labs: [] }; // Stored internally as 'labs'
-                        wb.categories.push(existCat);
+                    // Validation: Format Type
+                    if (typeof copiedLab !== 'object' || Array.isArray(copiedLab) || copiedLab === null) {
+                        textElement.classList.add('border-red-500', 'ring-2', 'ring-red-500');
+                        return alert('Invalid Data Format: The pasted data must be a single Lab object starting with { and ending with }. Please verify it against the Sample Format.');
                     }
 
-                    importModules.forEach(newMod => {
-                        if (typeof newMod !== 'object' || newMod === null) return;
+                    const category = wb.categories.find(c => c.category === catName);
+                    if (!category) return alert('Error: Category not found.');
 
-                        // Flexible step detection: Find expected key, or just grab the first array property
-                        const stepArrayKeys = Object.keys(newMod).filter(k => Array.isArray(newMod[k]));
-                        const stepKeyToUse = Array.isArray(newMod[expectedStepKey]) ? expectedStepKey : (stepArrayKeys.length > 0 ? stepArrayKeys[0] : null);
-                        const importSteps = stepKeyToUse ? newMod[stepKeyToUse] : [];
+                    const importSteps = Array.isArray(copiedLab.steps) ? copiedLab.steps : [];
 
-                        // Always generate new IDs to prevent collisions, ignoring uploaded IDs
-                        const labId = 'lab-import-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                    if (labId) {
+                        // Append steps to the selected existing lab
+                        const targetLab = category.labs.find(l => l.id === labId);
+                        if (!targetLab) return alert('Error: Target lab not found.');
+
+                        importSteps.forEach((step, idx) => {
+                            const sid = `step-${targetLab.id}-${Date.now()}-${idx}-${Math.random().toString(36).substr(2, 5)}`;
+                            appState.progressData[sid] = false;
+                            targetLab.steps.push({
+                                id: sid,
+                                text: step.text || 'Unnamed step',
+                                description: step.description || ''
+                            });
+                        });
+                        alert('Steps successfully appended to the existing lab!');
+                    } else {
+                        // Create as a brand new lab inside the selected category
+                        const newLabId = 'lab-import-adv-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
                         const steps = importSteps.map((step, idx) => {
-                            const sid = `step-${labId}-${idx}`;
-                            appState.progressData[sid] = false; // Init progress
+                            const sid = `step-${newLabId}-${idx}`;
+                            appState.progressData[sid] = false;
                             return {
                                 id: sid,
-                                text: typeof step === 'string' ? step : (step.text || 'Unnamed step'),
-                                description: typeof step === 'object' ? (step.description || '') : ''
+                                text: step.text || 'Unnamed step',
+                                description: step.description || ''
                             };
                         });
 
-                        existCat.labs.push({
-                            id: labId,
-                            title: newMod.title || `Untitled ${wb.moduleLabel}`,
-                            icon: newMod.icon || 'fa-solid fa-vial',
-                            description: newMod.description || 'Imported item.',
-                            steps
+                        category.labs.push({
+                            id: newLabId,
+                            title: copiedLab.title || `Imported ${wb.moduleLabel}`,
+                            icon: copiedLab.icon || 'fa-solid fa-vial',
+                            description: copiedLab.description || '',
+                            steps: steps
                         });
-                    });
-                });
+                        alert('New lab successfully created in the selected category!');
+                    }
 
-                saveState();
-                touchActiveWorkbook();
-                alert(`Successfully imported data to this workbook!`);
-                closeImportModal();
+                    saveState();
+                    touchActiveWorkbook();
+                    closeImportModal();
+                    openWorkbook(wb.id, false, activeLabId);
 
-                // Re-render to reflect new potential Labels and Data
-                openWorkbook(wb.id, false, activeLabId);
-            } catch (err) {
-                alert('Parsing error: ' + err.message);
+                } catch (err) {
+                    // Catch JSON Syntax errors explicitly
+                    textElement.classList.add('border-red-500', 'ring-2', 'ring-red-500');
+                    alert('JSON Syntax Error: The pasted text is not valid JSON.\\n\\nDetails: ' + err.message + '\\n\\nTip: Ensure all strings are wrapped in double quotes and there are no trailing commas.');
+                }
             }
         }
 
@@ -3100,6 +3352,14 @@
                 console.error('Failed to copy text: ', err);
                 alert('Failed to copy to clipboard. Your browser might not support this feature.');
             });
+        }
+        function copySampleAdvJson(btn) {
+            const sampleCode = document.getElementById('advImportSampleCode').innerText;
+            navigator.clipboard.writeText(sampleCode).then(() => {
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-check text-green-500"></i><span class="text-green-500">Copied!</span>';
+                setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
+            }).catch(err => { alert('Failed to copy to clipboard.'); });
         }
 
         // ==========================================
@@ -3579,8 +3839,69 @@
             if (document.getElementById('overallProgressTextMobile')) document.getElementById('overallProgressTextMobile').innerText = totalPerc + '%';
         }
         // ==========================================
-        // STEP DROPDOWN & HIGHLIGHT LOGIC
+        // LAB & STEP DROPDOWN & HIGHLIGHT LOGIC
         // ==========================================
+        function toggleLabDropdown(labId) {
+            const dropdown = document.getElementById(`lab-dropdown-${labId}`);
+            const isHidden = dropdown.classList.contains('hidden');
+
+            // Close other open dropdowns first
+            closeAllDropdowns();
+
+            if (isHidden) {
+                dropdown.classList.remove('hidden');
+            }
+        }
+
+        function copyLabData(labId) {
+            const wb = getActiveWorkbook();
+            if (!wb) return;
+
+            let foundLab = null;
+            wb.categories.forEach(c => {
+                const l = c.labs.find(x => x.id === labId);
+                if (l) foundLab = l;
+            });
+
+            if (!foundLab) return;
+
+            // Only copy the raw lab data
+            const labToCopy = {
+                title: foundLab.title,
+                icon: foundLab.icon,
+                description: foundLab.description,
+                steps: foundLab.steps.map(s => ({
+                    text: s.text,
+                    description: s.description
+                }))
+            };
+
+            const jsonString = JSON.stringify(labToCopy, null, 2);
+            navigator.clipboard.writeText(jsonString).then(() => {
+                // Show a non-intrusive toast message for successful copy
+                const toast = document.createElement('div');
+                toast.className = 'fixed bottom-5 right-5 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg shadow-green-500/20 z-[100] animate-fade-in font-bold flex items-center space-x-3 transition-opacity duration-300';
+                toast.innerHTML = '<i class="fa-solid fa-copy"></i><span>Lab copied! Use Advanced Import to paste it.</span>';
+                document.body.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }).catch(err => {
+                // Show error toast
+                const toast = document.createElement('div');
+                toast.className = 'fixed bottom-5 right-5 bg-red-500 text-white px-6 py-3 rounded-xl shadow-lg shadow-red-500/20 z-[100] animate-fade-in font-bold flex items-center space-x-3 transition-opacity duration-300';
+                toast.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i><span>Failed to copy lab data.</span>';
+                document.body.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            });
+        }
+
         function toggleStepDropdown(stepId) {
             const dropdown = document.getElementById(`step-dropdown-${stepId}`);
             const isHidden = dropdown.classList.contains('hidden');

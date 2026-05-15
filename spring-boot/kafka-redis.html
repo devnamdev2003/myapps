@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kafka vs Redis Pub/Sub | Interactive Architecture</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Code Highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/java.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        darkbg: '#0f172a', panelbg: '#1e293b', compbg: '#334155', bordercolor: '#475569', textcolor: '#f8fafc', muted: '#94a3b8',
+                        redis: '#dc2626',
+                        kafka: '#ffffff', // Kafka official color theme is often black/white/grey
+                        accent_blue: '#38bdf8',
+                        accent_purple: '#a78bfa'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+
+        .component-box {
+            background-color: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+        }
+
+        .broker-container {
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .log-entry {
+            font-family: monospace;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 2px;
+            margin: 1px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+
+        .packet {
+            position: absolute; width: 14px; height: 14px; border-radius: 50%;
+            z-index: 50; display: none; transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+        svg.connector-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+        .connector-path { fill: none; stroke: #334155; stroke-width: 2; stroke-dasharray: 4, 4; }
+
+        .tab-btn { padding: 0.5rem 1rem; border-bottom: 2px solid transparent; color: #94a3b8; font-weight: 500; transition: all 0.2s; }
+        .tab-btn.active { border-bottom-color: #38bdf8; color: #f8fafc; }
+
+        .markdown-body pre { background-color: #0d1117; border-radius: 6px; padding: 16px; border: 1px solid #30363d; }
+
+        .sub-state { font-size: 9px; font-weight: bold; margin-top: 4px; }
+        .sub-online { color: #10b981; }
+        .sub-offline { color: #ef4444; }
+    </style>
+</head>
+
+<body class="antialiased h-screen flex flex-col overflow-hidden text-textcolor bg-darkbg">
+
+    <header class="bg-panelbg border-b border-bordercolor z-40 shadow-lg">
+        <div class="max-w-screen-2xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-code-compare text-accent_blue text-2xl drop-shadow-[0_0_8px_rgba(56,189,248,0.5)]"></i>
+                <h1 class="text-xl font-bold tracking-wide">Kafka vs Redis Pub/Sub</h1>
+            </div>
+            <div class="flex gap-4">
+                <div class="flex bg-darkbg rounded-lg p-1 border border-bordercolor">
+                    <button id="tab-visual" class="tab-btn active text-sm">Visual Duel</button>
+                    <button id="tab-principles" class="tab-btn text-sm">Comparison Details</button>
+                </div>
+            </div>
+            <div class="flex gap-2" id="sim-controls">
+                <button id="btn-broadcast" class="px-4 py-1.5 bg-accent_blue hover:bg-sky-500 text-white rounded font-medium transition text-sm flex items-center shadow-lg shadow-sky-900/20">
+                    <i class="fa-solid fa-tower-broadcast mr-2"></i> Broadcast Message
+                </button>
+                <button id="btn-late-joiner" class="px-4 py-1.5 bg-compbg hover:bg-slate-600 text-slate-200 rounded font-medium transition text-sm flex items-center border border-bordercolor">
+                    <i class="fa-solid fa-user-plus mr-2"></i> Late Subscriber Joins
+                </button>
+                <button id="btn-reset" class="px-3 py-1.5 bg-compbg hover:bg-slate-600 text-slate-200 border border-bordercolor rounded font-medium transition text-sm">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 flex overflow-hidden relative w-full h-full">
+        <!-- VISUAL DUEL VIEW -->
+        <div id="view-visual" class="flex w-full h-full">
+            
+            <!-- LEFT: REDIS (Ephemeral) -->
+            <div class="flex-1 flex flex-col border-r border-bordercolor/50 relative p-8">
+                <div class="absolute top-4 left-4 z-10 flex items-center gap-2">
+                    <div class="w-8 h-8 bg-redis rounded flex items-center justify-center"><i class="fa-solid fa-bolt text-white text-sm"></i></div>
+                    <span class="font-bold text-lg">Redis Pub/Sub</span>
+                </div>
+                <div class="text-xs text-muted mb-8 text-center italic">"Fire and Forget" - Stateless Delivery</div>
+
+                <div class="flex-1 flex flex-col justify-between" id="redis-arena">
+                    <svg class="connector-svg" id="svg-redis"></svg>
+
+                    <!-- Publisher -->
+                    <div class="flex justify-center">
+                        <div class="component-box w-40" id="redis-pub">
+                            <i class="fa-solid fa-bullhorn text-redis mb-2"></i>
+                            <div class="text-xs font-bold uppercase">Publisher</div>
+                        </div>
+                    </div>
+
+                    <!-- Redis Broker -->
+                    <div class="flex justify-center broker-container">
+                        <div class="component-box w-56 border-redis border-2" id="redis-broker">
+                            <div class="font-bold">Redis Broker</div>
+                            <div class="text-[10px] text-muted mt-2">RAM Only (No Persistence)</div>
+                            <div id="redis-buffer" class="mt-2 h-16 flex flex-wrap content-start justify-center overflow-hidden">
+                                <div class="text-[9px] text-slate-500 italic mt-4 opacity-50">Memory Clears Instantly</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Subscribers -->
+                    <div class="flex justify-between px-4">
+                        <div class="component-box w-28" id="redis-sub-1">
+                            <div class="text-[10px] font-bold">Sub A</div>
+                            <div class="sub-state sub-online">Online</div>
+                        </div>
+                        <div class="component-box w-28 opacity-30 border-dashed" id="redis-sub-2">
+                            <div class="text-[10px] font-bold">Sub B</div>
+                            <div class="sub-state sub-offline">Offline</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: KAFKA (Persistent) -->
+            <div class="flex-1 flex flex-col relative p-8 bg-black/10">
+                <div class="absolute top-4 left-4 z-10 flex items-center gap-2">
+                    <div class="w-8 h-8 bg-white rounded flex items-center justify-center"><i class="fa-solid fa-scroll text-black text-sm"></i></div>
+                    <span class="font-bold text-lg">Apache Kafka</span>
+                </div>
+                <div class="text-xs text-muted mb-8 text-center italic">"Distributed Log" - Stateful Storage</div>
+
+                <div class="flex-1 flex flex-col justify-between" id="kafka-arena">
+                    <svg class="connector-svg" id="svg-kafka"></svg>
+
+                    <!-- Producer -->
+                    <div class="flex justify-center">
+                        <div class="component-box w-40" id="kafka-pub">
+                            <i class="fa-solid fa-paper-plane text-accent_blue mb-2"></i>
+                            <div class="text-xs font-bold uppercase">Producer</div>
+                        </div>
+                    </div>
+
+                    <!-- Kafka Broker -->
+                    <div class="flex justify-center broker-container">
+                        <div class="component-box w-56 border-white/50 border-2" id="kafka-broker">
+                            <div class="font-bold">Kafka Broker</div>
+                            <div class="text-[10px] text-muted mt-2">Append-Only Log (Disk)</div>
+                            <div id="kafka-log" class="mt-2 h-20 w-full flex flex-col items-center overflow-y-auto scrollbar-hide bg-black/40 rounded border border-white/5">
+                                <!-- Messages will persist here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Consumers -->
+                    <div class="flex justify-between px-4">
+                        <div class="component-box w-28" id="kafka-sub-1">
+                            <div class="text-[10px] font-bold">Cons A</div>
+                            <div class="sub-state sub-online">Online</div>
+                        </div>
+                        <div class="component-box w-28 opacity-30 border-dashed" id="kafka-sub-2">
+                            <div class="text-[10px] font-bold">Cons B</div>
+                            <div class="sub-state sub-offline">Offline</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Global Packets -->
+            <div id="packet-redis" class="packet bg-redis"></div>
+            <div id="packet-kafka" class="packet bg-accent_blue"></div>
+        </div>
+
+        <!-- PRINCIPLES VIEW -->
+        <div id="view-principles" class="hidden w-full h-full overflow-y-auto bg-darkbg p-8">
+            <div class="max-w-5xl mx-auto pb-16">
+                <h1 class="text-3xl font-bold mb-8">Architectural Comparison</h1>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                    <div class="bg-panelbg p-6 rounded-xl border border-bordercolor">
+                        <h2 class="text-xl font-bold text-redis mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-bolt"></i> Redis Pub/Sub
+                        </h2>
+                        <ul class="space-y-3 text-sm text-slate-300">
+                            <li><strong class="text-white">Stateless:</strong> Messages are delivered and immediately removed from memory.</li>
+                            <li><strong class="text-white">Delivery:</strong> If a subscriber is offline, they miss the message forever.</li>
+                            <li><strong class="text-white">Latency:</strong> Extremely low, as it's purely in-memory and bypasses disk.</li>
+                            <li><strong class="text-white">Use Case:</strong> Real-time chat, gaming updates, cache invalidation.</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-panelbg p-6 rounded-xl border border-bordercolor">
+                        <h2 class="text-xl font-bold text-accent_blue mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-scroll"></i> Apache Kafka
+                        </h2>
+                        <ul class="space-y-3 text-sm text-slate-300">
+                            <li><strong class="text-white">Stateful:</strong> Messages are persisted to disk as an immutable append-only log.</li>
+                            <li><strong class="text-white">Replayability:</strong> Consumers can "rewind" and read history (Event Sourcing).</li>
+                            <li><strong class="text-white">Throughput:</strong> High-performance sequential disk I/O allows massive volumes.</li>
+                            <li><strong class="text-white">Use Case:</strong> Activity tracking, log aggregation, complex event processing.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="bg-panelbg border border-bordercolor rounded-xl p-8 overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="text-xs uppercase text-muted border-b border-bordercolor">
+                            <tr>
+                                <th class="pb-4">Feature</th>
+                                <th class="pb-4 text-redis">Redis Pub/Sub</th>
+                                <th class="pb-4 text-accent_blue">Apache Kafka</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-bordercolor">
+                            <tr>
+                                <td class="py-4 font-bold">Data Storage</td>
+                                <td class="py-4">No. Ethereal/Ephemeral.</td>
+                                <td class="py-4">Yes. Persistent on disk.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 font-bold">Late Joiners</td>
+                                <td class="py-4">Receive only new messages.</td>
+                                <td class="py-4">Can read historical messages.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 font-bold">Scaling</td>
+                                <td class="py-4">Scales vertically; Cluster support.</td>
+                                <td class="py-4">Scales horizontally via Partitions.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 font-bold">Guarantees</td>
+                                <td class="py-4">Best effort delivery.</td>
+                                <td class="py-4">At-least-once, Exactly-once.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            hljs.highlightAll();
+
+            const tabVisual = document.getElementById('tab-visual');
+            const tabPrinciples = document.getElementById('tab-principles');
+            const viewVisual = document.getElementById('view-visual');
+            const viewPrinciples = document.getElementById('view-principles');
+
+            tabVisual.addEventListener('click', () => {
+                tabVisual.classList.add('active'); tabPrinciples.classList.remove('active');
+                viewVisual.classList.remove('hidden'); viewPrinciples.classList.add('hidden');
+                setTimeout(drawConnections, 50);
+            });
+
+            tabPrinciples.addEventListener('click', () => {
+                tabPrinciples.classList.add('active'); tabVisual.classList.remove('active');
+                viewPrinciples.classList.remove('hidden'); viewVisual.classList.add('hidden');
+            });
+
+            // Logic elements
+            const svgRedis = document.getElementById('svg-redis');
+            const svgKafka = document.getElementById('svg-kafka');
+            const kafkaLog = document.getElementById('kafka-log');
+            const arenaRedis = document.getElementById('redis-arena');
+            const arenaKafka = document.getElementById('kafka-arena');
+
+            let messageCount = 0;
+            let lateSubActive = false;
+
+            function getCoords(elId, arenaId) {
+                const el = document.getElementById(elId);
+                const rect = el.getBoundingClientRect();
+                const arena = document.getElementById(arenaId).getBoundingClientRect();
+                return {
+                    x: rect.left - arena.left + rect.width / 2,
+                    y: rect.top - arena.top + rect.height / 2
+                };
+            }
+
+            function drawConnections() {
+                // Redis
+                const p1r = getCoords('redis-pub', 'redis-arena');
+                const midr = getCoords('redis-broker', 'redis-arena');
+                const s1r = getCoords('redis-sub-1', 'redis-arena');
+                const s2r = getCoords('redis-sub-2', 'redis-arena');
+
+                svgRedis.innerHTML = `<path d="M ${p1r.x} ${p1r.y} L ${midr.x} ${midr.y - 40}" class="connector-path" />
+                                     <path d="M ${midr.x} ${midr.y + 40} L ${s1r.x} ${s1r.y}" class="connector-path" />
+                                     <path d="M ${midr.x} ${midr.y + 40} L ${s2r.x} ${s2r.y}" class="connector-path" />`;
+
+                // Kafka
+                const p1k = getCoords('kafka-pub', 'kafka-arena');
+                const midk = getCoords('kafka-broker', 'kafka-arena');
+                const s1k = getCoords('kafka-sub-1', 'kafka-arena');
+                const s2k = getCoords('kafka-sub-2', 'kafka-arena');
+
+                svgKafka.innerHTML = `<path d="M ${p1k.x} ${p1k.y} L ${midk.x} ${midk.y - 40}" class="connector-path" />
+                                     <path d="M ${midk.x} ${midk.y + 40} L ${s1k.x} ${s1k.y}" class="connector-path" />
+                                     <path d="M ${midk.x} ${midk.y + 40} L ${s2k.x} ${s2k.y}" class="connector-path" />`;
+            }
+
+            async function broadcast() {
+                messageCount++;
+                const msgText = `MSG_${messageCount}`;
+
+                // --- REDIS SIDE ---
+                const rStart = getCoords('redis-pub', 'redis-arena');
+                const rMid = getCoords('redis-broker', 'redis-arena');
+                const rEnd1 = getCoords('redis-sub-1', 'redis-arena');
+                const rEnd2 = getCoords('redis-sub-2', 'redis-arena');
+
+                const pRedis = document.getElementById('packet-redis');
+                pRedis.style.display = 'block';
+                pRedis.style.left = `calc(25% + ${rStart.x - arenaRedis.getBoundingClientRect().width/2}px)`;
+                pRedis.style.top = `${rStart.y}px`;
+
+                // Pub to Broker
+                await pRedis.animate([
+                    { left: `calc(25vw - 120px + ${rStart.x}px)`, top: `${rStart.y}px`, opacity: 1 },
+                    { left: `calc(25vw - 120px + ${rMid.x}px)`, top: `${rMid.y - 40}px`, opacity: 1 }
+                ], { duration: 500, easing: 'ease-in' }).finished;
+
+                // Fire and Forget Visual: Blink broker
+                document.getElementById('redis-broker').style.borderColor = '#dc2626';
+                setTimeout(() => document.getElementById('redis-broker').style.borderColor = '#475569', 300);
+
+                // Split Delivery
+                // Sub 1 (Online)
+                const pk1 = pRedis.cloneNode(true);
+                arenaRedis.appendChild(pk1);
+                pk1.animate([
+                    { left: `${rMid.x}px`, top: `${rMid.y + 40}px` },
+                    { left: `${rEnd1.x}px`, top: `${rEnd1.y}px` }
+                ], { duration: 400, easing: 'ease-out' }).onfinish = () => pk1.remove();
+
+                // Sub 2 (Conditional)
+                if (lateSubActive) {
+                    const pk2 = pRedis.cloneNode(true);
+                    arenaRedis.appendChild(pk2);
+                    pk2.animate([
+                        { left: `${rMid.x}px`, top: `${rMid.y + 40}px` },
+                        { left: `${rEnd2.x}px`, top: `${rEnd2.y}px` }
+                    ], { duration: 400, easing: 'ease-out' }).onfinish = () => pk2.remove();
+                } else {
+                    // Visual feedback of "lost" message for offline sub
+                    const pk2Lost = pRedis.cloneNode(true);
+                    arenaRedis.appendChild(pk2Lost);
+                    pk2Lost.style.opacity = "0.3";
+                    pk2Lost.animate([
+                        { left: `${rMid.x}px`, top: `${rMid.y + 40}px`, opacity: 0.3 },
+                        { left: `${rEnd2.x}px`, top: `${rEnd2.y - 20}px`, opacity: 0 }
+                    ], { duration: 400 }).onfinish = () => pk2Lost.remove();
+                }
+                pRedis.style.display = 'none';
+
+                // --- KAFKA SIDE ---
+                const kStart = getCoords('kafka-pub', 'kafka-arena');
+                const kMid = getCoords('kafka-broker', 'kafka-arena');
+                const kEnd1 = getCoords('kafka-sub-1', 'kafka-arena');
+                const kEnd2 = getCoords('kafka-sub-2', 'kafka-arena');
+
+                const pKafka = document.getElementById('packet-kafka');
+                pKafka.style.display = 'block';
+                pKafka.style.left = `calc(75% + ${kStart.x - arenaKafka.getBoundingClientRect().width/2}px)`;
+                pKafka.style.top = `${kStart.y}px`;
+
+                await pKafka.animate([
+                    { left: `calc(75vw - 120px + ${kStart.x}px)`, top: `${kStart.y}px`, opacity: 1 },
+                    { left: `calc(75vw - 120px + ${kMid.x}px)`, top: `${kMid.y - 40}px`, opacity: 1 }
+                ], { duration: 500, easing: 'ease-in' }).finished;
+
+                // Persistence Visual: Append to log
+                const logItem = document.createElement('div');
+                logItem.className = 'log-entry bg-sky-900/40 border border-sky-500/30 text-sky-200';
+                logItem.textContent = `offset_${messageCount}: ${msgText}`;
+                kafkaLog.appendChild(logItem);
+                kafkaLog.scrollTop = kafkaLog.scrollHeight;
+
+                // Consumer Group Delivery
+                const pk3 = pKafka.cloneNode(true);
+                arenaKafka.appendChild(pk3);
+                pk3.animate([
+                    { left: `${kMid.x}px`, top: `${kMid.y + 40}px` },
+                    { left: `${kEnd1.x}px`, top: `${kEnd1.y}px` }
+                ], { duration: 400, easing: 'ease-out' }).onfinish = () => pk3.remove();
+
+                if (lateSubActive) {
+                    const pk4 = pKafka.cloneNode(true);
+                    arenaKafka.appendChild(pk4);
+                    pk4.animate([
+                        { left: `${kMid.x}px`, top: `${kMid.y + 40}px` },
+                        { left: `${kEnd2.x}px`, top: `${kEnd2.y}px` }
+                    ], { duration: 400, easing: 'ease-out' }).onfinish = () => pk4.remove();
+                }
+                pKafka.style.display = 'none';
+            }
+
+            async function joinLate() {
+                if (lateSubActive) return;
+                lateSubActive = true;
+
+                // Visual updates
+                ['redis-sub-2', 'kafka-sub-2'].forEach(id => {
+                    const el = document.getElementById(id);
+                    el.classList.remove('opacity-30', 'border-dashed');
+                    el.querySelector('.sub-state').textContent = 'Online';
+                    el.querySelector('.sub-state').className = 'sub-state sub-online';
+                });
+
+                // Kafka REPLAY logic
+                if (messageCount > 0) {
+                    const kMid = getCoords('kafka-broker', 'kafka-arena');
+                    const kEnd2 = getCoords('kafka-sub-2', 'kafka-arena');
+                    
+                    // Simulate replay of all existing messages
+                    for(let i=1; i<=messageCount; i++) {
+                        const repl = document.createElement('div');
+                        repl.className = "packet bg-accent_purple"; // Different color for replay
+                        repl.style.position = 'absolute';
+                        repl.style.width = '10px';
+                        repl.style.height = '10px';
+                        repl.style.borderRadius = '50%';
+                        arenaKafka.appendChild(repl);
+
+                        await repl.animate([
+                            { left: `${kMid.x}px`, top: `${kMid.y + 20}px`, opacity: 1 },
+                            { left: `${kEnd2.x}px`, top: `${kEnd2.y}px`, opacity: 1 }
+                        ], { duration: 300, easing: 'ease-out' }).finished;
+                        repl.remove();
+                    }
+                }
+            }
+
+            document.getElementById('btn-broadcast').addEventListener('click', broadcast);
+            document.getElementById('btn-late-joiner').addEventListener('click', joinLate);
+            document.getElementById('btn-reset').addEventListener('click', () => location.reload());
+
+            window.addEventListener('resize', drawConnections);
+            setTimeout(drawConnections, 100);
+        });
+    </script>
+</body>
+</html>
