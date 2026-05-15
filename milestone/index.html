@@ -526,7 +526,12 @@
                     </div>
                 </div>
 
-                <div class="border-t border-gray-100 dark:border-gray-700 pt-6">
+                <div class="border-t border-gray-100 dark:border-gray-700 pt-6 space-y-3">
+                    <button onclick="clearSharedData()"
+                        class="w-full flex items-center justify-center space-x-2 border border-orange-200 bg-orange-50 hover:bg-orange-100 dark:border-orange-900/30 dark:bg-orange-900/20 dark:hover:bg-orange-900/40 text-orange-600 dark:text-orange-400 py-3.5 px-4 rounded-xl font-bold transition">
+                        <i class="fa-solid fa-broom"></i>
+                        <span>Clear Shared Workbooks Cache</span>
+                    </button>
                     <button onclick="factoryReset()"
                         class="w-full flex items-center justify-center space-x-2 border border-red-200 bg-red-50 hover:bg-red-100 dark:border-red-900/30 dark:bg-red-900/20 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 py-3.5 px-4 rounded-xl font-bold transition">
                         <i class="fa-solid fa-triangle-exclamation"></i>
@@ -718,6 +723,46 @@
                 <button onclick="saveNewLab()" id="btnLabFormSave"
                     class="px-8 py-2.5 rounded-xl bg-brand text-white font-bold hover:brightness-110 transition shadow-lg shadow-brand/30">Save
                     Module</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="copyCategoryModal"
+        class="fixed inset-0 z-[70] flex items-center justify-center hidden p-4 transition-all duration-300">
+        <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="closeCopyCategoryModal()"></div>
+        <div
+            class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md z-10 overflow-hidden animate-fade-in flex flex-col max-h-[85vh] border border-gray-100 dark:border-gray-700">
+            <div
+                class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50 shrink-0">
+                <h3 class="text-xl font-bold text-gray-800 dark:text-white flex items-center"><i
+                        class="fa-solid fa-copy mr-3 text-brand"></i> Copy Category</h3>
+                <button onclick="closeCopyCategoryModal()"
+                    class="text-gray-400 hover:text-gray-600 bg-white dark:bg-gray-800 shadow-sm rounded-full w-8 h-8 flex items-center justify-center"><i
+                        class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-4 flex-1 bg-gray-50 dark:bg-gray-900/20">
+                <div class="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-gray-700">
+                    <span class="text-sm font-bold text-gray-700 dark:text-gray-300" id="copyCategoryLabelText">Select
+                        items to copy:</span>
+                    <label class="flex items-center space-x-2 cursor-pointer group">
+                        <input type="checkbox" id="selectAllCopyCategoryLabs" checked
+                            onchange="toggleAllCopyCategoryLabs(this)"
+                            class="w-4 h-4 text-brand bg-gray-100 border-gray-300 rounded focus:ring-brand outline-none transition-colors cursor-pointer">
+                        <span
+                            class="text-xs font-bold text-gray-500 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">Select
+                            All</span>
+                    </label>
+                </div>
+                <div id="copyCategoryLabsList" class="space-y-2">
+                </div>
+            </div>
+            <div
+                class="p-6 border-t border-gray-100 dark:border-gray-700 flex justify-end space-x-3 bg-gray-50 dark:bg-gray-900/50 shrink-0">
+                <button onclick="closeCopyCategoryModal()"
+                    class="px-6 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition">Cancel</button>
+                <button onclick="executeCategoryCopy()"
+                    class="px-8 py-2.5 rounded-xl bg-brand text-white font-bold hover:brightness-110 transition shadow-lg shadow-brand/30 flex items-center"><i
+                        class="fa-solid fa-copy mr-2"></i> Copy Selected</button>
             </div>
         </div>
     </div>
@@ -1667,7 +1712,7 @@
         }
 
         function closeAllDropdowns() {
-            const dropdowns = document.querySelectorAll('[id^="dropdown-"], [id^="step-dropdown-"], [id^="lab-dropdown-"]');
+            const dropdowns = document.querySelectorAll('[id^="dropdown-"], [id^="step-dropdown-"], [id^="lab-dropdown-"], [id^="cat-dropdown-"]');
             dropdowns.forEach(d => d.classList.add('hidden'));
 
             // Reset z-index of all task rows back to normal
@@ -1874,7 +1919,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5">`
                         ;
 
-                    wb.categories.forEach(cat => {
+                    wb.categories.forEach((cat, catIdx) => {
                         const firstLabId = cat.labs.length > 0 ? cat.labs[0].id : null;
                         const totalLabs = cat.labs.length;
                         let catSteps = 0;
@@ -1886,22 +1931,34 @@
                             });
                         });
                         const prog = catSteps === 0 ? 0 : Math.round((compSteps / catSteps) * 100);
+                        const safeCatId = 'cat-' + catIdx; // Unique ID for the dropdown
 
                         html += `
-                        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col group relative overflow-hidden" onclick="${firstLabId ? `selectLab('${escapeHTML(firstLabId)}')` : (!isSharedMode ? `openManageLabModal()` : '')}">
-                            <div class="absolute inset-0 bg-brand opacity-0 group-hover:opacity-5 transition-opacity"></div>
+                        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col group relative overflow-visible z-10" onclick="${firstLabId ? `selectLab('${escapeHTML(firstLabId)}')` : (!isSharedMode ? `openManageLabModal()` : '')}">
+                            <div class="absolute inset-0 bg-brand opacity-0 group-hover:opacity-5 transition-opacity rounded-2xl"></div>
                             
-                            <div class="flex justify-between items-start gap-4 mb-2 relative z-10">
+                            <div class="flex justify-between items-start gap-4 mb-2 relative z-20">
                                 <h4 class="font-bold text-xl text-gray-800 dark:text-white group-hover:text-brand transition-colors leading-tight flex-1">${escapeHTML(cat.category)}</h4>
                                 
-                                <div class="flex flex-col items-center space-y-2 shrink-0">
+                                <div class="relative shrink-0 ml-2">
                                     ${!isSharedMode ? `
-                                    <button onclick="openEditCategoryModal('${escapeHTML(cat.category)}', event)" class="text-gray-400 hover:text-blue-500 bg-gray-50 dark:bg-gray-700/50 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition px-2 py-1 rounded-lg shadow-sm" title="Edit Category">
-                                        <i class="fa-solid fa-pen text-xs"></i>
+                                    <button onclick="event.stopPropagation(); toggleCategoryDropdown('${safeCatId}')" class="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 bg-gray-50 dark:bg-gray-900/50 hover:bg-white dark:hover:bg-gray-700 transition px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm" title="Options">
+                                        <i class="fa-solid fa-ellipsis-vertical text-sm"></i>
                                     </button>
-                                    <button onclick="deleteCategory('${escapeHTML(cat.category)}', event)" class="text-gray-400 hover:text-red-500 bg-gray-50 dark:bg-gray-700/50 hover:bg-red-50 dark:hover:bg-red-900/30 transition px-2 py-1 rounded-lg shadow-sm" title="Delete Category">
-                                        <i class="fa-solid fa-trash text-xs"></i>
-                                    </button>
+                                    <div id="cat-dropdown-${safeCatId}" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden transform origin-top-right transition-all z-[60]">
+                                        <div class="py-1">
+                                            <button onclick="event.stopPropagation(); closeAllDropdowns(); openEditCategoryModal('${escapeHTML(cat.category.replace(/'/g, "\\'"))}', event)" class="w-full text-left px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center transition-colors">
+                                                <i class="fa-solid fa-pen w-5 text-center mr-2 text-blue-500"></i> Edit
+                                            </button>
+                                            <button onclick="event.stopPropagation(); closeAllDropdowns(); openCopyCategoryModal('${escapeHTML(cat.category.replace(/'/g, "\\'"))}', event)" class="w-full text-left px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center transition-colors">
+                                                <i class="fa-solid fa-copy w-5 text-center mr-2 text-green-500"></i> Copy Category
+                                            </button>
+                                            <div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                                            <button onclick="event.stopPropagation(); closeAllDropdowns(); deleteCategory('${escapeHTML(cat.category.replace(/'/g, "\\'"))}', event)" class="w-full text-left px-4 py-2.5 text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center transition-colors">
+                                                <i class="fa-solid fa-trash w-5 text-center mr-2"></i> Delete
+                                            </button>
+                                        </div>
+                                    </div>
                                     ` : ''}
                                 </div>
                             </div>
@@ -2910,6 +2967,35 @@
             }
         }
 
+        function clearSharedData() {
+            if (confirm("Are you sure you want to clear all locally cached shared workbooks? This will NOT affect your personal workbooks.")) {
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith('milestone_shared_app_')) {
+                        keysToRemove.push(key);
+                    }
+                }
+
+                if (keysToRemove.length === 0) {
+                    alert("No shared workbook data found to clear.");
+                    return;
+                }
+
+                // Delete the targeted keys
+                keysToRemove.forEach(k => localStorage.removeItem(k));
+
+                // Behavior based on current view
+                if (isSharedMode) {
+                    alert("Shared data cleared! Returning to your personal dashboard.");
+                    exitSharedMode(); // Force them out so it doesn't re-save the current view
+                } else {
+                    alert(`Successfully cleared ${keysToRemove.length} shared workbook(s) from your browser cache.`);
+                    closeGlobalSettingsModal();
+                }
+            }
+        }
+
         // ==========================================
         // WORKBOOK SPECIFIC IMPORT (JSON CATEGORIES)
         // ==========================================
@@ -3160,55 +3246,85 @@
                 }
 
                 try {
-                    const copiedLab = JSON.parse(jsonString);
-
-                    // Validation: Format Type
-                    if (typeof copiedLab !== 'object' || Array.isArray(copiedLab) || copiedLab === null) {
-                        textElement.classList.add('border-red-500', 'ring-2', 'ring-red-500');
-                        return alert('Invalid Data Format: The pasted data must be a single Lab object starting with { and ending with }. Please verify it against the Sample Format.');
-                    }
-
+                    const pastedData = JSON.parse(jsonString);
                     const category = wb.categories.find(c => c.category === catName);
                     if (!category) return alert('Error: Category not found.');
 
-                    const importSteps = Array.isArray(copiedLab.steps) ? copiedLab.steps : [];
+                    // SCENARIO 1: Pasted data is an Array (Multiple Labs from a Copied Category)
+                    if (Array.isArray(pastedData)) {
+                        if (labId) {
+                            alert('Note: You pasted multiple labs. They will be added directly to the Category. The specific Lab you selected in the dropdown will be ignored.');
+                        }
 
-                    if (labId) {
-                        // Append steps to the selected existing lab
-                        const targetLab = category.labs.find(l => l.id === labId);
-                        if (!targetLab) return alert('Error: Target lab not found.');
+                        pastedData.forEach(copiedLab => {
+                            if (typeof copiedLab !== 'object' || copiedLab === null) return;
 
-                        importSteps.forEach((step, idx) => {
-                            const sid = `step-${targetLab.id}-${Date.now()}-${idx}-${Math.random().toString(36).substr(2, 5)}`;
-                            appState.progressData[sid] = false;
-                            targetLab.steps.push({
-                                id: sid,
-                                text: step.text || 'Unnamed step',
-                                description: step.description || ''
+                            const newLabId = 'lab-import-adv-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                            const importSteps = Array.isArray(copiedLab.steps) ? copiedLab.steps : [];
+
+                            const steps = importSteps.map((step, idx) => {
+                                const sid = `step-${newLabId}-${idx}`;
+                                appState.progressData[sid] = false;
+                                return {
+                                    id: sid,
+                                    text: step.text || 'Unnamed step',
+                                    description: step.description || ''
+                                };
+                            });
+
+                            category.labs.push({
+                                id: newLabId,
+                                title: copiedLab.title || `Imported ${wb.moduleLabel}`,
+                                icon: copiedLab.icon || 'fa-solid fa-vial',
+                                description: copiedLab.description || '',
+                                steps: steps
                             });
                         });
-                        alert('Steps successfully appended to the existing lab!');
-                    } else {
-                        // Create as a brand new lab inside the selected category
-                        const newLabId = 'lab-import-adv-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-                        const steps = importSteps.map((step, idx) => {
-                            const sid = `step-${newLabId}-${idx}`;
-                            appState.progressData[sid] = false;
-                            return {
-                                id: sid,
-                                text: step.text || 'Unnamed step',
-                                description: step.description || ''
-                            };
-                        });
+                        alert('Labs successfully imported into the category!');
+                    }
+                    // SCENARIO 2: Pasted data is a Single Object (From a Copied Lab)
+                    else if (typeof pastedData === 'object' && pastedData !== null) {
+                        const importSteps = Array.isArray(pastedData.steps) ? pastedData.steps : [];
 
-                        category.labs.push({
-                            id: newLabId,
-                            title: copiedLab.title || `Imported ${wb.moduleLabel}`,
-                            icon: copiedLab.icon || 'fa-solid fa-vial',
-                            description: copiedLab.description || '',
-                            steps: steps
-                        });
-                        alert('New lab successfully created in the selected category!');
+                        if (labId) {
+                            // Append steps to the selected existing lab
+                            const targetLab = category.labs.find(l => l.id === labId);
+                            if (!targetLab) return alert('Error: Target lab not found.');
+
+                            importSteps.forEach((step, idx) => {
+                                const sid = `step-${targetLab.id}-${Date.now()}-${idx}-${Math.random().toString(36).substr(2, 5)}`;
+                                appState.progressData[sid] = false;
+                                targetLab.steps.push({
+                                    id: sid,
+                                    text: step.text || 'Unnamed step',
+                                    description: step.description || ''
+                                });
+                            });
+                            alert('Steps successfully appended to the existing lab!');
+                        } else {
+                            // Create as a brand new lab inside the selected category
+                            const newLabId = 'lab-import-adv-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                            const steps = importSteps.map((step, idx) => {
+                                const sid = `step-${newLabId}-${idx}`;
+                                appState.progressData[sid] = false;
+                                return {
+                                    id: sid,
+                                    text: step.text || 'Unnamed step',
+                                    description: step.description || ''
+                                };
+                            });
+
+                            category.labs.push({
+                                id: newLabId,
+                                title: pastedData.title || `Imported ${wb.moduleLabel}`,
+                                icon: pastedData.icon || 'fa-solid fa-vial',
+                                description: pastedData.description || '',
+                                steps: steps
+                            });
+                            alert('New lab successfully created in the selected category!');
+                        }
+                    } else {
+                        throw new Error('Data is not a valid Object or Array.');
                     }
 
                     saveState();
@@ -3217,9 +3333,8 @@
                     openWorkbook(wb.id, false, activeLabId);
 
                 } catch (err) {
-                    // Catch JSON Syntax errors explicitly
                     textElement.classList.add('border-red-500', 'ring-2', 'ring-red-500');
-                    alert('JSON Syntax Error: The pasted text is not valid JSON.\\n\\nDetails: ' + err.message + '\\n\\nTip: Ensure all strings are wrapped in double quotes and there are no trailing commas.');
+                    alert('JSON Syntax Error: The pasted text is not valid.\\n\\nDetails: ' + err.message);
                 }
             }
         }
@@ -3904,6 +4019,18 @@
             }
         }
 
+        function toggleCategoryDropdown(catSafeId) {
+            const dropdown = document.getElementById(`cat-dropdown-${catSafeId}`);
+            if (!dropdown) return;
+            const isHidden = dropdown.classList.contains('hidden');
+
+            // Close other open dropdowns first
+            closeAllDropdowns();
+
+            if (isHidden) {
+                dropdown.classList.remove('hidden');
+            }
+        }
         let currentCopyLabId = null;
 
         function openCopyLabModal(labId) {
@@ -4028,6 +4155,115 @@
                 }, 3000);
 
                 closeCopyLabModal();
+            });
+        }
+
+        let currentCopyCategoryName = null;
+
+        function openCopyCategoryModal(categoryName, event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            const wb = getActiveWorkbook();
+            if (!wb) return;
+
+            const category = wb.categories.find(c => c.category === categoryName);
+            if (!category) return;
+
+            currentCopyCategoryName = categoryName;
+
+            document.getElementById('copyCategoryLabelText').innerText = `Select ${escapeHTML(wb.moduleLabel)}s to copy:`;
+
+            const listContainer = document.getElementById('copyCategoryLabsList');
+            listContainer.innerHTML = '';
+
+            document.getElementById('selectAllCopyCategoryLabs').checked = true;
+
+            if (category.labs.length === 0) {
+                listContainer.innerHTML = `<p class="text-sm text-gray-500 italic text-center py-4">No ${escapeHTML(wb.moduleLabel.toLowerCase())}s available to copy.</p>`;
+            } else {
+                category.labs.forEach((lab) => {
+                    const row = document.createElement('label');
+                    row.className = "flex items-start space-x-3 p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer hover:border-brand transition shadow-sm group";
+                    row.innerHTML = `
+                        <div class="flex items-center h-5 mt-0.5">
+                            <input type="checkbox" value="${escapeHTML(lab.id)}" checked class="copy-cat-lab-checkbox w-4 h-4 text-brand bg-gray-100 border-gray-300 rounded focus:ring-brand outline-none transition-colors cursor-pointer">
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-800 dark:text-gray-200 line-clamp-2 group-hover:text-brand transition-colors"><i class="${escapeHTML(lab.icon)} mr-2 text-gray-400"></i>${escapeHTML(lab.title)}</p>
+                            <p class="text-xs text-gray-500 mt-1">${lab.steps.length} ${escapeHTML(wb.stepLabel)}s</p>
+                        </div>
+                    `;
+                    listContainer.appendChild(row);
+                });
+
+                const checkboxes = document.querySelectorAll('.copy-cat-lab-checkbox');
+                checkboxes.forEach(cb => {
+                    cb.addEventListener('change', () => {
+                        const allChecked = Array.from(checkboxes).every(c => c.checked);
+                        document.getElementById('selectAllCopyCategoryLabs').checked = allChecked;
+                    });
+                });
+            }
+
+            document.getElementById('copyCategoryModal').classList.remove('hidden');
+        }
+
+        function toggleAllCopyCategoryLabs(selectAllCheckbox) {
+            const checkboxes = document.querySelectorAll('.copy-cat-lab-checkbox');
+            checkboxes.forEach(cb => cb.checked = selectAllCheckbox.checked);
+        }
+
+        function closeCopyCategoryModal() {
+            document.getElementById('copyCategoryModal').classList.add('hidden');
+            currentCopyCategoryName = null;
+        }
+
+        function executeCategoryCopy() {
+            if (!currentCopyCategoryName) return;
+
+            const wb = getActiveWorkbook();
+            if (!wb) return;
+
+            const category = wb.categories.find(c => c.category === currentCopyCategoryName);
+            if (!category) return;
+
+            const checkboxes = document.querySelectorAll('.copy-cat-lab-checkbox:checked');
+            const selectedLabIds = Array.from(checkboxes).map(cb => cb.value);
+
+            if (selectedLabIds.length === 0) {
+                alert('Please select at least one item to copy.');
+                return;
+            }
+
+            const labsToCopy = category.labs.filter(l => selectedLabIds.includes(l.id));
+
+            // Format data as an Array of Labs for Advanced Import
+            const exportData = labsToCopy.map(lab => ({
+                "title": lab.title,
+                "icon": lab.icon,
+                "description": lab.description,
+                "steps": lab.steps.map(s => ({
+                    "text": s.text,
+                    "description": s.description
+                }))
+            }));
+
+            const jsonString = JSON.stringify(exportData, null, 2);
+            navigator.clipboard.writeText(jsonString).then(() => {
+                const toast = document.createElement('div');
+                toast.className = 'fixed bottom-5 right-5 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg shadow-green-500/20 z-[100] animate-fade-in font-bold flex items-center space-x-3 transition-opacity duration-300';
+                toast.innerHTML = '<i class="fa-solid fa-copy"></i><span>Category copied! Use Advanced Import to paste it.</span>';
+                document.body.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+
+                closeCopyCategoryModal();
             });
         }
 
