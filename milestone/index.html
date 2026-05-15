@@ -722,6 +722,44 @@
         </div>
     </div>
 
+    <div id="copyLabModal"
+        class="fixed inset-0 z-[70] flex items-center justify-center hidden p-4 transition-all duration-300">
+        <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="closeCopyLabModal()"></div>
+        <div
+            class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md z-10 overflow-hidden animate-fade-in flex flex-col max-h-[85vh] border border-gray-100 dark:border-gray-700">
+            <div
+                class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50 shrink-0">
+                <h3 class="text-xl font-bold text-gray-800 dark:text-white flex items-center"><i
+                        class="fa-solid fa-copy mr-3 text-brand"></i> Copy Lab Data</h3>
+                <button onclick="closeCopyLabModal()"
+                    class="text-gray-400 hover:text-gray-600 bg-white dark:bg-gray-800 shadow-sm rounded-full w-8 h-8 flex items-center justify-center"><i
+                        class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-4 flex-1 bg-gray-50 dark:bg-gray-900/20">
+                <div class="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-gray-700">
+                    <span class="text-sm font-bold text-gray-700 dark:text-gray-300">Select steps to copy:</span>
+                    <label class="flex items-center space-x-2 cursor-pointer group">
+                        <input type="checkbox" id="selectAllCopySteps" checked onchange="toggleAllCopySteps(this)"
+                            class="w-4 h-4 text-brand bg-gray-100 border-gray-300 rounded focus:ring-brand outline-none transition-colors cursor-pointer">
+                        <span
+                            class="text-xs font-bold text-gray-500 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">Select
+                            All</span>
+                    </label>
+                </div>
+                <div id="copyLabStepsList" class="space-y-2">
+                </div>
+            </div>
+            <div
+                class="p-6 border-t border-gray-100 dark:border-gray-700 flex justify-end space-x-3 bg-gray-50 dark:bg-gray-900/50 shrink-0">
+                <button onclick="closeCopyLabModal()"
+                    class="px-6 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition">Cancel</button>
+                <button onclick="executeLabCopy()"
+                    class="px-8 py-2.5 rounded-xl bg-brand text-white font-bold hover:brightness-110 transition shadow-lg shadow-brand/30 flex items-center"><i
+                        class="fa-solid fa-copy mr-2"></i> Copy Selected</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 4. Import JSON Modal (Workbook Level) -->
     <div id="importModal"
         class="fixed inset-0 z-[70] flex items-center justify-center hidden p-4 transition-all duration-300">
@@ -1942,7 +1980,7 @@
                                                 <button onclick="event.stopPropagation(); closeAllDropdowns(); openManageLabModal('${escapeHTML(foundLab.id)}')" class="w-full text-left px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center transition-colors">
                                                     <i class="fa-solid fa-pen w-5 text-center mr-2 text-blue-500"></i> Edit
                                                 </button>
-                                                <button onclick="event.stopPropagation(); closeAllDropdowns(); copyLabData('${escapeHTML(foundLab.id)}')" class="w-full text-left px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center transition-colors">
+                                                <button onclick="event.stopPropagation(); closeAllDropdowns(); openCopyLabModal('${escapeHTML(foundLab.id)}')" class="w-full text-left px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center transition-colors">
                                                     <i class="fa-solid fa-copy w-5 text-center mr-2 text-green-500"></i> Copy Lab
                                                 </button>
                                                 <div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
@@ -3866,7 +3904,9 @@
             }
         }
 
-        function copyLabData(labId) {
+        let currentCopyLabId = null;
+
+        function openCopyLabModal(labId) {
             const wb = getActiveWorkbook();
             if (!wb) return;
 
@@ -3877,13 +3917,85 @@
             });
 
             if (!foundLab) return;
+            currentCopyLabId = labId;
 
-            // Only copy the raw lab data
+            const listContainer = document.getElementById('copyLabStepsList');
+            listContainer.innerHTML = '';
+
+            document.getElementById('selectAllCopySteps').checked = true;
+
+            if (foundLab.steps.length === 0) {
+                listContainer.innerHTML = '<p class="text-sm text-gray-500 italic text-center py-4">No items available to copy.</p>';
+            } else {
+                foundLab.steps.forEach((step) => {
+                    const stepRow = document.createElement('label');
+                    stepRow.className = "flex items-start space-x-3 p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer hover:border-brand transition shadow-sm group";
+                    stepRow.innerHTML = `
+                        <div class="flex items-center h-5 mt-0.5">
+                            <input type="checkbox" value="${escapeHTML(step.id)}" checked class="copy-step-checkbox w-4 h-4 text-brand bg-gray-100 border-gray-300 rounded focus:ring-brand outline-none transition-colors cursor-pointer">
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-800 dark:text-gray-200 line-clamp-2 group-hover:text-brand transition-colors">${escapeHTML(step.text)}</p>
+                        </div>
+                    `;
+                    listContainer.appendChild(stepRow);
+                });
+
+                // Add listeners to individual checkboxes to automatically uncheck "Select All" if one is deselected
+                const checkboxes = document.querySelectorAll('.copy-step-checkbox');
+                checkboxes.forEach(cb => {
+                    cb.addEventListener('change', () => {
+                        const allChecked = Array.from(checkboxes).every(c => c.checked);
+                        document.getElementById('selectAllCopySteps').checked = allChecked;
+                    });
+                });
+            }
+
+            document.getElementById('copyLabModal').classList.remove('hidden');
+        }
+
+        function toggleAllCopySteps(selectAllCheckbox) {
+            const checkboxes = document.querySelectorAll('.copy-step-checkbox');
+            checkboxes.forEach(cb => cb.checked = selectAllCheckbox.checked);
+        }
+
+        function closeCopyLabModal() {
+            document.getElementById('copyLabModal').classList.add('hidden');
+            currentCopyLabId = null;
+        }
+
+        function executeLabCopy() {
+            if (!currentCopyLabId) return;
+
+            const wb = getActiveWorkbook();
+            if (!wb) return;
+
+            let foundLab = null;
+            wb.categories.forEach(c => {
+                const l = c.labs.find(x => x.id === currentCopyLabId);
+                if (l) foundLab = l;
+            });
+
+            if (!foundLab) return;
+
+            // Gather only the checked items
+            const checkboxes = document.querySelectorAll('.copy-step-checkbox:checked');
+            const selectedStepIds = Array.from(checkboxes).map(cb => cb.value);
+
+            if (selectedStepIds.length === 0) {
+                alert('Please select at least one item to copy.');
+                return;
+            }
+
+            // Filter the steps based on selection
+            const stepsToCopy = foundLab.steps.filter(s => selectedStepIds.includes(s.id));
+
+            // Format data exactly how Advanced Import expects it
             const labToCopy = {
                 title: foundLab.title,
                 icon: foundLab.icon,
                 description: foundLab.description,
-                steps: foundLab.steps.map(s => ({
+                steps: stepsToCopy.map(s => ({
                     text: s.text,
                     description: s.description
                 }))
@@ -3901,6 +4013,8 @@
                     toast.style.opacity = '0';
                     setTimeout(() => toast.remove(), 300);
                 }, 3000);
+
+                closeCopyLabModal();
             }).catch(err => {
                 // Show error toast
                 const toast = document.createElement('div');
@@ -3912,6 +4026,8 @@
                     toast.style.opacity = '0';
                     setTimeout(() => toast.remove(), 300);
                 }, 3000);
+
+                closeCopyLabModal();
             });
         }
 
