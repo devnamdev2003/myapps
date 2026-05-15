@@ -723,10 +723,11 @@
     </div>
 
     <!-- 4. Import JSON Modal (Workbook Level) -->
-    <div id="importModal" class="fixed inset-0 z-[70] flex items-center justify-center hidden p-4">
-        <div class="fixed inset-0 bg-black/60 backdrop-blur-sm"></div>
+    <div id="importModal"
+        class="fixed inset-0 z-[70] flex items-center justify-center hidden p-4 transition-all duration-300">
+        <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="closeImportModal()"></div>
         <div
-            class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-2xl z-10 overflow-hidden animate-fade-in flex flex-col max-h-[90vh] border border-gray-100 dark:border-gray-700">
+            class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-2xl z-10 overflow-hidden animate-fade-in flex flex-col h-[85vh] sm:h-[650px] border border-gray-100 dark:border-gray-700">
             <div
                 class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50 shrink-0">
                 <h3 id="importModalTitle" class="text-xl font-bold text-gray-800 dark:text-white flex items-center"><i
@@ -735,7 +736,7 @@
                     class="text-gray-400 hover:text-gray-600 bg-white dark:bg-gray-800 shadow-sm rounded-full w-8 h-8 flex items-center justify-center"><i
                         class="fa-solid fa-times"></i></button>
             </div>
-            <div class="p-6 overflow-y-auto space-y-6">
+            <div class="p-6 overflow-y-auto space-y-6 flex-1">
 
                 <div class="flex border-b border-gray-200 dark:border-gray-700">
                     <button type="button" id="tabFullImport" onclick="switchImportMode('full')"
@@ -2968,16 +2969,28 @@
             const activeClass = 'px-4 py-2 border-b-2 border-brand text-brand font-bold text-sm outline-none transition-colors';
             const inactiveClass = 'px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 font-bold text-sm outline-none transition-colors';
 
+            // Reset animation classes
+            secFull.classList.remove('animate-fade-in');
+            secAdv.classList.remove('animate-fade-in');
+
             if (mode === 'full') {
                 btnFull.className = activeClass;
                 btnAdv.className = inactiveClass;
                 secFull.classList.remove('hidden');
                 secAdv.classList.add('hidden');
+
+                // Trigger DOM reflow to restart the animation smoothly
+                void secFull.offsetWidth;
+                secFull.classList.add('animate-fade-in');
             } else {
                 btnAdv.className = activeClass;
                 btnFull.className = inactiveClass;
                 secAdv.classList.remove('hidden');
                 secFull.classList.add('hidden');
+
+                // Trigger DOM reflow to restart the animation smoothly
+                void secAdv.offsetWidth;
+                secAdv.classList.add('animate-fade-in');
             }
         }
 
