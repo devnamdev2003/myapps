@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Architecture Flows | Directory</title>
+
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Load Fonts and Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        // Custom dark theme matching the flow page
+                        darkbg: '#0f172a',    // slate-900
+                        panelbg: '#1e293b',   // slate-800
+                        compbg: '#334155',    // slate-700
+                        bordercolor: '#475569', // slate-600
+                        textcolor: '#f8fafc', // slate-50
+                        muted: '#94a3b8',     // slate-400
+                        accent: '#38bdf8',    // sky-400
+                        spring: {
+                            light: '#a3e635', // Lighter green
+                            DEFAULT: '#6db33f', // Classic spring
+                            dark: '#4d7c2a'
+                        },
+                        oauth: '#f59e0b',     // amber-500
+                        micro: '#a855f7'      // purple-500
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            /* Subtle grid background pattern */
+            background-image: linear-gradient(rgba(51, 65, 85, 0.2) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(51, 65, 85, 0.2) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        .glow-effect {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.1) 0%, rgba(15, 23, 42, 0) 70%);
+            border-radius: 50%;
+            top: -50px;
+            right: -50px;
+            pointer-events: none;
+            transition: all 0.5s ease;
+        }
+
+        .card-container:hover .glow-effect {
+            transform: scale(1.5);
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, rgba(15, 23, 42, 0) 70%);
+        }
+    </style>
+</head>
+
+<body class="antialiased min-h-screen flex flex-col relative overflow-x-hidden">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-panelbg/90 backdrop-blur-md border-b border-bordercolor sticky top-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3 cursor-pointer">
+                <div class="bg-accent/20 p-2 rounded-lg border border-accent/30">
+                    <i class="fa-solid fa-network-wired text-accent text-xl"></i>
+                </div>
+                <h1 class="text-xl font-bold tracking-wide text-white">Arch<span class="text-accent">Flows</span></h1>
+            </div>
+
+            <div class="flex gap-4 items-center">
+                <a href="#" class="text-sm font-medium text-muted hover:text-white transition">Library</a>
+                <a href="#" class="text-sm font-medium text-muted hover:text-white transition">About</a>
+                <a href="https://github.com" target="_blank" class="text-muted hover:text-white transition ml-2">
+                    <i class="fa-brands fa-github text-xl"></i>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl mx-auto w-full px-6 py-12 flex flex-col relative z-10">
+
+        <!-- Hero Section -->
+        <div class="text-center max-w-3xl mx-auto mb-16 mt-8">
+            <h2
+                class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-400 mb-6 drop-shadow-sm">
+                Interactive Systems & DSA Flows
+            </h2>
+            <p class="text-lg text-muted leading-relaxed">
+                Explore complex software architectures and classic data structure algorithms through step-by-step,
+                interactive visual simulations. Click into a module below to start.
+            </p>
+        </div>
+
+        <!-- Flows Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+            <!-- Card: Binary Tree Boundary Traversal (NEW) -->
+            <a href="binary-tree-boundary-traversal.html"
+                class="card-container group relative bg-panelbg border border-bordercolor rounded-2xl p-6 flex flex-col overflow-hidden hover:-translate-y-2 hover:border-sky-400 hover:shadow-[0_12px_30px_-10px_rgba(56,189,248,0.3)] transition-all duration-300">
+                <div class="glow-effect"></div>
+
+                <div
+                    class="w-14 h-14 rounded-xl bg-darkbg border border-bordercolor flex items-center justify-center mb-6 group-hover:border-sky-400 transition-colors relative z-10">
+                    <i
+                        class="fa-solid fa-code-branch text-2xl text-sky-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.5)]"></i>
+                </div>
+
+                <h3 class="text-xl font-bold text-white mb-2 relative z-10 group-hover:text-sky-400 transition-colors">
+                    Binary Tree Boundary Traversal</h3>
+                <p class="text-sm text-muted mb-6 flex-1 relative z-10 leading-relaxed">
+                    Visualize Left Boundary, Leaf Nodes, and Right Boundary traversal steps interactively in a
+                    customizable Binary Tree.
+                </p>
+
+                <div class="flex flex-wrap gap-2 mt-auto mb-6 relative z-10">
+                    <span
+                        class="px-2.5 py-1 text-[10px] font-semibold bg-darkbg text-slate-300 rounded-md border border-bordercolor">DSA</span>
+                    <span
+                        class="px-2.5 py-1 text-[10px] font-semibold bg-darkbg text-emerald-400 rounded-md border border-emerald-500/30">Binary
+                        Tree</span>
+                    <span
+                        class="px-2.5 py-1 text-[10px] font-semibold bg-darkbg text-sky-400 rounded-md border border-sky-500/30">Algorithms</span>
+                </div>
+
+                <div
+                    class="flex items-center text-sm font-semibold text-accent group-hover:text-sky-300 transition-colors relative z-10 border-t border-bordercolor pt-4 group-hover:border-sky-900/50">
+                    Launch DSA Simulation <i
+                        class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </a>
+
+
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-bordercolor mt-auto bg-darkbg relative z-10">
+        <div class="max-w-7xl mx-auto px-6 py-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="text-sm text-muted flex items-center gap-2">
+                <i class="fa-solid fa-code"></i> Built for interactive learning.
+            </div>
+            <div class="text-sm text-muted">
+                &copy; <span id="year"></span> Architecture & DSA Flows Hub
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
+</body>
+
+</html>
