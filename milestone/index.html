@@ -1120,6 +1120,10 @@
                     <button type="button" onclick="insertMarkdown('ol')"
                         class="p-1 sm:p-1.5 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
                         title="Numbered List"><i class="fa-solid fa-list-ol w-4 text-center text-sm"></i></button>
+                    <button type="button" onclick="insertMarkdown('iframe')"
+                        class="p-1 sm:p-1.5 text-gray-500 hover:text-brand hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                        title="Numbered List"><i
+                            class="fa-solid fa-up-right-from-square w-4 text-center text-sm"></i></button>
                 </div>
             </div>
 
@@ -3760,6 +3764,7 @@
                 case 'image': prefix = '!['; suffix = '](https://image-url.com/img.png)'; placeholder = 'alt text'; break;
                 case 'ul': prefix = '\n- '; suffix = ''; placeholder = 'list item'; break;
                 case 'ol': prefix = '\n1. '; suffix = ''; placeholder = 'list item'; break;
+                case 'iframe': prefix = '\n<iframe src="'; suffix = '" width="100%" height="700px" frameborder="0"></iframe>\n'; placeholder = 'your link'; break;
             }
 
             const insertText = selectedText || placeholder;

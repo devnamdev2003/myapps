@@ -100,7 +100,7 @@
         }
 
         .glass-card:hover {
-            transform: translateY(-10px) scale(1.02);
+            transform: translateY(-8px) scale(1.01);
             border-color: rgba(255, 255, 255, 0.2);
         }
 
@@ -121,6 +121,10 @@
             box-shadow: 0 25px 50px -12px rgba(249, 115, 22, 0.25);
         }
 
+        .card-violet:hover {
+            box-shadow: 0 25px 50px -12px rgba(139, 92, 246, 0.25);
+        }
+
         /* Typography */
         .gradient-text {
             background: linear-gradient(to right, #38bdf8, #818cf8, #c084fc);
@@ -139,10 +143,10 @@
 
         /* Modern Tags & Buttons */
         .tag {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            padding: 4px 12px;
+            padding: 3px 10px;
             border-radius: 9999px;
             font-weight: 600;
             background: rgba(255, 255, 255, 0.05);
@@ -177,6 +181,7 @@
         /* Icon Container */
         .icon-box {
             position: relative;
+            z-index: 1;
         }
 
         .icon-box::after {
@@ -192,18 +197,16 @@
     </style>
 </head>
 
-<body class="min-h-screen selection:bg-sky-500/30">
+<body class="min-h-screen selection:bg-sky-500/30 flex flex-col justify-between">
 
-    <!-- Animated Background -->
     <div class="bg-shapes">
         <div class="shape shape-1"></div>
         <div class="shape shape-2"></div>
         <div class="shape shape-3"></div>
     </div>
 
-    <!-- Navigation / Header -->
     <nav class="w-full border-b border-white/5 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+        <div class="max-w-[98vw] w-full mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
             <div class="font-bold text-xl tracking-wider">DEV<span class="text-sky-400">NAMDEV</span></div>
             <div class="flex gap-4">
                 <a href="https://github.com/devnamdev2003" target="_blank"
@@ -214,395 +217,356 @@
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <header class="max-w-6xl mx-auto px-6 pt-24 pb-16 text-center relative z-10">
+    <header class="max-w-4xl mx-auto px-6 pt-16 pb-12 text-center relative z-10">
         <div
             class="inline-block mb-4 px-4 py-1.5 rounded-full border border-sky-500/30 bg-sky-500/10 text-sky-400 text-sm font-semibold tracking-wide backdrop-blur-sm">
             PORTFOLIO 2024
         </div>
-        <h1 class="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight">
+        <h1 class="text-4xl md:text-6xl font-extrabold mb-4 tracking-tight">
             My <span class="gradient-text">Web Applications</span>
         </h1>
-        <p class="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-light leading-relaxed">
+        <p class="text-base md:text-lg text-slate-400 max-w-2xl mx-auto font-light leading-relaxed">
             A curated collection of tools and platforms built for fitness, productivity, and lifestyle management.
-            Explore the apps below.
         </p>
     </header>
 
-    <!-- Main Grid -->
-    <main class="max-w-6xl mx-auto px-6 pb-32 relative z-10">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10">
+    <main class="max-w-[98vw] w-full mx-auto px-4 sm:px-6 pb-24 relative z-10 flex-grow">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 lg:gap-5">
 
-            <!-- 1. Weight Tracker -->
-            <div class="glass-card card-blue rounded-3xl p-8 flex flex-col group">
-                <div class="flex items-start justify-between mb-8">
+            <div class="glass-card card-blue rounded-2xl p-5 flex flex-col group">
+                <div class="flex items-start justify-between mb-5">
                     <div
-                        class="w-14 h-14 rounded-2xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-white icon-box shadow-lg shadow-blue-500/30">
-                        <i class="fas fa-weight fa-xl"></i>
+                        class="w-11 h-11 rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-white icon-box shadow-lg shadow-blue-500/30">
+                        <i class="fas fa-weight fa-md"></i>
                     </div>
-                    <div class="flex flex-wrap justify-end gap-2 max-w-[50%]">
+                    <div class="flex flex-wrap justify-end gap-1 max-w-[65%]">
                         <span class="tag text-sky-300 border-sky-500/20 bg-sky-500/10">Health</span>
                         <span class="tag text-sky-300 border-sky-500/20 bg-sky-500/10">Fitness</span>
                     </div>
                 </div>
-                <h3 class="text-3xl font-bold mb-3 text-white group-hover:text-sky-400 transition-colors">Weight Tracker
+                <h3 class="text-xl font-bold mb-2 text-white group-hover:text-sky-400 transition-colors">Weight Tracker
                 </h3>
-                <p class="text-slate-400 mb-8 flex-grow leading-relaxed text-lg font-light">
+                <p class="text-slate-400 mb-5 flex-grow leading-relaxed text-sm font-light">
                     Track your daily weight, monitor progress, and stay fit with ease. Simple, fast, and effective
                     health tracking designed for your fitness journey.
                 </p>
-                <div class="flex items-center justify-between mt-auto pt-6 border-t border-white/10">
-                    <div class="flex -space-x-3">
+                <div class="flex items-center justify-between mt-auto pt-3 border-t border-white/10">
+                    <div class="flex -space-x-2">
                         <div
-                            class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold border-2 border-slate-900 text-slate-300 z-20">
+                            class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold border-2 border-slate-900 text-slate-300 z-20">
                             HTML</div>
                         <div
-                            class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold border-2 border-slate-900 text-slate-300 z-10">
+                            class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold border-2 border-slate-900 text-slate-300 z-10">
                             JS</div>
                     </div>
                     <a href="https://devnamdev2003.github.io/myapps/w.html" target="_blank" rel="noopener noreferrer"
-                        class="btn-launch px-6 py-2.5 bg-white text-slate-900 font-bold rounded-full hover:bg-sky-50 hover:shadow-lg hover:shadow-sky-500/20 transition-all flex items-center gap-2">
-                        Open App <i class="fas fa-arrow-right text-sm"></i>
+                        class="btn-launch px-3.5 py-1.5 bg-white text-slate-900 text-xs font-bold rounded-full hover:bg-sky-50 hover:shadow-lg hover:shadow-sky-500/20 transition-all flex items-center gap-1">
+                        Open App <i class="fas fa-arrow-right text-[10px]"></i>
                     </a>
                 </div>
             </div>
 
-            <!-- 2. TaskFlow -->
-            <div class="glass-card card-indigo rounded-3xl p-8 flex flex-col group">
-                <div class="flex items-start justify-between mb-8">
+            <div class="glass-card card-indigo rounded-2xl p-5 flex flex-col group">
+                <div class="flex items-start justify-between mb-5">
                     <div
-                        class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-600 flex items-center justify-center text-white icon-box shadow-lg shadow-indigo-500/30">
-                        <i class="fas fa-layer-group fa-xl"></i>
+                        class="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-600 flex items-center justify-center text-white icon-box shadow-lg shadow-indigo-500/30">
+                        <i class="fas fa-layer-group fa-md"></i>
                     </div>
-                    <div class="flex flex-wrap justify-end gap-2 max-w-[50%]">
+                    <div class="flex flex-wrap justify-end gap-1 max-w-[65%]">
                         <span class="tag text-indigo-300 border-indigo-500/20 bg-indigo-500/10">Productivity</span>
                         <span class="tag text-indigo-300 border-indigo-500/20 bg-indigo-500/10">PWA</span>
                     </div>
                 </div>
-                <h3 class="text-3xl font-bold mb-3 text-white group-hover:text-indigo-400 transition-colors">TaskFlow
+                <h3 class="text-xl font-bold mb-2 text-white group-hover:text-indigo-400 transition-colors">TaskFlow
                 </h3>
-                <p class="text-slate-400 mb-8 flex-grow leading-relaxed text-lg font-light">
+                <p class="text-slate-400 mb-5 flex-grow leading-relaxed text-sm font-light">
                     A premium, mobile-first task management application. Features stunning dark glassmorphism design,
                     consistency heatmaps, and detailed productivity stats.
                 </p>
-                <div class="flex items-center justify-between mt-auto pt-6 border-t border-white/10">
-                    <div class="flex -space-x-3">
+                <div class="flex items-center justify-between mt-auto pt-3 border-t border-white/10">
+                    <div class="flex -space-x-2">
                         <div
-                            class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold border-2 border-slate-900 text-slate-300 z-20">
+                            class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold border-2 border-slate-900 text-slate-300 z-20">
                             CSS</div>
                         <div
-                            class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold border-2 border-slate-900 text-slate-300 z-10">
+                            class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold border-2 border-slate-900 text-slate-300 z-10">
                             JS</div>
                     </div>
                     <a href="https://devnamdev2003.github.io/myapps/taskflow" target="_blank" rel="noopener noreferrer"
-                        class="btn-launch px-6 py-2.5 bg-white text-slate-900 font-bold rounded-full hover:bg-indigo-50 hover:shadow-lg hover:shadow-indigo-500/20 transition-all flex items-center gap-2">
-                        Open App <i class="fas fa-arrow-right text-sm"></i>
+                        class="btn-launch px-3.5 py-1.5 bg-white text-slate-900 text-xs font-bold rounded-full hover:bg-indigo-50 hover:shadow-lg hover:shadow-indigo-500/20 transition-all flex items-center gap-1">
+                        Open App <i class="fas fa-arrow-right text-[10px]"></i>
                     </a>
                 </div>
             </div>
 
-            <!-- 3. Weekly Workout Plan -->
-            <div class="glass-card card-emerald rounded-3xl p-8 flex flex-col group">
-                <div class="flex items-start justify-between mb-8">
+            <div class="glass-card card-emerald rounded-2xl p-5 flex flex-col group">
+                <div class="flex items-start justify-between mb-5">
                     <div
-                        class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-white icon-box shadow-lg shadow-emerald-500/30">
-                        <i class="fas fa-calendar-alt fa-xl"></i>
+                        class="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-white icon-box shadow-lg shadow-emerald-500/30">
+                        <i class="fas fa-calendar-alt fa-md"></i>
                     </div>
-                    <div class="flex flex-wrap justify-end gap-2 max-w-[50%]">
+                    <div class="flex flex-wrap justify-end gap-1 max-w-[65%]">
                         <span class="tag text-emerald-300 border-emerald-500/20 bg-emerald-500/10">Fitness</span>
                         <span class="tag text-emerald-300 border-emerald-500/20 bg-emerald-500/10">Planner</span>
                     </div>
                 </div>
-                <h3 class="text-3xl font-bold mb-3 text-white group-hover:text-emerald-400 transition-colors">Workout
+                <h3 class="text-xl font-bold mb-2 text-white group-hover:text-emerald-400 transition-colors">Workout
                     Plan</h3>
-                <p class="text-slate-400 mb-8 flex-grow leading-relaxed text-lg font-light">
+                <p class="text-slate-400 mb-5 flex-grow leading-relaxed text-sm font-light">
                     Organize your training split and maintain consistency. A visually appealing and powerful way to map
                     out your weekly fitness routine and smash your goals.
                 </p>
-                <div class="flex items-center justify-between mt-auto pt-6 border-t border-white/10">
-                    <div class="flex -space-x-3">
+                <div class="flex items-center justify-between mt-auto pt-3 border-t border-white/10">
+                    <div class="flex -space-x-2">
                         <div
-                            class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold border-2 border-slate-900 text-slate-300 z-20">
+                            class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold border-2 border-slate-900 text-slate-300 z-20">
                             UI</div>
                         <div
-                            class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold border-2 border-slate-900 text-slate-300 z-10">
+                            class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold border-2 border-slate-900 text-slate-300 z-10">
                             WEB</div>
                     </div>
                     <a href="https://devnamdev2003.github.io/myapps/gym.html" target="_blank" rel="noopener noreferrer"
-                        class="btn-launch px-6 py-2.5 bg-white text-slate-900 font-bold rounded-full hover:bg-emerald-50 hover:shadow-lg hover:shadow-emerald-500/20 transition-all flex items-center gap-2">
-                        Open App <i class="fas fa-arrow-right text-sm"></i>
+                        class="btn-launch px-3.5 py-1.5 bg-white text-slate-900 text-xs font-bold rounded-full hover:bg-emerald-50 hover:shadow-lg hover:shadow-emerald-500/20 transition-all flex items-center gap-1">
+                        Open App <i class="fas fa-arrow-right text-[10px]"></i>
                     </a>
                 </div>
             </div>
 
-            <!-- 4. Focus & Balance Tracker -->
-            <div class="glass-card card-orange rounded-3xl p-8 flex flex-col group">
-                <div class="flex items-start justify-between mb-8">
+            <div class="glass-card card-orange rounded-2xl p-5 flex flex-col group">
+                <div class="flex items-start justify-between mb-5">
                     <div
-                        class="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white icon-box shadow-lg shadow-orange-500/30">
-                        <i class="fas fa-brain fa-xl"></i>
+                        class="w-11 h-11 rounded-xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white icon-box shadow-lg shadow-orange-500/30">
+                        <i class="fas fa-brain fa-md"></i>
                     </div>
-                    <div class="flex flex-wrap justify-end gap-2 max-w-[50%]">
+                    <div class="flex flex-wrap justify-end gap-1 max-w-[65%]">
                         <span class="tag text-orange-300 border-orange-500/20 bg-orange-500/10">Wellness</span>
                         <span class="tag text-orange-300 border-orange-500/20 bg-orange-500/10">Mental Health</span>
                     </div>
                 </div>
-                <h3 class="text-3xl font-bold mb-3 text-white group-hover:text-orange-400 transition-colors">Focus &
+                <h3 class="text-xl font-bold mb-2 text-white group-hover:text-orange-400 transition-colors">Focus &
                     Balance</h3>
-                <p class="text-slate-400 mb-8 flex-grow leading-relaxed text-lg font-light">
+                <p class="text-slate-400 mb-5 flex-grow leading-relaxed text-sm font-light">
                     Monitor your mental clarity and work-life balance. Thoughtfully designed to help you maintain deep
                     focus and peace during high-intensity periods.
                 </p>
-                <div class="flex items-center justify-between mt-auto pt-6 border-t border-white/10">
-                    <div class="flex -space-x-3">
+                <div class="flex items-center justify-between mt-auto pt-3 border-t border-white/10">
+                    <div class="flex -space-x-2">
                         <div
-                            class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold border-2 border-slate-900 text-slate-300 z-20">
+                            class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold border-2 border-slate-900 text-slate-300 z-20">
                             ZEN</div>
                         <div
-                            class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold border-2 border-slate-900 text-slate-300 z-10">
+                            class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold border-2 border-slate-900 text-slate-300 z-10">
                             APP</div>
                     </div>
                     <a href="https://devnamdev2003.github.io/myapps/f.html" target="_blank" rel="noopener noreferrer"
-                        class="btn-launch px-6 py-2.5 bg-white text-slate-900 font-bold rounded-full hover:bg-orange-50 hover:shadow-lg hover:shadow-orange-500/20 transition-all flex items-center gap-2">
-                        Open App <i class="fas fa-arrow-right text-sm"></i>
+                        class="btn-launch px-3.5 py-1.5 bg-white text-slate-900 text-xs font-bold rounded-full hover:bg-orange-50 hover:shadow-lg hover:shadow-orange-500/20 transition-all flex items-center gap-1">
+                        Open App <i class="fas fa-arrow-right text-[10px]"></i>
                     </a>
                 </div>
             </div>
 
-            <!-- 5. API Testing Tool -->
-            <div class="glass-card card-violet rounded-3xl p-8 flex flex-col group">
-                <div class="flex items-start justify-between mb-8">
+            <div class="glass-card card-violet rounded-2xl p-5 flex flex-col group">
+                <div class="flex items-start justify-between mb-5">
                     <div
-                        class="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center text-white icon-box shadow-lg shadow-violet-500/30">
-                        <i class="fas fa-flask fa-xl"></i>
+                        class="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center text-white icon-box shadow-lg shadow-violet-500/30">
+                        <i class="fas fa-flask fa-md"></i>
                     </div>
-                    <div class="flex flex-wrap justify-end gap-2 max-w-[50%]">
+                    <div class="flex flex-wrap justify-end gap-1 max-w-[65%]">
                         <span class="tag text-violet-300 border-violet-500/20 bg-violet-500/10">API</span>
                         <span class="tag text-violet-300 border-violet-500/20 bg-violet-500/10">Developer</span>
                     </div>
                 </div>
-                <h3 class="text-3xl font-bold mb-3 text-white group-hover:text-violet-400 transition-colors">API Testing
+                <h3 class="text-xl font-bold mb-2 text-white group-hover:text-violet-400 transition-colors">API Testing
                     Tool</h3>
-                <p class="text-slate-400 mb-8 flex-grow leading-relaxed text-lg font-light">
+                <p class="text-slate-400 mb-5 flex-grow leading-relaxed text-sm font-light">
                     Test and debug APIs with ease. A powerful developer tool for making HTTP requests, inspecting
                     responses, and validating API endpoints in real-time.
                 </p>
-                <div class="flex items-center justify-between mt-auto pt-6 border-t border-white/10">
-                    <div class="flex -space-x-3">
+                <div class="flex items-center justify-between mt-auto pt-3 border-t border-white/10">
+                    <div class="flex -space-x-2">
                         <div
-                            class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold border-2 border-slate-900 text-slate-300 z-20">
+                            class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold border-2 border-slate-900 text-slate-300 z-20">
                             React</div>
                         <div
-                            class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold border-2 border-slate-900 text-slate-300 z-10">
+                            class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold border-2 border-slate-900 text-slate-300 z-10">
                             API</div>
                     </div>
                     <a href="https://devnamdev2003.github.io/myapps/api.html" target="_blank" rel="noopener noreferrer"
-                        class="btn-launch px-6 py-2.5 bg-white text-slate-900 font-bold rounded-full hover:bg-violet-50 hover:shadow-lg hover:shadow-violet-500/20 transition-all flex items-center gap-2">
-                        Open App <i class="fas fa-arrow-right text-sm"></i>
+                        class="btn-launch px-3.5 py-1.5 bg-white text-slate-900 text-xs font-bold rounded-full hover:bg-violet-50 hover:shadow-lg hover:shadow-violet-500/20 transition-all flex items-center gap-1">
+                        Open App <i class="fas fa-arrow-right text-[10px]"></i>
                     </a>
                 </div>
             </div>
 
-            <!-- 6. Milestone -->
-            <div class="glass-card card-blue rounded-3xl p-8 flex flex-col group">
-                <div class="flex items-start justify-between mb-8">
+            <div class="glass-card card-blue rounded-2xl p-5 flex flex-col group">
+                <div class="flex items-start justify-between mb-5">
                     <div
-                        class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white icon-box shadow-lg shadow-blue-500/30">
-                        <i class="fas fa-layer-group fa-xl"></i>
+                        class="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white icon-box shadow-lg shadow-blue-500/30">
+                        <i class="fas fa-layer-group fa-md"></i>
                     </div>
-                    <div class="flex flex-wrap justify-end gap-2 max-w-[50%]">
+                    <div class="flex flex-wrap justify-end gap-1 max-w-[65%]">
                         <span class="tag text-blue-300 border-blue-500/20 bg-blue-500/10">Productivity</span>
                         <span class="tag text-blue-300 border-blue-500/20 bg-blue-500/10">Learning</span>
                     </div>
                 </div>
-                <h3 class="text-3xl font-bold mb-3 text-white group-hover:text-blue-400 transition-colors">Milestone
-                </h3>
-                <p class="text-slate-400 mb-8 flex-grow leading-relaxed text-lg font-light">
+                <h3 class="text-xl font-bold mb-2 text-white group-hover:text-blue-400 transition-colors">Milestone</h3>
+                <p class="text-slate-400 mb-5 flex-grow leading-relaxed text-sm font-light">
                     Track your learning journey. Manage your workbooks, complete modules, and monitor your progress
                     step-by-step.
                 </p>
-                <div class="flex items-center justify-between mt-auto pt-6 border-t border-white/10">
-                    <div class="flex -space-x-3">
+                <div class="flex items-center justify-between mt-auto pt-3 border-t border-white/10">
+                    <div class="flex -space-x-2">
                         <div
-                            class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold border-2 border-slate-900 text-slate-300 z-20">
+                            class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold border-2 border-slate-900 text-slate-300 z-20">
                             DEV</div>
                         <div
-                            class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold border-2 border-slate-900 text-slate-300 z-10">
+                            class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold border-2 border-slate-900 text-slate-300 z-10">
                             APP</div>
                     </div>
                     <a href="./milestone/" target="_blank" rel="noopener noreferrer"
-                        class="btn-launch px-6 py-2.5 bg-white text-slate-900 font-bold rounded-full hover:bg-blue-50 hover:shadow-lg hover:shadow-blue-500/20 transition-all flex items-center gap-2">
-                        Open App <i class="fas fa-arrow-right text-sm"></i>
+                        class="btn-launch px-3.5 py-1.5 bg-white text-slate-900 text-xs font-bold rounded-full hover:bg-blue-50 hover:shadow-lg hover:shadow-blue-500/20 transition-all flex items-center gap-1">
+                        Open App <i class="fas fa-arrow-right text-[10px]"></i>
                     </a>
                 </div>
             </div>
 
-            <!-- 7. Streak Tracker -->
-            <div class="glass-card card-orange rounded-3xl p-8 flex flex-col group">
-                <div class="flex items-start justify-between mb-8">
+            <div class="glass-card card-orange rounded-2xl p-5 flex flex-col group">
+                <div class="flex items-start justify-between mb-5">
                     <div
-                        class="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white icon-box shadow-lg shadow-orange-500/30">
-                        <i class="fas fa-fire fa-xl"></i>
+                        class="w-11 h-11 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white icon-box shadow-lg shadow-orange-500/30">
+                        <i class="fas fa-fire fa-md"></i>
                     </div>
-                    <div class="flex flex-wrap justify-end gap-2 max-w-[50%]">
+                    <div class="flex flex-wrap justify-end gap-1 max-w-[65%]">
                         <span class="tag text-orange-300 border-orange-500/20 bg-orange-500/10">Habit</span>
                         <span class="tag text-orange-300 border-orange-500/20 bg-orange-500/10">Consistency</span>
                     </div>
                 </div>
-
-                <h3 class="text-3xl font-bold mb-3 text-white group-hover:text-orange-400 transition-colors">
-                    Streak Tracker
-                </h3>
-
-                <p class="text-slate-400 mb-8 flex-grow leading-relaxed text-lg font-light">
+                <h3 class="text-xl font-bold mb-2 text-white group-hover:text-orange-400 transition-colors">Streak
+                    Tracker</h3>
+                <p class="text-slate-400 mb-5 flex-grow leading-relaxed text-sm font-light">
                     Build powerful daily habits. Track your streaks, stay consistent, and never break your momentum with
                     a clean and simple interface.
                 </p>
-
-                <div class="flex items-center justify-between mt-auto pt-6 border-t border-white/10">
-                    <div class="flex -space-x-3">
+                <div class="flex items-center justify-between mt-auto pt-3 border-t border-white/10">
+                    <div class="flex -space-x-2">
                         <div
-                            class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold border-2 border-slate-900 text-slate-300 z-20">
-                            DEV
-                        </div>
+                            class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold border-2 border-slate-900 text-slate-300 z-20">
+                            DEV</div>
                         <div
-                            class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold border-2 border-slate-900 text-slate-300 z-10">
-                            STREAK
-                        </div>
+                            class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold border-2 border-slate-900 text-slate-300 z-10">
+                            STREAK</div>
                     </div>
-
                     <a href="https://streakerpro.netlify.app/" target="_blank" rel="noopener noreferrer"
-                        class="btn-launch px-6 py-2.5 bg-white text-slate-900 font-bold rounded-full hover:bg-orange-50 hover:shadow-lg hover:shadow-orange-500/20 transition-all flex items-center gap-2">
-                        Open App <i class="fas fa-arrow-right text-sm"></i>
+                        class="btn-launch px-3.5 py-1.5 bg-white text-slate-900 text-xs font-bold rounded-full hover:bg-orange-50 hover:shadow-lg hover:shadow-orange-500/20 transition-all flex items-center gap-1">
+                        Open App <i class="fas fa-arrow-right text-[10px]"></i>
                     </a>
                 </div>
             </div>
 
-            <div class="glass-card card-orange rounded-3xl p-8 flex flex-col group">
-                <div class="flex items-start justify-between mb-8">
+            <div class="glass-card card-orange rounded-2xl p-5 flex flex-col group">
+                <div class="flex items-start justify-between mb-5">
                     <div
-                        class="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white icon-box shadow-lg shadow-orange-500/30">
-                        <i class="fas fa-play fa-xl"></i>
+                        class="w-11 h-11 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white icon-box shadow-lg shadow-orange-500/30">
+                        <i class="fas fa-play fa-md"></i>
                     </div>
-                    <div class="flex flex-wrap justify-end gap-2 max-w-[50%]">
+                    <div class="flex flex-wrap justify-end gap-1 max-w-[65%]">
                         <span class="tag text-orange-300 border-orange-500/20 bg-orange-500/10">Video</span>
                         <span class="tag text-orange-300 border-orange-500/20 bg-orange-500/10">Streaming</span>
                     </div>
                 </div>
-
-                <h3 class="text-3xl font-bold mb-3 text-white group-hover:text-orange-400 transition-colors">
-                    Video Player
+                <h3 class="text-xl font-bold mb-2 text-white group-hover:text-orange-400 transition-colors">Video Player
                 </h3>
-
-                <p class="text-slate-400 mb-8 flex-grow leading-relaxed text-lg font-light">
+                <p class="text-slate-400 mb-5 flex-grow leading-relaxed text-sm font-light">
                     Watch your videos seamlessly with a fast and lightweight player. Enjoy smooth playback, clean UI,
                     and easy access to your media anytime.
                 </p>
-
-                <div class="flex items-center justify-between mt-auto pt-6 border-t border-white/10">
-                    <div class="flex -space-x-3">
+                <div class="flex items-center justify-between mt-auto pt-3 border-t border-white/10">
+                    <div class="flex -space-x-2">
                         <div
-                            class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold border-2 border-slate-900 text-slate-300 z-20">
-                            DEV
-                        </div>
+                            class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold border-2 border-slate-900 text-slate-300 z-20">
+                            DEV</div>
                         <div
-                            class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold border-2 border-slate-900 text-slate-300 z-10">
-                            PLAYER
-                        </div>
+                            class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold border-2 border-slate-900 text-slate-300 z-10">
+                            PLAYER</div>
                     </div>
-
                     <a href="./vasync/" target="_blank" rel="noopener noreferrer"
-                        class="btn-launch px-6 py-2.5 bg-white text-slate-900 font-bold rounded-full hover:bg-orange-50 hover:shadow-lg hover:shadow-orange-500/20 transition-all flex items-center gap-2">
-                        Watch Now <i class="fas fa-arrow-right text-sm"></i>
+                        class="btn-launch px-3.5 py-1.5 bg-white text-slate-900 text-xs font-bold rounded-full hover:bg-orange-50 hover:shadow-lg hover:shadow-orange-500/20 transition-all flex items-center gap-1">
+                        Watch Now <i class="fas fa-arrow-right text-[10px]"></i>
                     </a>
                 </div>
             </div>
 
-            <div class="glass-card card-orange rounded-3xl p-8 flex flex-col group">
-                <div class="flex items-start justify-between mb-8">
+            <div class="glass-card card-orange rounded-2xl p-5 flex flex-col group">
+                <div class="flex items-start justify-between mb-5">
                     <div
-                        class="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white icon-box shadow-lg shadow-orange-500/30">
-                        <i class="fas fa-leaf fa-xl"></i>
+                        class="w-11 h-11 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white icon-box shadow-lg shadow-orange-500/30">
+                        <i class="fas fa-leaf fa-md"></i>
                     </div>
-
-                    <div class="flex flex-wrap justify-end gap-2 max-w-[50%]">
+                    <div class="flex flex-wrap justify-end gap-1 max-w-[65%]">
                         <span class="tag text-orange-300 border-orange-500/20 bg-orange-500/10">Java</span>
                         <span class="tag text-orange-300 border-orange-500/20 bg-orange-500/10">Spring Boot</span>
                     </div>
                 </div>
-
-                <h3 class="text-3xl font-bold mb-3 text-white group-hover:text-orange-400 transition-colors">
-                    Spring Boot APIs
-                </h3>
-
-                <p class="text-slate-400 mb-8 flex-grow leading-relaxed text-lg font-light">
-                    Build scalable and secure backend applications using Spring Boot.
-                    Develop REST APIs, integrate databases, implement authentication,
-                    and create enterprise-level microservices with clean architecture.
+                <h3 class="text-xl font-bold mb-2 text-white group-hover:text-orange-400 transition-colors">Spring Boot
+                    APIs</h3>
+                <p class="text-slate-400 mb-5 flex-grow leading-relaxed text-sm font-light">
+                    Build scalable and secure backend applications using Spring Boot. Develop REST APIs, integrate
+                    databases, implement authentication, and create microservices.
                 </p>
-
-                <div class="flex items-center justify-between mt-auto pt-6 border-t border-white/10">
-
-                    <div class="flex -space-x-3">
+                <div class="flex items-center justify-between mt-auto pt-3 border-t border-white/10">
+                    <div class="flex -space-x-2">
                         <div
-                            class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold border-2 border-slate-900 text-slate-300 z-20">
-                            JAVA
-                        </div>
-
+                            class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold border-2 border-slate-900 text-slate-300 z-20">
+                            JAVA</div>
                         <div
-                            class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold border-2 border-slate-900 text-slate-300 z-10">
-                            API
-                        </div>
+                            class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold border-2 border-slate-900 text-slate-300 z-10">
+                            API</div>
                     </div>
-
                     <a href="./spring-boot/" target="_blank" rel="noopener noreferrer"
-                        class="btn-launch px-6 py-2.5 bg-white text-slate-900 font-bold rounded-full hover:bg-orange-50 hover:shadow-lg hover:shadow-orange-500/20 transition-all flex items-center gap-2">
-                        Explore Now <i class="fas fa-arrow-right text-sm"></i>
+                        class="btn-launch px-3.5 py-1.5 bg-white text-slate-900 text-xs font-bold rounded-full hover:bg-orange-50 hover:shadow-lg hover:shadow-orange-500/20 transition-all flex items-center gap-1">
+                        Explore Now <i class="fas fa-arrow-right text-[10px]"></i>
                     </a>
                 </div>
             </div>
 
-            <div class="glass-card card-orange rounded-3xl p-8 flex flex-col group">
-                <div class="flex items-start justify-between mb-8">
+            <div class="glass-card card-orange rounded-2xl p-5 flex flex-col group">
+                <div class="flex items-start justify-between mb-5">
                     <div
-                        class="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white icon-box shadow-lg shadow-orange-500/30">
-                        <i class="fas fa-leaf fa-xl"></i>
+                        class="w-11 h-11 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white icon-box shadow-lg shadow-orange-500/30">
+                        <i class="fas fa-leaf fa-md"></i>
                     </div>
-
-                    <div class="flex flex-wrap justify-end gap-2 max-w-[50%]">
+                    <div class="flex flex-wrap justify-end gap-1 max-w-[65%]">
                         <span class="tag text-orange-300 border-orange-500/20 bg-orange-500/10">Java</span>
                         <span class="tag text-orange-300 border-orange-500/20 bg-orange-500/10">Spring Boot</span>
                     </div>
                 </div>
-
-                <h3 class="text-3xl font-bold mb-3 text-white group-hover:text-orange-400 transition-colors">
-                    DSA flow
+                <h3 class="text-xl font-bold mb-2 text-white group-hover:text-orange-400 transition-colors">DSA Flow
                 </h3>
-
-
-
-                <div class="flex items-center justify-between mt-auto pt-6 border-t border-white/10">
-
-                    <div class="flex -space-x-3">
+                <p class="text-slate-400 mb-5 flex-grow leading-relaxed text-sm font-light">
+                    Master data structures and algorithms with an optimized learning roadmap. Track complex
+                    problem-solving patterns, optimize algorithmic efficiency, and level up core engineering
+                    fundamentals.
+                </p>
+                <div class="flex items-center justify-between mt-auto pt-3 border-t border-white/10">
+                    <div class="flex -space-x-2">
                         <div
-                            class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold border-2 border-slate-900 text-slate-300 z-20">
-                            JAVA
-                        </div>
+                            class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold border-2 border-slate-900 text-slate-300 z-20">
+                            JAVA</div>
                     </div>
-
                     <a href="./dsa/" target="_blank" rel="noopener noreferrer"
-                        class="btn-launch px-6 py-2.5 bg-white text-slate-900 font-bold rounded-full hover:bg-orange-50 hover:shadow-lg hover:shadow-orange-500/20 transition-all flex items-center gap-2">
-                        Explore Now <i class="fas fa-arrow-right text-sm"></i>
+                        class="btn-launch px-3.5 py-1.5 bg-white text-slate-900 text-xs font-bold rounded-full hover:bg-orange-50 hover:shadow-lg hover:shadow-orange-500/20 transition-all flex items-center gap-1">
+                        Explore Now <i class="fas fa-arrow-right text-[10px]"></i>
                     </a>
                 </div>
             </div>
+
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="relative z-10 border-t border-white/10 bg-slate-900/30 backdrop-blur-lg">
-        <div class="max-w-6xl mx-auto px-6 py-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p class="text-slate-500 text-sm font-medium">© 2024 Dev Namdev. Crafted with precision.</p>
+    <footer class="relative z-10 border-t border-white/10 bg-slate-900/30 backdrop-blur-lg w-full mt-auto">
+        <div
+            class="max-w-[98vw] w-full mx-auto px-4 sm:px-6 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p class="text-slate-500 text-xs font-medium">© 2024 Dev Namdev. Crafted with precision.</p>
             <div class="flex gap-4 text-slate-500">
                 <a href="#" class="hover:text-sky-400 transition-colors"><i class="fas fa-envelope"></i></a>
                 <a href="#" class="hover:text-sky-400 transition-colors"><i class="fab fa-twitter"></i></a>
