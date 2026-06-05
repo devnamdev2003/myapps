@@ -84,6 +84,10 @@
             background: radial-gradient(circle, rgba(168, 85, 247, 0.2) 0%, rgba(15, 23, 42, 0) 70%);
         }
 
+        .card-container.rose:hover .glow-effect {
+            background: radial-gradient(circle, rgba(244, 63, 94, 0.2) 0%, rgba(15, 23, 42, 0) 70%);
+        }
+
         .card-container:hover .glow-effect {
             transform: scale(1.5);
             background: radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, rgba(15, 23, 42, 0) 70%);
@@ -196,6 +200,40 @@
 
                 <div
                     class="flex items-center text-sm font-semibold text-violet-400 group-hover:text-violet-300 transition-colors relative z-10 border-t border-bordercolor pt-4 group-hover:border-violet-900/50">
+                    Launch DSA Simulation <i
+                        class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </a>
+
+            <!-- Card: Dutch National Flag Algorithm -->
+            <a href="dutch-national-flag.html"
+                class="card-container rose group relative bg-panelbg border border-bordercolor rounded-2xl p-6 flex flex-col overflow-hidden hover:-translate-y-2 hover:border-rose-400 hover:shadow-[0_12px_30px_-10px_rgba(244,63,94,0.3)] transition-all duration-300">
+                <div class="glow-effect"></div>
+
+                <div
+                    class="w-14 h-14 rounded-xl bg-darkbg border border-bordercolor flex items-center justify-center mb-6 group-hover:border-rose-400 transition-colors relative z-10">
+                    <i class="fa-solid fa-flag text-2xl text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]"></i>
+                </div>
+
+                <h3 class="text-xl font-bold text-white mb-2 relative z-10 group-hover:text-rose-400 transition-colors">
+                    Dutch National Flag Algorithm
+                </h3>
+                <p class="text-sm text-muted mb-6 flex-1 relative z-10 leading-relaxed">
+                    Understand the 3-Pointer technique to sort an array of 0s, 1s, and 2s in linear $O(N)$ time with
+                    constant space.
+                </p>
+
+                <div class="flex flex-wrap gap-2 mt-auto mb-6 relative z-10">
+                    <span
+                        class="px-2.5 py-1 text-[10px] font-semibold bg-darkbg text-slate-300 rounded-md border border-bordercolor">DSA</span>
+                    <span
+                        class="px-2.5 py-1 text-[10px] font-semibold bg-darkbg text-amber-400 rounded-md border border-amber-500/30">Arrays</span>
+                    <span
+                        class="px-2.5 py-1 text-[10px] font-semibold bg-darkbg text-rose-400 rounded-md border border-rose-500/30">3-Pointers</span>
+                </div>
+
+                <div
+                    class="flex items-center text-sm font-semibold text-rose-400 group-hover:text-rose-300 transition-colors relative z-10 border-t border-bordercolor pt-4 group-hover:border-rose-900/50">
                     Launch DSA Simulation <i
                         class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
                 </div>
